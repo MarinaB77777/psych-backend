@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from model_engine.run_engine import run_engine_logic
+
 app = FastAPI()
 
 
@@ -11,14 +13,6 @@ class RunInput(BaseModel):
 @app.get("/")
 def root():
     return {"status": "ok"}
-
-
-def run_engine_logic(answers: dict):
-    return {
-        "state": "test_state",
-        "engine_location": "backend",
-        "confidence": "low"
-    }
 
 
 @app.post("/run")
