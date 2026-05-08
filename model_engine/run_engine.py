@@ -10,6 +10,9 @@ from model_engine.loads import compute_loads
 from model_engine.stress import compute_s
 from model_engine.delta import compute_delta
 from model_engine.consistency import compute_consistency
+from model_engine.outputs import build_output
+from model_engine.pressure import compute_pressure
+from model_engine.multipliers import compute_multipliers
 
 
 def run_engine_logic(answers: dict):
@@ -28,12 +31,28 @@ def run_engine_logic(answers: dict):
 
     r_data = compute_r(answers)
     k_self_data = compute_k_self(answers)
+
     loads_data = compute_loads(answers)
+    
+    pressure_data = compute_pressure(
+        answers=answers,
+        loads_data=loads_data,
+        r_data=r_data,
+   )
+    
+    multipliers_data = compute_multipliers(
+        answers=answers,
+        r_data=r_data,
+        loads_data=loads_data,
+    )
 
     s_data = compute_s(
         loads_data=loads_data,
         r_data=r_data,
+        pressure_data=pressure_data,
+        multipliers_data=multipliers_data,
     )
+
 
     if state_data["state"] == "CRITICAL":
         s_data["s_final"] = 10
@@ -66,6 +85,26 @@ def run_engine_logic(answers: dict):
     if coverage_data["coverage"] >= 0.8 and q_data["q_global"] == 0:
         confidence = "high"
 
+    combined_reason_codes = (
+        state_data["reason_codes"]
+        + final_state_data["reason_codes"]
+    )
+
+    output_data = build_output(
+        state=final_state_data["state"],
+        confidence=confidence,
+        coverage=coverage_data["coverage"],
+        q_global=q_data["q_global"],
+        c_final=c_data["c_final"],
+        s_data=s_data,
+        r_data=r_data,
+        k_self_data=k_self_data,
+        delta_data=delta_data,
+        warnings=state_data["warnings"],
+        reason_codes=combined_reason_codes,
+    )
+
+
     result = {
         "initial_state": state_data["state"],
         "state": final_state_data["state"],
@@ -75,17 +114,17 @@ def run_engine_logic(answers: dict):
         "missing_fields": coverage_data["missing_fields"],
         "q_global": q_data["q_global"],
         "warnings": state_data["warnings"],
-        "reason_codes": (
-            state_data["reason_codes"]
-            + final_state_data["reason_codes"]
-        ),
+        "reason_codes": combined_reason_codes,
         "r": r_data,
         "k_self": k_self_data,
         "loads": loads_data,
+        "pressure": pressure_data,
+        "multipliers": multipliers_data,
         "s": s_data,
         "delta": delta_data,
         "consistency": c_data,
         "c_final": c_data["c_final"],
+        "output": output_data,
     }
 
     return result
