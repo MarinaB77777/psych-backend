@@ -51,7 +51,9 @@ def determine_initial_state(coverage_data: dict, q_data: dict, answers: dict):
         "warnings": warnings,
     }
 
+
 def determine_final_state(
+    initial_state: str,
     s_data: dict,
     k_self_data: dict,
     consistency_data: dict,
@@ -59,6 +61,12 @@ def determine_final_state(
     q_data: dict,
 ):
     reason_codes = []
+
+    if initial_state == "CRITICAL":
+        return {
+            "state": "CRITICAL",
+            "reason_codes": ["CRITICAL_OVERRIDE"],
+        }
 
     s_norm = s_data.get("s_norm")
     k_self_norm = k_self_data.get("k_self_norm")

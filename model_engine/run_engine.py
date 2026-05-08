@@ -35,6 +35,13 @@ def run_engine_logic(answers: dict):
         r_data=r_data,
     )
 
+    if state_data["state"] == "CRITICAL":
+        s_data["s_final"] = 10
+        s_data["critical_override"] = True
+    else:
+        s_data["critical_override"] = False
+
+
     delta_data = compute_delta(
         r_data=r_data,
         k_self_data=k_self_data,
@@ -43,6 +50,7 @@ def run_engine_logic(answers: dict):
     c_data = compute_consistency(delta_data)
 
     final_state_data = determine_final_state(
+        initial_state=state_data["state"],
         s_data=s_data,
         k_self_data=k_self_data,
         consistency_data=c_data,
