@@ -14,7 +14,10 @@ from model_engine.outputs import build_output
 from model_engine.pressure import compute_pressure
 from model_engine.multipliers import compute_multipliers
 from model_engine.questions import build_next_questions
-
+from model_engine.reasons import (
+    normalize_reason_codes,
+    extract_public_reasons,
+)
 
 def run_engine_logic(answers: dict):
     coverage_data = compute_coverage(answers)
@@ -98,6 +101,9 @@ def run_engine_logic(answers: dict):
         + final_state_data["reason_codes"]
     )
 
+    normalized_reasons = normalize_reason_codes(combined_reason_codes)
+    public_reasons = extract_public_reasons(normalized_reasons)
+
     output_data = build_output(
         state=final_state_data["state"],
         confidence=confidence,
@@ -109,7 +115,7 @@ def run_engine_logic(answers: dict):
         k_self_data=k_self_data,
         delta_data=delta_data,
         warnings=state_data["warnings"],
-        reason_codes=combined_reason_codes,
+        public_reasons=public_reasons,
         next_questions=next_questions,
     )
 
@@ -135,6 +141,8 @@ def run_engine_logic(answers: dict):
         "c_final": c_data["c_final"],
         "output": output_data,
         "next_questions": next_questions,
+        "normalized_reasons": normalized_reasons,
+        "public_reasons": public_reasons,
     }
 
     return result

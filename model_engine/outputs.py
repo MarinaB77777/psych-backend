@@ -87,7 +87,7 @@ def build_output(
     k_self_data: dict,
     delta_data: dict,
     warnings: list,
-    reason_codes: list,
+    public_reasons: list,
     next_questions: list = None,
 ):
     s_final = s_data.get("s_final")
@@ -119,6 +119,6 @@ def build_output(
         "forecast_allowed": forecast_allowed,
         "domain_summary": domain_summary,
         "warnings": warnings,
-        "reason_codes": reason_codes,
+        "public_reasons": public_reasons,
         "next_questions": next_questions or [],
     }
