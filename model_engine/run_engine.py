@@ -13,6 +13,7 @@ from model_engine.consistency import compute_consistency
 from model_engine.outputs import build_output
 from model_engine.pressure import compute_pressure
 from model_engine.multipliers import compute_multipliers
+from model_engine.questions import build_next_questions
 
 
 def run_engine_logic(answers: dict):
@@ -77,6 +78,13 @@ def run_engine_logic(answers: dict):
         q_data=q_data,
     )
 
+    next_questions = build_next_questions(
+        coverage_data=coverage_data,
+        delta_data=delta_data,
+        consistency_data=c_data,
+        limit=3,
+    )
+
     confidence = "low"
 
     if coverage_data["coverage"] >= 0.6 and q_data["q_global"] <= 1:
@@ -102,6 +110,7 @@ def run_engine_logic(answers: dict):
         delta_data=delta_data,
         warnings=state_data["warnings"],
         reason_codes=combined_reason_codes,
+        next_questions=next_questions,
     )
 
 
@@ -125,6 +134,7 @@ def run_engine_logic(answers: dict):
         "consistency": c_data,
         "c_final": c_data["c_final"],
         "output": output_data,
+        "next_questions": next_questions,
     }
 
     return result

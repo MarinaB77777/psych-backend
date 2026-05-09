@@ -88,6 +88,7 @@ def build_output(
     delta_data: dict,
     warnings: list,
     reason_codes: list,
+    next_questions: list = None,
 ):
     s_final = s_data.get("s_final")
 
@@ -119,5 +120,5 @@ def build_output(
         "domain_summary": domain_summary,
         "warnings": warnings,
         "reason_codes": reason_codes,
-        "next_questions": [],
+        "next_questions": next_questions or [],
     }

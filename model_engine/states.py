@@ -67,6 +67,11 @@ def determine_final_state(
             "state": "CRITICAL",
             "reason_codes": ["CRITICAL_OVERRIDE"],
         }
+    if initial_state == "SAFE_DATA_REQUEST":
+        return {
+            "state": "SAFE_DATA_REQUEST",
+            "reason_codes": ["SAFE_DATA_REQUEST_OVERRIDE"],
+        }
 
     s_norm = s_data.get("s_norm")
     k_self_norm = k_self_data.get("k_self_norm")
