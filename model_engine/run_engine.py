@@ -18,6 +18,11 @@ from model_engine.reasons import (
     normalize_reason_codes,
     extract_public_reasons,
 )
+from model_engine.warnings_engine import (
+    build_warnings,
+    extract_public_warnings,
+)
+from model_engine.forecast import build_forecast_governance
 
 def run_engine_logic(answers: dict):
     coverage_data = compute_coverage(answers)
@@ -104,6 +109,21 @@ def run_engine_logic(answers: dict):
     normalized_reasons = normalize_reason_codes(combined_reason_codes)
     public_reasons = extract_public_reasons(normalized_reasons)
 
+    normalized_warnings = build_warnings(combined_reason_codes)
+    public_warnings = extract_public_warnings(normalized_warnings)
+
+    forecast_data = build_forecast_governance(
+        state=final_state_data["state"],
+        confidence=confidence,
+        coverage=coverage_data["coverage"],
+        q_global=q_data["q_global"],
+        c_final=c_data["c_final"],
+        s_data=s_data,
+        delta_data=delta_data,
+        reason_codes=combined_reason_codes,
+    )
+
+
     output_data = build_output(
         state=final_state_data["state"],
         confidence=confidence,
@@ -114,8 +134,9 @@ def run_engine_logic(answers: dict):
         r_data=r_data,
         k_self_data=k_self_data,
         delta_data=delta_data,
-        warnings=state_data["warnings"],
+        warnings=public_warnings,
         public_reasons=public_reasons,
+        forecast=forecast_data,
         next_questions=next_questions,
     )
 
@@ -128,6 +149,9 @@ def run_engine_logic(answers: dict):
         "coverage": coverage_data["coverage"],
         "missing_fields": coverage_data["missing_fields"],
         "q_global": q_data["q_global"],
+        "normalized_warnings": normalized_warnings,
+        "public_warnings": public_warnings,
+        "forecast": forecast_data,
         "warnings": state_data["warnings"],
         "reason_codes": combined_reason_codes,
         "r": r_data,
@@ -143,6 +167,6 @@ def run_engine_logic(answers: dict):
         "next_questions": next_questions,
         "normalized_reasons": normalized_reasons,
         "public_reasons": public_reasons,
-    }
+     }
 
     return result

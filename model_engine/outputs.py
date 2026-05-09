@@ -88,6 +88,7 @@ def build_output(
     delta_data: dict,
     warnings: list,
     public_reasons: list,
+    forecast: dict = None,
     next_questions: list = None,
 ):
     s_final = s_data.get("s_final")
@@ -116,7 +117,13 @@ def build_output(
     return {
         "summary_text": summary_text,
         "result_level": result_level,
-        "forecast_allowed": forecast_allowed,
+        "forecast_allowed": (forecast or {}).get("allowed", forecast_allowed),
+        "forecast": forecast or {
+        "allowed": forecast_allowed,
+        "reason": "LEGACY_FORECAST_RULE",
+        "confidence": confidence,
+        "allowed_scope": "none",
+    },
         "domain_summary": domain_summary,
         "warnings": warnings,
         "public_reasons": public_reasons,
