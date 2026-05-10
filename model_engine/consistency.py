@@ -14,7 +14,10 @@ def compute_consistency(delta_data: dict):
 
         interpretation = item.get("interpretation")
 
-        if interpretation in ["accumulated_pressure", "hidden_factor"]:
+        if interpretation in [
+            "resource_present_not_expressed",
+            "accumulated_pressure",
+        ]:
             flags.append({
                 "flag_code": "C3_R_K_CONFLICT",
                 "domain": domain,
