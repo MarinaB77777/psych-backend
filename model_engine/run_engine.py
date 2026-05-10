@@ -23,6 +23,7 @@ from model_engine.warnings_engine import (
     extract_public_warnings,
 )
 from model_engine.forecast import build_forecast_governance
+from model_engine.uncertainty import build_uncertainty_profile
 
 def run_engine_logic(answers: dict):
     coverage_data = compute_coverage(answers)
@@ -122,7 +123,15 @@ def run_engine_logic(answers: dict):
         delta_data=delta_data,
         reason_codes=combined_reason_codes,
     )
-
+    
+    uncertainty_data = build_uncertainty_profile(
+        coverage=coverage_data["coverage"],
+        q_global=q_data["q_global"],
+        c_final=c_data["c_final"],
+        state=final_state_data["state"],
+        forecast_data=forecast_data,
+        delta_data=delta_data,
+    )
 
     output_data = build_output(
         state=final_state_data["state"],
@@ -138,6 +147,7 @@ def run_engine_logic(answers: dict):
         public_reasons=public_reasons,
         forecast=forecast_data,
         next_questions=next_questions,
+        uncertainty_data=uncertainty_data,
     )
 
 
@@ -167,6 +177,7 @@ def run_engine_logic(answers: dict):
         "next_questions": next_questions,
         "normalized_reasons": normalized_reasons,
         "public_reasons": public_reasons,
+        "uncertainty": uncertainty_data,
      }
 
     return result

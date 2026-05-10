@@ -48,7 +48,8 @@ def compute_delta(r_data: dict, k_self_data: dict):
         else:
             interpretation = "aligned"
             reason_code = "DELTA_ALIGNED"
-            
+
+
         result[domain] = {
             "calculated": True,
             "delta": round(delta, 3),

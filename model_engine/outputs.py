@@ -90,6 +90,7 @@ def build_output(
     public_reasons: list,
     forecast: dict = None,
     next_questions: list = None,
+    uncertainty_data: dict = None,
 ):
     s_final = s_data.get("s_final")
 
@@ -128,4 +129,17 @@ def build_output(
         "warnings": warnings,
         "public_reasons": public_reasons,
         "next_questions": next_questions or [],
+        "uncertainty": {
+            "level": (
+                uncertainty_data or {}
+        ).get("uncertainty_level"),
+
+        "dialogue_mode": (
+                uncertainty_data or {}
+        ).get("dialogue_mode"),
+
+        "allow_recommendations": (
+                uncertainty_data or {}
+        ).get("allow_recommendations"),
+   },
     }
