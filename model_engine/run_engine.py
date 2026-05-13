@@ -13,7 +13,10 @@ from model_engine.consistency import compute_consistency
 from model_engine.outputs import build_output
 from model_engine.pressure import compute_pressure
 from model_engine.multipliers import compute_multipliers
-from model_engine.questions import build_next_questions
+from model_engine.questions import (
+    build_next_questions,
+    build_data_acquisition_requests,
+)
 from model_engine.reasons import (
     normalize_reason_codes,
     extract_public_reasons,
@@ -24,6 +27,19 @@ from model_engine.warnings_engine import (
 )
 from model_engine.forecast import build_forecast_governance
 from model_engine.uncertainty import build_uncertainty_profile
+
+def dedupe_list(items: list):
+    result = []
+    seen = set()
+
+    for item in items:
+        key = str(item)
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(item)
+
+    return result
 
 def run_engine_logic(answers: dict):
     coverage_data = compute_coverage(answers)
@@ -41,15 +57,14 @@ def run_engine_logic(answers: dict):
 
     r_data = compute_r(answers)
     k_self_data = compute_k_self(answers)
-
     loads_data = compute_loads(answers)
-    
+
     pressure_data = compute_pressure(
         answers=answers,
         loads_data=loads_data,
         r_data=r_data,
-   )
-    
+    )
+
     multipliers_data = compute_multipliers(
         answers=answers,
         r_data=r_data,
@@ -63,13 +78,11 @@ def run_engine_logic(answers: dict):
         multipliers_data=multipliers_data,
     )
 
-
     if state_data["state"] == "CRITICAL":
         s_data["s_final"] = 10
         s_data["critical_override"] = True
     else:
         s_data["critical_override"] = False
-
 
     delta_data = compute_delta(
         r_data=r_data,
@@ -79,19 +92,29 @@ def run_engine_logic(answers: dict):
     c_data = compute_consistency(delta_data)
 
     final_state_data = determine_final_state(
-        initial_state=state_data["state"],
-        s_data=s_data,
-        k_self_data=k_self_data,
-        consistency_data=c_data,
-        coverage_data=coverage_data,
-        q_data=q_data,
+    initial_state=state_data["state"],
+    s_data=s_data,
+    k_self_data=k_self_data,
+    consistency_data=c_data,
+    coverage_data=coverage_data,
+    q_data=q_data,
+    r_data=r_data,
+    pressure_data=pressure_data,
+    delta_data=delta_data,
     )
+
 
     next_questions = build_next_questions(
         coverage_data=coverage_data,
         delta_data=delta_data,
         consistency_data=c_data,
+        answers=answers,
+        state=final_state_data["state"],
         limit=3,
+    )
+
+    data_acquisition_requests = build_data_acquisition_requests(
+    next_questions=next_questions,
     )
 
     confidence = "low"
@@ -102,9 +125,15 @@ def run_engine_logic(answers: dict):
     if coverage_data["coverage"] >= 0.8 and q_data["q_global"] == 0:
         confidence = "high"
 
-    combined_reason_codes = (
-        state_data["reason_codes"]
-        + final_state_data["reason_codes"]
+    combined_reason_codes = dedupe_list(
+        state_data.get("reason_codes", [])
+        + final_state_data.get("reason_codes", [])
+        + pressure_data.get("reason_codes", [])
+    )
+
+    combined_raw_warnings = (
+        state_data.get("warnings", [])
+        + pressure_data.get("warnings", [])
     )
 
     normalized_reasons = normalize_reason_codes(combined_reason_codes)
@@ -123,7 +152,7 @@ def run_engine_logic(answers: dict):
         delta_data=delta_data,
         reason_codes=combined_reason_codes,
     )
-    
+
     uncertainty_data = build_uncertainty_profile(
         coverage=coverage_data["coverage"],
         q_global=q_data["q_global"],
@@ -150,20 +179,27 @@ def run_engine_logic(answers: dict):
         uncertainty_data=uncertainty_data,
     )
 
-
     result = {
         "initial_state": state_data["state"],
         "state": final_state_data["state"],
         "confidence": confidence,
         "engine_location": "backend",
+
         "coverage": coverage_data["coverage"],
         "missing_fields": coverage_data["missing_fields"],
         "q_global": q_data["q_global"],
+
+        "warnings": combined_raw_warnings,
         "normalized_warnings": normalized_warnings,
         "public_warnings": public_warnings,
-        "forecast": forecast_data,
-        "warnings": state_data["warnings"],
+
         "reason_codes": combined_reason_codes,
+        "normalized_reasons": normalized_reasons,
+        "public_reasons": public_reasons,
+
+        "forecast": forecast_data,
+        "uncertainty": uncertainty_data,
+
         "r": r_data,
         "k_self": k_self_data,
         "loads": loads_data,
@@ -173,11 +209,12 @@ def run_engine_logic(answers: dict):
         "delta": delta_data,
         "consistency": c_data,
         "c_final": c_data["c_final"],
-        "output": output_data,
+
         "next_questions": next_questions,
-        "normalized_reasons": normalized_reasons,
-        "public_reasons": public_reasons,
-        "uncertainty": uncertainty_data,
-     }
+        "data_acquisition_requests": (
+            data_acquisition_requests
+        ),
+        "output": output_data,
+    }
 
     return result

@@ -40,11 +40,11 @@ def compute_delta(r_data: dict, k_self_data: dict):
         delta = r_score - k_score
 
         if delta > DELTA_THRESHOLD:
-            interpretation = "resource_present_not_expressed"
-            reason_code = "DELTA_RESOURCE_PRESENT_NOT_EXPRESSED"
-        elif delta < -DELTA_THRESHOLD:
             interpretation = "accumulated_pressure"
             reason_code = "DELTA_ACCUMULATED_PRESSURE"
+        elif delta < -DELTA_THRESHOLD:
+            interpretation = "hidden_factor"
+            reason_code = "DELTA_HIDDEN_FACTOR"
         else:
             interpretation = "aligned"
             reason_code = "DELTA_ALIGNED"

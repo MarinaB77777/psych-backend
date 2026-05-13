@@ -8,8 +8,19 @@ def build_uncertainty_profile(
 ):
     uncertainty_score = 0
 
+    if state == "CRITICAL":
+        return {
+            "uncertainty_score": 10,
+            "uncertainty_level": "high",
+            "allow_recommendations": False,
+            "allow_strong_recommendations": False,
+            "dialogue_mode": "critical",
+        }
+
     if coverage < 0.4:
         uncertainty_score += 3
+    elif coverage < 0.6:
+        uncertainty_score += 2
     elif coverage < 0.7:
         uncertainty_score += 1
 
@@ -24,9 +35,11 @@ def build_uncertainty_profile(
         uncertainty_score += 1
 
     if state in [
+        "ORIENTING",
         "HIDDEN_FACTOR",
         "SAFE_DATA_REQUEST",
-        "STATE_NOT_ENOUGH_DATA",
+        "LOW_QUALITY",
+        "CONSISTENCY_FAILURE",
     ]:
         uncertainty_score += 2
 
@@ -39,7 +52,9 @@ def build_uncertainty_profile(
         if item.get("calculated") is True:
             calculated_domains += 1
 
-    if calculated_domains < 3:
+    if calculated_domains == 0:
+        uncertainty_score += 3
+    elif calculated_domains < 3:
         uncertainty_score += 2
 
     if uncertainty_score >= 7:
@@ -50,15 +65,24 @@ def build_uncertainty_profile(
         level = "low"
 
     allow_recommendations = uncertainty_score < 7
-    allow_strong_recommendations = uncertainty_score < 4
+
+    allow_strong_recommendations = (
+        uncertainty_score < 4
+        and state not in [
+            "ORIENTING",
+            "SAFE_DATA_REQUEST",
+            "LOW_QUALITY",
+            "CONSISTENCY_FAILURE",
+            "HIDDEN_FACTOR",
+        ]
+        and forecast_data.get("allowed") is True
+    )
 
     return {
         "uncertainty_score": uncertainty_score,
         "uncertainty_level": level,
         "allow_recommendations": allow_recommendations,
-        "allow_strong_recommendations": (
-            allow_strong_recommendations
-        ),
+        "allow_strong_recommendations": allow_strong_recommendations,
         "dialogue_mode": (
             "soft"
             if level == "high"

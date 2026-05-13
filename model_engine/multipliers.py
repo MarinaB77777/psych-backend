@@ -10,38 +10,23 @@ def cap(value, min_value=0.0, max_value=5.0):
 
 def compute_domain_pressure(loads_data: dict, r_data: dict):
     r_domains = r_data.get("domains", {})
-
-    # MVP domain load mapping
-    l_physical = safe_num(loads_data.get("l_environment"))
-    l_psych = safe_num(loads_data.get("l_environment"))
-    l_goals = safe_num(loads_data.get("l_environment"))
-    l_social = safe_num(loads_data.get("l_external"))
-    l_finance = safe_num(loads_data.get("l_external"))
-    l_spiritual = safe_num(loads_data.get("l_external"))
-
-    load_by_domain = {
-        "physical": l_physical,
-        "psych": l_psych,
-        "goals": l_goals,
-        "social": l_social,
-        "finance": l_finance,
-        "spiritual": l_spiritual,
-    }
+    domain_loads = loads_data.get("domain_loads", {})
 
     pressures = {}
 
-    for domain, l_value in load_by_domain.items():
+    for domain, load_item in domain_loads.items():
+        l_score = load_item.get("score")
+
         r_score = r_domains.get(domain, {}).get("score")
 
-        if r_score is None:
+        if l_score is None or r_score is None:
             pressures[domain] = None
             continue
 
-        pressure = (l_value + r_score) / 2
+        pressure = (l_score + r_score) / 2
         pressures[domain] = cap(pressure)
 
     return pressures
-
 
 def compute_multipliers(answers: dict, r_data: dict, loads_data: dict):
     b12 = safe_num(answers.get("b12"))

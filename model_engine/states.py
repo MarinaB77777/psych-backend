@@ -29,7 +29,10 @@ def determine_initial_state(coverage_data: dict, q_data: dict, answers: dict):
             "warnings": warnings,
         }
 
-    if coverage_data["coverage"] < 0.4:
+    coverage = coverage_data.get("coverage", 0)
+    q_global = q_data.get("q_global", 999)
+
+    if coverage < 0.4:
         reason_codes.append("LOW_COVERAGE")
         return {
             "state": "SAFE_DATA_REQUEST",
@@ -37,7 +40,15 @@ def determine_initial_state(coverage_data: dict, q_data: dict, answers: dict):
             "warnings": warnings,
         }
 
-    if q_data["q_global"] > 1:
+    if 0.4 <= coverage < 0.6:
+        reason_codes.append("ORIENTING_LOW_COVERAGE")
+        return {
+            "state": "ORIENTING",
+            "reason_codes": reason_codes,
+            "warnings": warnings,
+        }
+
+    if q_global > 1.5:
         reason_codes.append("LOW_QUALITY")
         return {
             "state": "LOW_QUALITY",
@@ -52,6 +63,18 @@ def determine_initial_state(coverage_data: dict, q_data: dict, answers: dict):
     }
 
 
+def count_calculated_delta_domains(delta_data: dict):
+    count = 0
+
+    if not delta_data:
+        return count
+
+    for item in delta_data.values():
+        if item.get("calculated"):
+            count += 1
+
+    return count
+
 def determine_final_state(
     initial_state: str,
     s_data: dict,
@@ -59,77 +82,102 @@ def determine_final_state(
     consistency_data: dict,
     coverage_data: dict,
     q_data: dict,
+    r_data: dict = None,
+    pressure_data: dict = None,
+    delta_data: dict = None,
 ):
-    reason_codes = []
-
     if initial_state == "CRITICAL":
         return {
             "state": "CRITICAL",
             "reason_codes": ["CRITICAL_OVERRIDE"],
         }
+
     if initial_state == "SAFE_DATA_REQUEST":
         return {
             "state": "SAFE_DATA_REQUEST",
             "reason_codes": ["SAFE_DATA_REQUEST_OVERRIDE"],
         }
 
+    coverage = coverage_data.get("coverage", 0)
+    q_global = q_data.get("q_global", 999)
+
+    if coverage < 0.6:
+        return {
+            "state": "ORIENTING",
+            "reason_codes": ["ORIENTING_LOW_COVERAGE"],
+        }
+
+    if q_global > 1.5:
+        return {
+            "state": "LOW_QUALITY",
+            "reason_codes": ["LOW_QUALITY_OVERRIDE"],
+        }
+
     s_norm = s_data.get("s_norm")
     k_self_norm = k_self_data.get("k_self_norm")
     c_final = consistency_data.get("c_final", 0)
 
-    coverage = coverage_data.get("coverage", 0)
-    q_global = q_data.get("q_global", 999)
-
-    # no enough data
     if s_norm is None or k_self_norm is None:
-        reason_codes.append("STATE_NOT_ENOUGH_DATA")
-
         return {
             "state": "ORIENTING",
-            "reason_codes": reason_codes,
+            "reason_codes": ["STATE_NOT_ENOUGH_DATA"],
         }
 
-    # consistency failure
     if c_final > 4:
-        reason_codes.append("CONSISTENCY_FAILURE")
-
         return {
             "state": "CONSISTENCY_FAILURE",
-            "reason_codes": reason_codes,
+            "reason_codes": ["CONSISTENCY_FAILURE"],
+        }
+
+    readiness_reasons = []
+
+    if r_data is None or r_data.get("r_total") is None:
+        readiness_reasons.append("R_NOT_ENOUGH_DATA")
+
+    if pressure_data is None or pressure_data.get("calculated_count", 0) == 0:
+        readiness_reasons.append("PRESSURE_NOT_ENOUGH_DATA")
+
+    
+    calculated_delta_domains = count_calculated_delta_domains(delta_data)
+
+    if calculated_delta_domains < 3:
+        readiness_reasons.append("DELTA_NOT_ENOUGH_DATA")
+   
+
+    if readiness_reasons:
+        return {
+            "state": "ORIENTING",
+            "reason_codes": ["STATE_READINESS_NOT_ENOUGH_DATA"] + readiness_reasons,
         }
 
     delta_total = s_norm - k_self_norm
 
-    # aligned
     if abs(delta_total) <= 1.5:
-        reason_codes.append("STATE_DIAGNOSTIC")
-
         return {
             "state": "DIAGNOSTIC",
-            "reason_codes": reason_codes,
+            "reason_codes": ["STATE_DIAGNOSTIC"],
         }
 
-    # accumulated pressure
     if (
         s_norm > k_self_norm + 1.5
         and coverage >= 0.6
         and q_global <= 1.5
         and c_final <= 4
     ):
-        reason_codes.append("STATE_FORECAST")
-
         return {
             "state": "FORECAST",
-            "reason_codes": reason_codes,
+            "reason_codes": ["STATE_FORECAST"],
         }
 
-    # hidden factor
-    if k_self_norm > s_norm + 1.5:
-        reason_codes.append("STATE_HIDDEN_FACTOR")
-
+    if (
+        k_self_norm > s_norm + 1.5
+        and coverage >= 0.6
+        and q_global <= 1.5
+        and c_final <= 4
+    ):
         return {
             "state": "HIDDEN_FACTOR",
-            "reason_codes": reason_codes,
+            "reason_codes": ["STATE_HIDDEN_FACTOR"],
         }
 
     return {
