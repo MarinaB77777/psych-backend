@@ -2,7 +2,7 @@ from runtime.coordinator.contracts import (
     RuntimeCoordinationStatus,
 )
 
-from runtime.coordinator.service import RuntimeCoordinatorService
+from runtime.coordinator.runtime_service import RuntimeCoordinatorService
 
 from runtime.intake.contracts import RuntimeTargetLayer
 

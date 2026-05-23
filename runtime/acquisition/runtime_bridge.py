@@ -1,10 +1,18 @@
-# runtime/acquisition/runtime_bridge.py
-
 from __future__ import annotations
 
+from uuid import uuid4
+
+from runtime.contracts.runtime_acquisition_request import (
+    RuntimeAcquisitionRequest,
+    RuntimeAcquisitionRequestStatus,
+    RuntimeAcquisitionRequestType,
+)
+
 from runtime.acquisition.contracts import (
+    AcquisitionReasonCode,
     AcquisitionRequest,
     AcquisitionResult,
+    AcquisitionSourceClass,
     ExposureFilterResult,
     InboundFilterResult,
     ReadinessEvaluation,
@@ -37,6 +45,15 @@ class AcquisitionRuntimeBridge:
     runtime_bridge ≠ Governance
     runtime_bridge ≠ executor
     runtime_bridge ≠ answer builder
+
+    RuntimeAcquisitionRequest ≠ permission.
+    RuntimeAcquisitionRequest ≠ acquisition result.
+    PREPARED ≠ sent.
+    PREPARED ≠ executed.
+
+    Source class rule:
+    Runtime bridge must not infer ambiguous source class.
+    Unknown source_class ≠ inferred operational truth.
     """
 
     def __init__(
@@ -45,6 +62,54 @@ class AcquisitionRuntimeBridge:
     ) -> None:
         self.acquisition_service = (
             acquisition_service or AcquisitionServiceWithRegistry()
+        )
+
+    def create_from_runtime_request(
+        self,
+        runtime_request: RuntimeAcquisitionRequest,
+    ) -> AcquisitionRequest:
+        """
+        Convert explicit Runtime acquisition intent into internal
+        AcquisitionRequest and register it.
+
+        This method does NOT:
+        - send acquisition externally;
+        - execute acquisition;
+        - grant permission;
+        - prove acquisition success;
+        - perform retry;
+        - mutate Coordinator state;
+        - mutate Runtime lifecycle.
+
+        RuntimeAcquisitionRequest ≠ permission.
+        RuntimeAcquisitionRequest ≠ acquisition result.
+        PREPARED ≠ sent.
+        PREPARED ≠ executed.
+        """
+
+        if runtime_request.status != RuntimeAcquisitionRequestStatus.PREPARED:
+            raise ValueError(
+                "Only PREPARED RuntimeAcquisitionRequest can be converted "
+                "to AcquisitionRequest"
+            )
+
+        source_class = self._resolve_source_class(runtime_request)
+
+        acquisition_request = AcquisitionRequest(
+            request_id=f"acq-{uuid4()}",
+            raw_internal_question_ref=runtime_request.runtime_request_id,
+            source_class=source_class,
+            domain=runtime_request.metadata.get("domain"),
+            importance_level=runtime_request.metadata.get("importance_level"),
+            risk_level=runtime_request.metadata.get("risk_level"),
+            required_fields=list(runtime_request.required_fields),
+            reason_codes=[
+                AcquisitionReasonCode.NO_DATA_ASK_OR_ACQUIRE,
+            ],
+        )
+
+        return self.acquisition_service.register_request(
+            acquisition_request
         )
 
     def create_acquisition_request(
@@ -102,3 +167,47 @@ class AcquisitionRuntimeBridge:
         return self.acquisition_service.evaluate_readiness(
             request_id=request_id,
         )
+
+    @staticmethod
+    def _resolve_source_class(
+        runtime_request: RuntimeAcquisitionRequest,
+    ) -> AcquisitionSourceClass:
+        if (
+            runtime_request.requested_acquisition_type
+            == RuntimeAcquisitionRequestType.DIALOGUE_QUESTION
+        ):
+            return AcquisitionSourceClass.HUMAN_PRIMARY
+
+        if (
+            runtime_request.requested_acquisition_type
+            == RuntimeAcquisitionRequestType.SENSOR_DATA
+        ):
+            return AcquisitionSourceClass.SENSOR
+
+        if (
+            runtime_request.requested_acquisition_type
+            == RuntimeAcquisitionRequestType.CONTEXT_LOOKUP
+        ):
+            return AcquisitionSourceClass.INTERNAL_RAY_LAYER
+
+        if runtime_request.requested_acquisition_type in {
+            RuntimeAcquisitionRequestType.EXTERNAL_SOURCE_LOOKUP,
+            RuntimeAcquisitionRequestType.CALIBRATION_TASK,
+        }:
+            source_class_value = runtime_request.policy_context.get(
+                "source_class"
+            )
+
+            if source_class_value is None:
+                raise ValueError(
+                    f"{runtime_request.requested_acquisition_type.value} "
+                    "requires policy_context['source_class']"
+                )
+
+            try:
+                return AcquisitionSourceClass(source_class_value)
+            except ValueError as exc:
+                raise ValueError(
+                    "Invalid policy_context['source_class']: "
+                    f"{source_class_value}"
+                ) from exc

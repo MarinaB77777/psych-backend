@@ -1,3 +1,4 @@
+import pytest
 from runtime.acquisition.contracts import (
     AcquisitionRequest,
     AcquisitionResult,
@@ -11,6 +12,11 @@ from runtime.acquisition.runtime_bridge import (
     AcquisitionRuntimeBridge,
 )
 
+from runtime.contracts.runtime_acquisition_request import (
+    RuntimeAcquisitionRequest,
+    RuntimeAcquisitionRequestStatus,
+    RuntimeAcquisitionRequestType,
+)
 
 def make_request(**kwargs) -> AcquisitionRequest:
     data = {
@@ -215,3 +221,127 @@ def test_runtime_bridge_does_not_build_answers():
 
     assert not hasattr(result, "final_answer")
     assert not hasattr(result, "recommendation")
+
+
+def make_runtime_request(**kwargs) -> RuntimeAcquisitionRequest:
+    data = {
+        "runtime_request_id": "runtime-acq-1",
+        "action_id": "action-1",
+        "requested_acquisition_type": (
+            RuntimeAcquisitionRequestType.DIALOGUE_QUESTION
+        ),
+        "reason": "Need missing field",
+        "required_fields": ["d0"],
+        "status": RuntimeAcquisitionRequestStatus.PREPARED,
+    }
+    data.update(kwargs)
+    return RuntimeAcquisitionRequest(**data)
+
+
+def test_bridge_converts_runtime_request_to_acquisition_request():
+    bridge = AcquisitionRuntimeBridge()
+
+    result = bridge.create_from_runtime_request(make_runtime_request())
+
+    assert isinstance(result, AcquisitionRequest)
+    assert result.raw_internal_question_ref == "runtime-acq-1"
+    assert result.required_fields == ["d0"]
+
+
+def test_bridge_requires_prepared_runtime_request():
+    bridge = AcquisitionRuntimeBridge()
+
+    request = make_runtime_request(
+        status=RuntimeAcquisitionRequestStatus.CREATED,
+    )
+
+    with pytest.raises(ValueError):
+        bridge.create_from_runtime_request(request)
+
+
+def test_dialogue_question_maps_to_human_primary():
+    bridge = AcquisitionRuntimeBridge()
+
+    result = bridge.create_from_runtime_request(make_runtime_request())
+
+    assert result.source_class == AcquisitionSourceClass.HUMAN_PRIMARY
+
+
+def test_sensor_data_maps_to_sensor():
+    bridge = AcquisitionRuntimeBridge()
+
+    result = bridge.create_from_runtime_request(
+        make_runtime_request(
+            requested_acquisition_type=(
+                RuntimeAcquisitionRequestType.SENSOR_DATA
+            )
+        )
+    )
+
+    assert result.source_class == AcquisitionSourceClass.SENSOR
+
+
+def test_context_lookup_maps_to_internal_ray_layer():
+    bridge = AcquisitionRuntimeBridge()
+
+    result = bridge.create_from_runtime_request(
+        make_runtime_request(
+            requested_acquisition_type=(
+                RuntimeAcquisitionRequestType.CONTEXT_LOOKUP
+            )
+        )
+    )
+
+    assert result.source_class == AcquisitionSourceClass.INTERNAL_RAY_LAYER
+
+
+def test_external_source_lookup_requires_policy_source_class():
+    bridge = AcquisitionRuntimeBridge()
+
+    request = make_runtime_request(
+        requested_acquisition_type=(
+            RuntimeAcquisitionRequestType.EXTERNAL_SOURCE_LOOKUP
+        ),
+        policy_context={"source_class": "official_source"},
+    )
+
+    result = bridge.create_from_runtime_request(request)
+
+    assert result.source_class == AcquisitionSourceClass.OFFICIAL_SOURCE
+
+
+def test_calibration_task_requires_policy_source_class():
+    bridge = AcquisitionRuntimeBridge()
+
+    request = make_runtime_request(
+        requested_acquisition_type=(
+            RuntimeAcquisitionRequestType.CALIBRATION_TASK
+        ),
+        policy_context={"source_class": "sensor"},
+    )
+
+    result = bridge.create_from_runtime_request(request)
+
+    assert result.source_class == AcquisitionSourceClass.SENSOR
+
+
+def test_invalid_policy_source_class_has_clear_error():
+    bridge = AcquisitionRuntimeBridge()
+
+    request = make_runtime_request(
+        requested_acquisition_type=(
+            RuntimeAcquisitionRequestType.CALIBRATION_TASK
+        ),
+        policy_context={"source_class": "not-a-real-source"},
+    )
+
+    with pytest.raises(ValueError, match="Invalid policy_context"):
+        bridge.create_from_runtime_request(request)
+
+
+def test_bridge_does_not_mark_outbound_sent():
+    bridge = AcquisitionRuntimeBridge()
+
+    result = bridge.create_from_runtime_request(make_runtime_request())
+
+    assert result.outbound_sent is False
