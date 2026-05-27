@@ -285,6 +285,40 @@ These contracts govern:
 
 ---
 
+# Projection / Inner Core Boundary Layer
+
+These contracts govern:
+- Inner Core protection;
+- Projection Layer boundaries;
+- acceptable harm projection;
+- bounded operational influence;
+- no raw Inner Core exposure;
+- projection review governance;
+- projection mismatch handling.
+
+This layer preserves:
+
+deep personalization
+WITHOUT
+raw psychological exposure
+
+Core principles:
+- Projection ≠ Inner Core
+- Projection weights ≠ unrestricted authority
+- Projection mismatch ≠ automatic rewrite
+- Better understanding ≠ ownership
+
+Future contracts may include:
+- `projection_governance.md`
+- `projection_review_lifecycle.md`
+- `inner_core_boundary_contract.md`
+- `acceptable_harm_projection.md`
+
+No files are finalized here yet.
+This architectural zone is reserved for future Projection / Inner Core contracts.
+
+---
+
 # Memory / Learning / Calibration Layer
 
 These contracts govern:
@@ -320,6 +354,43 @@ These contracts govern:
 - acquisition source legitimacy;
 - calibration source handling;
 - source trust limitations.
+
+---
+
+# Human Profiles / Context Layer
+
+These contracts govern:
+- operational human profiles;
+- activity-first routing;
+- profile-aware acquisition;
+- profile-aware readiness interpretation;
+- contextual operational orientation.
+
+Current baseline profiles include:
+- Academic / Analytical
+- Field / Operational
+- Household / Coordination
+- Student / Learning
+
+Human Profiles are:
+- contextual;
+- probabilistic;
+- revisable;
+- bounded operational approximations.
+
+Human Profiles are NOT:
+- identity labels;
+- diagnosis;
+- permanent personality definitions;
+- authority source.
+
+Core principles:
+
+Human Profile ≠ identity
+
+Profile hint ≠ verified reality
+
+Better profile understanding ≠ authority expansion
 
 ---
 
@@ -371,6 +442,27 @@ These contracts govern:
 - domain registration;
 - domain legitimacy;
 - Runtime domain extensibility.
+
+---
+
+# External AI / External Systems Boundary Layer
+
+These contracts govern:
+- external AI boundaries;
+- external system boundaries;
+- external information ingestion;
+- bounded external assistance;
+- external truth limitations.
+
+Core principles:
+
+External AI ≠ Ray truth
+
+External AI agreement ≠ validation
+
+External systems ≠ Runtime authority
+
+More external information ≠ more authority
 
 ---
 
@@ -428,3 +520,21 @@ Architectural growth must remain:
 - navigable;
 - implementation-compatible;
 - non-duplicative.
+
+---
+
+## Topology Authority
+
+Global architecture topology is defined by:
+
+`docs/architecture/ray_personal_ai_engine_architecture_map.md`
+
+This Runtime Architecture Index governs:
+- Runtime constitutional domains;
+- Runtime architectural contracts;
+- Runtime layer separation.
+
+This document does NOT redefine:
+- full Ray topology;
+- External Core topology;
+- Inner Core structure.

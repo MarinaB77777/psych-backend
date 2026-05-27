@@ -1,0 +1,49 @@
+from dataclasses import dataclass, field
+from datetime import datetime, UTC
+from enum import Enum
+from typing import Optional
+
+
+class SessionStatus(str, Enum):
+    CREATED = "CREATED"
+    ANSWERS_RECEIVED = "ANSWERS_RECEIVED"
+    RUN_COMPLETED = "RUN_COMPLETED"
+    WAITING_FOR_INPUT = "WAITING_FOR_INPUT"
+    PARTIAL_RESULT = "PARTIAL_RESULT"
+    EXPORT_READY = "EXPORT_READY"
+    EXPORT_BLOCKED = "EXPORT_BLOCKED"
+    RUN_FAILED = "RUN_FAILED"
+    INVALIDATED = "INVALIDATED"
+    CLOSED = "CLOSED"
+
+
+@dataclass
+class ParticipantSession:
+    session_id: str
+    participant_id: str
+    status: SessionStatus = SessionStatus.CREATED
+
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
+    closed_at: Optional[datetime] = None
+
+    answers: dict = field(default_factory=dict)
+
+    engine_version: str = "mvp-1"
+    engine_snapshot_schema_version: str = "mvp-1"
+    public_output_schema_version: str = "mvp-1"
+    export_schema_version: str = "mvp-1"
+
+    raw_engine_result: dict = field(default_factory=dict)
+    public_output: dict = field(default_factory=dict)
+
+    next_question_snapshots: list = field(default_factory=list)
+    acquisition_request_snapshots: dict = field(default_factory=dict)
+
+    uncertainty_snapshot: dict = field(default_factory=dict)
+
+    export_generated: bool = False
+    export_policy_version: str = "mvp-1"
+
+    invalidated: bool = False
+    invalidation_reason: Optional[str] = None
