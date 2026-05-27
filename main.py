@@ -26,6 +26,8 @@ class RunInput(BaseModel):
 class SubmitAnswersInput(BaseModel):
     answers: dict
 
+class InvalidateSessionInput(BaseModel):
+    reason: str
 
 @app.get("/")
 def root():
@@ -132,6 +134,55 @@ def export_pilot_session(session_id: str):
         return {
             "ok": True,
             "export": export_data,
+        }
+
+    except PilotSessionError as exc:
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail=exc.to_dict()["error"],
+        )
+
+
+@app.post("/pilot/sessions/{session_id}/close")
+def close_pilot_session(session_id: str):
+    try:
+        session = pilot_service.close_session(
+            session_id
+        )
+
+        return {
+            "ok": True,
+            "status": session.status.value,
+            "closed_at": (
+                session.closed_at.isoformat()
+                if session.closed_at is not None
+                else None
+            ),
+        }
+
+    except PilotSessionError as exc:
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail=exc.to_dict()["error"],
+        )
+
+
+@app.post("/pilot/sessions/{session_id}/invalidate")
+def invalidate_pilot_session(
+    session_id: str,
+    data: InvalidateSessionInput,
+):
+    try:
+        session = pilot_service.invalidate_session(
+            session_id=session_id,
+            reason=data.reason,
+        )
+
+        return {
+            "ok": True,
+            "status": session.status.value,
+            "invalidated": session.invalidated,
+            "reason": session.invalidation_reason,
         }
 
     except PilotSessionError as exc:

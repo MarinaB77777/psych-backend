@@ -122,3 +122,58 @@ def test_generate_export_blocks_invalidated_session():
 
     with pytest.raises(ExportBlockedError):
         service.generate_export(session.session_id)
+
+
+def test_close_session_marks_completed_session_closed():
+    store = PilotSessionStore()
+    service = PilotSessionService(store)
+
+    session = service.create_session(participant_id="participant-4")
+    service.submit_answers(session.session_id, {"k23": 0, "k24": 0})
+    service.run_session(session.session_id)
+
+    closed = service.close_session(session.session_id)
+
+    assert closed.status == SessionStatus.CLOSED
+    assert closed.closed_at is not None
+
+
+def test_close_session_rejects_unfinished_session():
+    store = PilotSessionStore()
+    service = PilotSessionService(store)
+
+    session = service.create_session(participant_id="participant-5")
+
+    with pytest.raises(InvalidStatusTransitionError):
+        service.close_session(session.session_id)
+
+
+def test_invalidate_session_marks_session_invalidated():
+    store = PilotSessionStore()
+    service = PilotSessionService(store)
+
+    session = service.create_session(participant_id="participant-6")
+
+    invalidated = service.invalidate_session(
+        session_id=session.session_id,
+        reason="test invalidation",
+    )
+
+    assert invalidated.status == SessionStatus.INVALIDATED
+    assert invalidated.invalidated is True
+    assert invalidated.invalidation_reason == "test invalidation"
+
+
+def test_close_session_blocks_invalidated_session():
+    store = PilotSessionStore()
+    service = PilotSessionService(store)
+
+    session = service.create_session(participant_id="participant-7")
+
+    service.invalidate_session(
+        session_id=session.session_id,
+        reason="test invalidation",
+    )
+
+    with pytest.raises(SessionInvalidatedError):
+        service.close_session(session.session_id)

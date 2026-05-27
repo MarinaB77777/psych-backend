@@ -131,3 +131,46 @@ class PilotSessionService:
             )
 
         return generate_session_export(session)
+
+    def close_session(self, session_id: str) -> ParticipantSession:
+        session = self.get_session(session_id)
+
+        if session.invalidated:
+            raise SessionInvalidatedError(
+                "Session is invalidated"
+            )
+
+        if session.status == SessionStatus.CLOSED:
+            return session
+
+        if session.status not in {
+            SessionStatus.RUN_COMPLETED,
+            SessionStatus.EXPORT_READY,
+            SessionStatus.EXPORT_BLOCKED,
+            SessionStatus.RUN_FAILED,
+        }:
+            raise InvalidStatusTransitionError(
+                "Invalid session status transition"
+            )
+
+        session.status = SessionStatus.CLOSED
+        session.closed_at = datetime.now(UTC)
+        session.updated_at = datetime.now(UTC)
+
+        self.store.save(session)
+        return session
+
+    def invalidate_session(
+        self,
+        session_id: str,
+        reason: str,
+    ) -> ParticipantSession:
+        session = self.get_session(session_id)
+
+        session.status = SessionStatus.INVALIDATED
+        session.invalidated = True
+        session.invalidation_reason = reason
+        session.updated_at = datetime.now(UTC)
+
+        self.store.save(session)
+        return session
