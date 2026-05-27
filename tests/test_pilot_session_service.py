@@ -3,6 +3,12 @@ import pytest
 from pilot_session.schemas import SessionStatus
 from pilot_session.service import PilotSessionService
 from pilot_session.store import PilotSessionStore
+from pilot_session.errors import (
+    ExportBlockedError,
+    InvalidStatusTransitionError,
+    SessionInvalidatedError,
+    SessionNotFoundError,
+)
 
 
 def test_create_session():
@@ -36,7 +42,7 @@ def test_submit_answers_requires_existing_session():
     store = PilotSessionStore()
     service = PilotSessionService(store)
 
-    with pytest.raises(ValueError, match="SESSION_NOT_FOUND"):
+    with pytest.raises(SessionNotFoundError):
         service.submit_answers(
             session_id="missing",
             answers={"b1": 3},
@@ -50,7 +56,7 @@ def test_submit_answers_rejects_invalid_status():
     session = service.create_session(participant_id="participant-1")
     service.submit_answers(session.session_id, {"b1": 3})
 
-    with pytest.raises(ValueError, match="INVALID_SESSION_STATUS"):
+    with pytest.raises(InvalidStatusTransitionError):
         service.submit_answers(session.session_id, {"b1": 4})
 
 
@@ -80,5 +86,39 @@ def test_run_session_requires_answers_received_status():
 
     session = service.create_session(participant_id="participant-1")
 
-    with pytest.raises(ValueError, match="INVALID_SESSION_STATUS"):
+    with pytest.raises(InvalidStatusTransitionError):
         service.run_session(session.session_id)
+
+def test_get_session_requires_existing_session():
+    store = PilotSessionStore()
+    service = PilotSessionService(store)
+
+    with pytest.raises(SessionNotFoundError):
+        service.get_session("missing-session")
+
+
+def test_run_session_blocks_invalidated_session():
+    store = PilotSessionStore()
+    service = PilotSessionService(store)
+
+    session = service.create_session(participant_id="participant-2")
+    stored = service.get_session(session.session_id)
+    stored.invalidated = True
+
+    with pytest.raises(SessionInvalidatedError):
+        service.run_session(session.session_id)
+
+
+def test_generate_export_blocks_invalidated_session():
+    store = PilotSessionStore()
+    service = PilotSessionService(store)
+
+    session = service.create_session(participant_id="participant-3")
+    service.submit_answers(session.session_id, {"k23": 0, "k24": 0})
+    service.run_session(session.session_id)
+
+    stored = service.get_session(session.session_id)
+    stored.invalidated = True
+
+    with pytest.raises(ExportBlockedError):
+        service.generate_export(session.session_id)
