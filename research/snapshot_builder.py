@@ -6,6 +6,10 @@ from pilot_session.schemas import (
     SessionStatus,
 )
 
+from research.snapshot_sanitizer import (
+    sanitize_acquisition_requests,
+    sanitize_next_questions,
+)
 
 SNAPSHOT_SCHEMA_VERSION = "research-snapshot-1"
 SNAPSHOT_BUILDER_VERSION = "research-snapshot-builder-1"
@@ -149,9 +153,13 @@ def _build_operational_summary(public_output: dict) -> dict:
 
 def _build_acquisition_summary(session: ParticipantSession) -> dict:
     return {
-        "next_questions": session.next_question_snapshots or [],
+        "next_questions": sanitize_next_questions(
+            session.next_question_snapshots or []
+        ),
         "data_acquisition_requests": (
+            sanitize_acquisition_requests(
             session.acquisition_request_snapshots or {}
+        )
         ),
         "next_questions_status": (
             "present"
