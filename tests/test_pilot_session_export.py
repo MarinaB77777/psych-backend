@@ -139,7 +139,7 @@ def test_generate_session_export_aliases_participant_export():
     assert export["export_mode"] == "participant"
 
 
-def test_research_export_is_explicitly_blocked_for_now():
+def test_generate_research_export_returns_bounded_snapshot():
     session = ParticipantSession(
         session_id="session-6",
         participant_id="participant-6",
@@ -147,8 +147,14 @@ def test_research_export_is_explicitly_blocked_for_now():
     )
 
     session.public_output = {
-        "summary_text": "Research blocked"
+        "summary_text": "Research export",
+        "result_level": "low",
     }
 
-    with pytest.raises(ExportBlockedError):
-        generate_research_export(session)
+    export = generate_research_export(session)
+
+    assert export["export_mode"] == "research"
+    assert export["export_scope"] == "bounded_research_snapshot"
+    assert export["purpose"] == "research_snapshot_export"
+    assert "research_snapshot" in export
+    assert "raw_engine_result" not in export
