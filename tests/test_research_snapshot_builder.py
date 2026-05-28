@@ -1,0 +1,299 @@
+from pilot_session.schemas import (
+    ParticipantSession,
+    SessionStatus,
+)
+from research.snapshot_builder import build_research_snapshot
+
+
+def make_completed_session():
+    session = ParticipantSession(
+        session_id="session-1",
+        participant_id="participant-1",
+        status=SessionStatus.RUN_COMPLETED,
+    )
+
+    session.answers = {
+        "k23": 0,
+        "secret_answer": "do-not-export",
+    }
+
+    session.raw_engine_result = {
+        "internal": "do-not-export",
+        "warnings": ["internal-warning"],
+    }
+
+    session.public_output = {
+        "summary_text": "Public summary",
+        "result_level": "low",
+        "forecast": {
+            "allowed": False,
+            "reason": "LOW_COVERAGE",
+            "confidence": "low",
+            "allowed_scope": "none",
+        },
+        "domain_summary": {
+            "physical": {
+                "r": None,
+                "k_self": None,
+                "delta": None,
+                "delta_interpretation": "not_calculated",
+                "calculated": False,
+            }
+        },
+        "warnings": [
+            {
+                "code": "LOW_COVERAGE",
+                "severity": "info",
+            }
+        ],
+        "public_reasons": [
+            {
+                "code": "LOW_COVERAGE",
+                "public": True,
+            }
+        ],
+    }
+
+    session.uncertainty_snapshot = {
+        "uncertainty_score": 10,
+        "uncertainty_level": "high",
+        "allow_recommendations": False,
+        "allow_strong_recommendations": False,
+        "dialogue_mode": "soft",
+    }
+
+    session.next_question_snapshots = [
+        {
+            "variable_code": "d0",
+            "reason_code": "MISSING_FIELD",
+        }
+    ]
+
+    session.acquisition_request_snapshots = [
+        {
+            "request_type": "data_acquisition",
+            "target_data": "d0",
+        }
+    ]
+
+    return session
+
+
+def test_research_snapshot_contains_bounded_metadata():
+    session = make_completed_session()
+
+    snapshot = build_research_snapshot(session)
+
+    assert snapshot["snapshot_mode"] == "research"
+    assert (
+        snapshot["snapshot_scope"]
+        == "bounded_research_snapshot"
+    )
+    assert snapshot["generated_by"] == (
+        "research.snapshot_builder"
+    )
+    assert snapshot["created_from"] == "ParticipantSession"
+    assert snapshot["source_session"]["session_id"] == "session-1"
+    assert (
+        snapshot["source_session"]["source_session_status"]
+        == "RUN_COMPLETED"
+    )
+    assert (
+        snapshot["versions"]["engine_version"]
+        == "mvp-1"
+    )
+
+
+def test_research_snapshot_excludes_raw_engine_result_and_answers():
+    session = make_completed_session()
+
+    snapshot = build_research_snapshot(session)
+
+    assert "raw_engine_result" not in snapshot
+    assert "answers" not in snapshot
+    assert "secret_answer" not in str(snapshot)
+    assert "do-not-export" not in str(snapshot)
+    assert "internal-warning" not in str(snapshot)
+    assert snapshot["limitations"]["raw_engine_result_excluded"] is True
+    assert snapshot["limitations"]["answers_excluded"] is True
+
+
+def test_research_snapshot_uses_preliminary_policy_status():
+    session = make_completed_session()
+
+    snapshot = build_research_snapshot(session)
+
+    policy = snapshot["snapshot_policy_status"]
+
+    assert policy["snapshot_status"] == "usable_preliminary"
+    assert policy["usable_for_research_preliminary"] is True
+    assert (
+        policy["policy_evaluation"]
+        == "preliminary_builder_evaluation"
+    )
+    assert policy["consent_status"] == "not_evaluated"
+    assert policy["retention_status"] == "not_evaluated"
+
+
+def test_research_snapshot_marks_invalidated_session_unusable():
+    session = make_completed_session()
+    session.invalidated = True
+    session.invalidation_reason = "test invalidation"
+
+    snapshot = build_research_snapshot(session)
+
+    policy = snapshot["snapshot_policy_status"]
+
+    assert snapshot["source_session"]["invalidated"] is True
+    assert policy["snapshot_status"] == "invalidated"
+    assert policy["usable_for_research_preliminary"] is False
+    assert policy["exclusion_status"] == "excluded_invalidated"
+
+
+def test_research_snapshot_preserves_forecast_blocked_semantics():
+    session = make_completed_session()
+
+    snapshot = build_research_snapshot(session)
+
+    forecast = snapshot["forecast_summary"]
+
+    assert forecast["forecast_status"] == "blocked"
+    assert forecast["allowed"] is False
+    assert forecast["reason"] == "LOW_COVERAGE"
+    assert forecast["allowed_scope"] == "none"
+
+
+def test_research_snapshot_preserves_forecast_missing_semantics():
+    session = make_completed_session()
+    session.public_output.pop("forecast")
+
+    snapshot = build_research_snapshot(session)
+
+    forecast = snapshot["forecast_summary"]
+
+    assert forecast["forecast_status"] == "missing"
+    assert forecast["allowed"] is None
+    assert forecast["reason"] is None
+
+
+def test_research_snapshot_preserves_uncertainty_summary():
+    session = make_completed_session()
+
+    snapshot = build_research_snapshot(session)
+
+    uncertainty = snapshot["uncertainty_summary"]
+
+    assert uncertainty["uncertainty_status"] == "present"
+    assert uncertainty["uncertainty_score"] == 10
+    assert uncertainty["uncertainty_level"] == "high"
+    assert uncertainty["allow_recommendations"] is False
+    assert uncertainty["allow_strong_recommendations"] is False
+    assert uncertainty["dialogue_mode"] == "soft"
+
+
+def test_research_snapshot_preserves_uncertainty_missing_semantics():
+    session = make_completed_session()
+    session.uncertainty_snapshot = {}
+
+    snapshot = build_research_snapshot(session)
+
+    uncertainty = snapshot["uncertainty_summary"]
+
+    assert uncertainty["uncertainty_status"] == "missing"
+    assert uncertainty["uncertainty_score"] is None
+    assert uncertainty["uncertainty_level"] is None
+
+
+def test_research_snapshot_preserves_not_calculated_domain_summary():
+    session = make_completed_session()
+
+    snapshot = build_research_snapshot(session)
+
+    domain = snapshot["operational_summary"]["domain_summary"][
+        "physical"
+    ]
+
+    assert (
+        snapshot["operational_summary"]["calculation_status"]
+        == "present"
+    )
+    assert domain["calculated"] is False
+    assert domain["delta_interpretation"] == "not_calculated"
+
+
+def test_research_snapshot_marks_identity_risk_explicitly():
+    session = make_completed_session()
+
+    snapshot = build_research_snapshot(session)
+
+    reference = snapshot["participant_reference"]
+
+    assert (
+        reference["participant_reference_id"]
+        == "participant-1"
+    )
+    assert reference["pseudonymized"] is False
+    assert (
+        reference["research_identity_risk"]
+        == "direct_pilot_id_used_mvp"
+    )
+
+
+def test_research_snapshot_marks_payload_safety_limitations():
+    session = make_completed_session()
+
+    snapshot = build_research_snapshot(session)
+
+    assert (
+        snapshot["payload_safety"]["payload_safety_status"]
+        == "bounded_extraction_no_deep_sanitizer"
+    )
+    assert (
+        snapshot["payload_safety"][
+            "public_output_extracted_field_by_field"
+        ]
+        is True
+    )
+    assert (
+        snapshot["payload_safety"][
+            "acquisition_payload_deep_sanitized"
+        ]
+        is False
+    )
+    assert (
+        snapshot["limitations"][
+            "acquisition_payload_deep_sanitizer_missing"
+        ]
+        is True
+    )
+
+
+def test_research_snapshot_has_not_implemented_sections():
+    session = make_completed_session()
+
+    snapshot = build_research_snapshot(session)
+
+    assert snapshot["sensor_summary"]["status"] == "not_implemented"
+    assert (
+        snapshot["standard_method_summary"]["status"]
+        == "not_implemented"
+    )
+    assert (
+        snapshot["decision_pattern_summary"]["status"]
+        == "not_implemented"
+    )
+
+
+def test_research_snapshot_has_interpretation_boundaries():
+    session = make_completed_session()
+
+    snapshot = build_research_snapshot(session)
+
+    boundaries = snapshot["research_interpretation_boundaries"]
+
+    assert boundaries["no_diagnosis"] is True
+    assert boundaries["no_identity_inference"] is True
+    assert boundaries["no_authority"] is True
+    assert boundaries["not_participant_truth"] is True
+    assert boundaries["not_clinical_record"] is True
+    assert boundaries["not_longitudinal_profile"] is True
