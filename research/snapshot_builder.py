@@ -1,3 +1,4 @@
+import os
 from datetime import UTC, datetime
 from uuid import uuid4
 
@@ -11,8 +12,16 @@ from research.snapshot_sanitizer import (
     sanitize_next_questions,
 )
 
+from research.pseudonymization import (
+    build_export_scoped_participant_reference,
+)
+
+
 SNAPSHOT_SCHEMA_VERSION = "research-snapshot-1"
 SNAPSHOT_BUILDER_VERSION = "research-snapshot-builder-1"
+
+DEFAULT_PSEUDONYMIZATION_SCOPE = "research_snapshot"
+PSEUDONYMIZATION_SALT_ENV = "RESEARCH_PSEUDONYMIZATION_SALT"
 
 
 ALLOWED_SOURCE_STATUSES = {
@@ -20,6 +29,17 @@ ALLOWED_SOURCE_STATUSES = {
     SessionStatus.EXPORT_READY,
     SessionStatus.CLOSED,
 }
+
+
+def _get_pseudonymization_salt() -> str:
+    salt = os.getenv(PSEUDONYMIZATION_SALT_ENV)
+
+    if not salt:
+        raise ValueError(
+            f"{PSEUDONYMIZATION_SALT_ENV} is required"
+        )
+
+    return salt
 
 
 def _has_public_output(session: ParticipantSession) -> bool:
@@ -152,28 +172,29 @@ def _build_operational_summary(public_output: dict) -> dict:
 
 
 def _build_acquisition_summary(session: ParticipantSession) -> dict:
+    sanitized_next_questions = sanitize_next_questions(
+        session.next_question_snapshots or []
+    )
+    sanitized_acquisition_requests = sanitize_acquisition_requests(
+        session.acquisition_request_snapshots or {}
+    )
+
     return {
-        "next_questions": sanitize_next_questions(
-            session.next_question_snapshots or []
-        ),
-        "data_acquisition_requests": (
-            sanitize_acquisition_requests(
-            session.acquisition_request_snapshots or {}
-        )
-        ),
+        "next_questions": sanitized_next_questions,
+        "data_acquisition_requests": sanitized_acquisition_requests,
         "next_questions_status": (
             "present"
-            if session.next_question_snapshots
-            else "missing_or_empty"
+            if sanitized_next_questions
+            else "missing_or_empty_after_sanitization"
         ),
         "data_acquisition_requests_status": (
             "present"
-            if session.acquisition_request_snapshots
-            else "missing_or_empty"
+            if sanitized_acquisition_requests
+            else "missing_or_empty_after_sanitization"
         ),
-        "research_safety_status": "bounded_public_contract_assumed",
+        "research_safety_status": "bounded_allowlist_sanitized",
         "payload_safety_status": (
-            "bounded_contract_assumed_no_deep_sanitizer"
+            "bounded_allowlist_sanitized_no_deep_semantic_sanitizer"
         ),
     }
 
@@ -181,6 +202,8 @@ def _build_acquisition_summary(session: ParticipantSession) -> dict:
 def build_research_snapshot(session: ParticipantSession) -> dict:
     public_output = session.public_output or {}
     invalidated = _is_invalidated(session)
+
+    pseudonymization_salt = _get_pseudonymization_salt()
 
     return {
         "snapshot_id": str(uuid4()),
@@ -192,7 +215,9 @@ def build_research_snapshot(session: ParticipantSession) -> dict:
         "snapshot_mode": "research",
         "snapshot_scope": "bounded_research_snapshot",
 
-        "snapshot_policy_status": _build_snapshot_policy_status(session),
+        "snapshot_policy_status": (
+            _build_snapshot_policy_status(session)
+        ),
 
         "source_session": {
             "session_id": session.session_id,
@@ -220,22 +245,29 @@ def build_research_snapshot(session: ParticipantSession) -> dict:
             "export_policy_version": session.export_policy_version,
         },
 
-        "participant_reference": {
-            "reference_type": "pilot_participant_reference",
-            "participant_reference_id": session.participant_id,
-            "pseudonymized": False,
-            "pseudonymization_status": "not_implemented",
-            "reidentification_risk": "not_evaluated",
-            "research_identity_risk": "direct_pilot_id_used_mvp",
-        },
+        "participant_reference": (
+            build_export_scoped_participant_reference(
+                participant_id=session.participant_id,
+                export_scope=DEFAULT_PSEUDONYMIZATION_SCOPE,
+                salt=pseudonymization_salt,
+            )
+        ),
 
-        "operational_summary": _build_operational_summary(public_output),
+        "operational_summary": (
+            _build_operational_summary(public_output)
+        ),
 
-        "forecast_summary": _build_forecast_summary(public_output),
+        "forecast_summary": (
+            _build_forecast_summary(public_output)
+        ),
 
-        "uncertainty_summary": _build_uncertainty_summary(session),
+        "uncertainty_summary": (
+            _build_uncertainty_summary(session)
+        ),
 
-        "acquisition_summary": _build_acquisition_summary(session),
+        "acquisition_summary": (
+            _build_acquisition_summary(session)
+        ),
 
         "sensor_summary": {
             "status": "not_implemented",
@@ -251,9 +283,11 @@ def build_research_snapshot(session: ParticipantSession) -> dict:
 
         "payload_safety": {
             "payload_safety_status": (
-                "bounded_extraction_no_deep_sanitizer"
+                "bounded_extraction_with_allowlist_sanitizer"
             ),
             "public_output_extracted_field_by_field": True,
+            "acquisition_payload_allowlist_sanitized": True,
+            "next_questions_allowlist_sanitized": True,
             "acquisition_payload_deep_sanitized": False,
             "next_questions_deep_sanitized": False,
         },
@@ -280,7 +314,9 @@ def build_research_snapshot(session: ParticipantSession) -> dict:
             "builder_is_not_export_authority": True,
             "builder_is_not_research_analysis": True,
             "schema_is_not_serialization_contract": True,
-            "participant_reference_not_pseudonymized": True,
+            "participant_reference_pseudonymized": True,
+            "pseudonymization_salt_not_exported": True,
+            "pseudonymization_salt_source": "environment_variable",
             "research_export_policy_not_final": True,
             "acquisition_payload_deep_sanitizer_missing": True,
             "next_questions_bounded_schema_not_verified": True,

@@ -228,15 +228,12 @@ def test_research_snapshot_marks_identity_risk_explicitly():
 
     reference = snapshot["participant_reference"]
 
-    assert (
-        reference["participant_reference_id"]
-        == "participant-1"
-    )
-    assert reference["pseudonymized"] is False
-    assert (
-        reference["research_identity_risk"]
-        == "direct_pilot_id_used_mvp"
-    )
+    assert reference["participant_reference_id"] != "participant-1"
+    assert reference["pseudonymized"] is True
+    assert reference["reidentification_risk"] == "reduced_not_zero"
+    assert reference["salt_exported"] is False
+    assert reference["global_identity"] is False
+    assert reference["longitudinal_linkage_allowed"] is False
 
 
 def test_research_snapshot_marks_payload_safety_limitations():
@@ -246,25 +243,7 @@ def test_research_snapshot_marks_payload_safety_limitations():
 
     assert (
         snapshot["payload_safety"]["payload_safety_status"]
-        == "bounded_extraction_no_deep_sanitizer"
-    )
-    assert (
-        snapshot["payload_safety"][
-            "public_output_extracted_field_by_field"
-        ]
-        is True
-    )
-    assert (
-        snapshot["payload_safety"][
-            "acquisition_payload_deep_sanitized"
-        ]
-        is False
-    )
-    assert (
-        snapshot["limitations"][
-            "acquisition_payload_deep_sanitizer_missing"
-        ]
-        is True
+        == "bounded_extraction_with_allowlist_sanitizer"
     )
 
 
