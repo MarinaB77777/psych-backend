@@ -83,6 +83,43 @@ def get_pilot_session(session_id: str):
             detail=exc.to_dict()["error"],
         )
 
+@app.get("/pilot/sessions/{session_id}/participant-export")
+def participant_export_pilot_session(session_id: str):
+    try:
+        export_data = pilot_service.generate_participant_export(
+            session_id
+        )
+
+        return {
+            "ok": True,
+            "export": export_data,
+        }
+
+    except PilotSessionError as exc:
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail=exc.to_dict()["error"],
+        )
+
+
+@app.get("/pilot/sessions/{session_id}/research-export")
+def research_export_pilot_session(session_id: str):
+    try:
+        export_data = pilot_service.generate_research_export(
+            session_id
+        )
+
+        return {
+            "ok": True,
+            "export": export_data,
+        }
+
+    except PilotSessionError as exc:
+        raise HTTPException(
+            status_code=exc.status_code,
+            detail=exc.to_dict()["error"],
+        )
+
 
 @app.post("/pilot/sessions/{session_id}/answers")
 def submit_pilot_answers(

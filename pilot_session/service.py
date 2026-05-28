@@ -10,7 +10,11 @@ from pilot_session.errors import (
     SessionInvalidatedError,
     SessionNotFoundError,
 )
-from pilot_session.export import generate_session_export
+from pilot_session.export import (
+    generate_participant_export,
+    generate_research_export,
+)
+
 from pilot_session.schemas import ParticipantSession, SessionStatus
 from pilot_session.statuses import can_generate_export
 from pilot_session.store import PilotSessionStore
@@ -122,15 +126,25 @@ class PilotSessionService:
         self.store.save(session)
         return session
 
-    def generate_export(self, session_id: str) -> dict:
+    def generate_participant_export(self, session_id: str) -> dict:
         session = self.get_session(session_id)
 
         if not can_generate_export(session):
             raise ExportBlockedError(
-                "Export generation blocked"
+                "Participant export generation blocked"
             )
 
-        return generate_session_export(session)
+        return generate_participant_export(session)
+
+    def generate_research_export(self, session_id: str) -> dict:
+        session = self.get_session(session_id)
+
+        return generate_research_export(session)
+
+    def generate_export(self, session_id: str) -> dict:
+        # Backward-compatible alias for participant export.
+        # TODO: remove after legacy /export endpoint is deprecated.
+        return self.generate_participant_export(session_id)
 
     def close_session(self, session_id: str) -> ParticipantSession:
         session = self.get_session(session_id)
