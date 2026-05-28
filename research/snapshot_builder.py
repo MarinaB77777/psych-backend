@@ -7,6 +7,10 @@ from pilot_session.schemas import (
     SessionStatus,
 )
 
+from research.answer_export_filter import (
+    filter_answers_for_research_snapshot,
+)
+
 from research.snapshot_sanitizer import (
     sanitize_acquisition_requests,
     sanitize_next_questions,
@@ -199,6 +203,31 @@ def _build_acquisition_summary(session: ParticipantSession) -> dict:
     }
 
 
+def _build_answer_summary(session: ParticipantSession) -> dict:
+    if not session.answers:
+        return {
+            "answer_integration_status": "missing_or_empty",
+            "answer_export_result": None,
+            "builder_consumed_raw_answers_directly": False,
+            "builder_is_not_answer_policy_authority": True,
+            "builder_is_not_consent_authority": True,
+            "builder_is_not_retention_authority": True,
+        }
+
+    answer_export_result = filter_answers_for_research_snapshot(
+        session.answers
+    )
+
+    return {
+        "answer_integration_status": "filter_applied",
+        "answer_export_result": answer_export_result,
+        "builder_consumed_raw_answers_directly": False,
+        "builder_is_not_answer_policy_authority": True,
+        "builder_is_not_consent_authority": True,
+        "builder_is_not_retention_authority": True,
+    }
+
+
 def build_research_snapshot(session: ParticipantSession) -> dict:
     public_output = session.public_output or {}
     invalidated = _is_invalidated(session)
@@ -269,6 +298,10 @@ def build_research_snapshot(session: ParticipantSession) -> dict:
             _build_acquisition_summary(session)
         ),
 
+        "answer_summary": (
+            _build_answer_summary(session)
+        ),
+
         "sensor_summary": {
             "status": "not_implemented",
         },
@@ -290,6 +323,11 @@ def build_research_snapshot(session: ParticipantSession) -> dict:
             "next_questions_allowlist_sanitized": True,
             "acquisition_payload_deep_sanitized": False,
             "next_questions_deep_sanitized": False,
+            "answer_values_policy_filtered": True,
+            "answer_values_not_transformed": True,
+            "answer_values_not_deep_sanitized": True,
+            "raw_answers_not_directly_included": True,
+            "answers_included_only_via_answer_export_filter": True,
         },
 
         "research_interpretation_boundaries": {
@@ -303,9 +341,18 @@ def build_research_snapshot(session: ParticipantSession) -> dict:
 
         "limitations": {
             "raw_engine_result_excluded": True,
-            "answers_excluded": True,
+            "raw_answers_excluded": True,
+            "filtered_answer_summary_included": True,
+            "answer_values_may_be_included_only_after_policy_filter": True,
+            "answer_values_not_transformed": True,
+            "answer_values_not_deep_sanitized": True,
+            "raw_answers_not_directly_included": True,
+            "answers_included_only_via_answer_export_filter": True,
+            "answer_filter_output_not_final_export_authorization": True,
+            "answer_filter_output_not_consent_resolution": True,
+            "answer_filter_output_not_retention_resolution": True,
             "raw_answers_policy": (
-                "excluded_until_bounded_answer_policy_exists"
+                "answers_may_enter_only_through_bounded_answer_export_filter"
             ),
             "unrestricted_runtime_state_excluded": True,
             "snapshot_is_not_runtime_memory": True,
@@ -313,6 +360,9 @@ def build_research_snapshot(session: ParticipantSession) -> dict:
             "no_longitudinal_aggregation": True,
             "builder_is_not_export_authority": True,
             "builder_is_not_research_analysis": True,
+            "builder_is_not_answer_policy_authority": True,
+            "builder_is_not_consent_authority": True,
+            "builder_is_not_retention_authority": True,
             "schema_is_not_serialization_contract": True,
             "participant_reference_pseudonymized": True,
             "pseudonymization_salt_not_exported": True,

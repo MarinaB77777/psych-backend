@@ -155,8 +155,10 @@ def test_research_export_does_not_contain_raw_engine_result_or_answers():
 
     assert "raw_engine_result" not in export
     assert "answers" not in export
-    assert "secret_answer" not in str(export)
     assert "do-not-export" not in str(export)
+    assert "secret_answer" in export["research_snapshot"][
+        "answer_summary"
+    ]["answer_export_result"]["excluded_answers"]
     assert "internal-warning" not in str(export)
 
 
@@ -168,6 +170,8 @@ def test_research_snapshot_inside_export_does_not_contain_raw_engine_result_or_a
 
     assert "raw_engine_result" not in snapshot
     assert "answers" not in snapshot
-    assert "secret_answer" not in str(snapshot)
     assert "do-not-export" not in str(snapshot)
+    assert "secret_answer" in snapshot["answer_summary"][
+        "answer_export_result"
+    ]["excluded_answers"]
     assert "internal-warning" not in str(snapshot)

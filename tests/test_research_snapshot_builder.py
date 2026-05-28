@@ -111,11 +111,19 @@ def test_research_snapshot_excludes_raw_engine_result_and_answers():
 
     assert "raw_engine_result" not in snapshot
     assert "answers" not in snapshot
-    assert "secret_answer" not in str(snapshot)
+    assert "secret_answer" in snapshot["answer_summary"][
+        "answer_export_result"
+    ]["excluded_answers"]
     assert "do-not-export" not in str(snapshot)
     assert "internal-warning" not in str(snapshot)
     assert snapshot["limitations"]["raw_engine_result_excluded"] is True
-    assert snapshot["limitations"]["answers_excluded"] is True
+    assert snapshot["limitations"]["raw_answers_excluded"] is True
+    assert (
+        snapshot["limitations"][
+        "filtered_answer_summary_included"
+        ]
+        is True
+   )
 
 
 def test_research_snapshot_uses_preliminary_policy_status():
