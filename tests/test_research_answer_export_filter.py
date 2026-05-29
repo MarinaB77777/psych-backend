@@ -4,6 +4,47 @@ from research.answer_export_filter import (
     filter_answers_for_research_snapshot,
 )
 
+from research import answer_export_filter
+
+
+def test_invalid_policy_is_excluded_fail_closed(monkeypatch):
+    def fake_get_answer_policy(variable_code):
+        return {
+            "variable_code": variable_code,
+            "policy_category": "exportable",
+            "allowed_export_scope": ["research_snapshot"],
+            "requires_consent": True,
+            "retention_class": "bounded_research",
+            "linkage_allowed": False,
+            "aggregation_allowed": True,
+            "individual_snapshot_allowed": True,
+            "dataset_allowed": True,
+            "export_allowed": True,
+            "policy_version": "wrong-version",
+            "review_status": "reviewed",
+            "rationale": "Invalid policy version",
+        }
+
+    monkeypatch.setattr(
+        answer_export_filter,
+        "get_answer_policy",
+        fake_get_answer_policy,
+    )
+
+    result = answer_export_filter.filter_answers_for_research_snapshot(
+        {"d_bad": "secret-value"}
+    )
+
+    assert result["included_answers"] == {}
+    assert result["policy_validation_applied"] is True
+
+    excluded = result["excluded_answers"]["d_bad"]
+
+    assert excluded["reason_code"] == "ANSWER_POLICY_INVALID"
+    assert excluded["policy_validation"]["valid"] is False
+    assert "POLICY_VERSION_MISMATCH" in excluded["policy_validation"]["reason_codes"]
+
+    assert "secret-value" not in str(result["excluded_answers"])
 
 def test_filter_includes_reviewed_exportable_answer():
     result = filter_answers_for_research_snapshot(
@@ -123,9 +164,11 @@ def test_filter_returns_governance_boundary_flags():
     assert result["count_basis"] == "unique_normalized_variable_codes"
     assert result["answer_values_filtered"] is True
     assert result["unknown_policy_default_deny"] is True
+    assert result["policy_validation_applied"] is True
+    assert result["invalid_policy_fail_closed"] is True
     assert (
         result["malformed_policy_handling"]
-        == "not_implemented_static_registry_assumed_valid"
+        == "invalid_policy_excluded_with_audit"
     )
     assert result["consent_evaluated"] is False
     assert result["retention_evaluated"] is False
@@ -149,3 +192,4 @@ def test_filter_marks_included_values_as_raw_policy_allowed():
     )
 
     assert result["included_values_are_raw_policy_allowed"] is True
+

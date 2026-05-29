@@ -9,6 +9,7 @@ DEFAULT_POLICY = {
     "allowed_export_scope": [],
     "requires_consent": True,
     "consent_scope": "not_defined",
+    "consent_scope": "not_defined",
     "retention_class": "not_defined",
     "linkage_allowed": False,
     "aggregation_allowed": False,
@@ -30,6 +31,7 @@ ANSWER_POLICY_REGISTRY = {
             "research_snapshot"
         ],
         "requires_consent": True,
+        "consent_scope": "not_defined",
         "consent_scope": "pilot_research",
         "retention_class": "bounded_research",
         "linkage_allowed": False,

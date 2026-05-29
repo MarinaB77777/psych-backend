@@ -2,6 +2,7 @@ from research.answer_policy import (
     ANSWER_POLICY_VERSION,
     get_answer_policy,
 )
+from research.answer_policy_validator import validate_answer_policy
 
 
 ANSWER_EXPORT_FILTER_VERSION = "answer-export-filter-1"
@@ -63,6 +64,22 @@ def filter_answers_for_research_snapshot(
     for raw_variable_code, value in answers.items():
         policy = get_answer_policy(raw_variable_code)
         variable_code = policy["variable_code"]
+         
+        validation = validate_answer_policy(policy)
+
+        if validation["valid"] is not True:
+            excluded_answers[variable_code] = {
+                "policy_category": policy.get("policy_category"),
+                "reason_code": "ANSWER_POLICY_INVALID",
+                "policy_version": policy.get("policy_version"),
+                "review_status": policy.get("review_status"),
+                "allowed_export_scope": policy.get(
+                    "allowed_export_scope",
+                    [],
+                ),
+                "policy_validation": validation,
+            }
+            continue 
 
         if variable_code in seen_variable_codes:
             duplicate_variable_codes.append(variable_code)
@@ -132,8 +149,10 @@ def filter_answers_for_research_snapshot(
         "filter_scope": RESEARCH_SNAPSHOT_SCOPE,
         "answer_values_filtered": True,
         "unknown_policy_default_deny": True,
+        "policy_validation_applied": True,
+        "invalid_policy_fail_closed": True,
         "malformed_policy_handling": (
-            "not_implemented_static_registry_assumed_valid"
+            "invalid_policy_excluded_with_audit"
         ),
         "included_values_are_raw_policy_allowed": True,
         "included_answers_are_not_final_export_authorization": True,
