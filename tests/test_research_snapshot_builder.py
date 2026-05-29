@@ -123,7 +123,7 @@ def test_research_snapshot_excludes_raw_engine_result_and_answers():
         "filtered_answer_summary_included"
         ]
         is True
-   )
+    )
 
 
 def test_research_snapshot_uses_preliminary_policy_status():
@@ -284,3 +284,71 @@ def test_research_snapshot_has_interpretation_boundaries():
     assert boundaries["not_participant_truth"] is True
     assert boundaries["not_clinical_record"] is True
     assert boundaries["not_longitudinal_profile"] is True
+
+def test_research_snapshot_includes_policy_allowed_answer():
+    session = make_completed_session()
+    session.answers["__example_d1"] = 3
+
+    snapshot = build_research_snapshot(session)
+
+    included = snapshot["answer_summary"]["answer_export_result"][
+        "included_answers"
+    ]
+
+    assert included["__example_d1"]["value"] == 3
+    assert (
+        included["__example_d1"]["reason_code"]
+        == "ANSWER_INCLUDED_BY_POLICY"
+    )
+    assert (
+        included["__example_d1"]["policy_category"]
+        == "exportable"
+    )
+
+
+def test_research_snapshot_preserves_answer_filter_metadata():
+    session = make_completed_session()
+
+    snapshot = build_research_snapshot(session)
+
+    result = snapshot["answer_summary"]["answer_export_result"]
+
+    assert result["filter_version"] == "answer-export-filter-1"
+    assert result["filter_method"] == "static_answer_policy_lookup"
+    assert result["filter_scope"] == "research_snapshot"
+    assert result["count_basis"] == "unique_normalized_variable_codes"
+    assert result["unknown_policy_default_deny"] is True
+    assert result["included_answers_are_not_final_export_authorization"] is True
+
+
+def test_research_snapshot_preserves_duplicate_answer_exclusion():
+    session = make_completed_session()
+    session.answers = {
+        "__example_d1": 3,
+        "  __example_d1  ": 4,
+    }
+
+    snapshot = build_research_snapshot(session)
+
+    result = snapshot["answer_summary"]["answer_export_result"]
+
+    assert result["included_answers"] == {}
+    assert result["excluded_answers"]["__example_d1"][
+        "reason_code"
+    ] == "DUPLICATE_NORMALIZED_VARIABLE_CODE"
+    assert result["duplicate_variable_codes_detected"] == [
+        "__example_d1"
+    ]
+
+
+def test_research_snapshot_preserves_builder_non_authority_flags():
+    session = make_completed_session()
+
+    snapshot = build_research_snapshot(session)
+
+    answer_summary = snapshot["answer_summary"]
+
+    assert answer_summary["builder_consumed_raw_answers_directly"] is False
+    assert answer_summary["builder_is_not_answer_policy_authority"] is True
+    assert answer_summary["builder_is_not_consent_authority"] is True
+    assert answer_summary["builder_is_not_retention_authority"] is True
