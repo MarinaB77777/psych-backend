@@ -11,6 +11,10 @@ from pilot_session.schemas import (
     SessionStatus,
 )
 
+from research.aggregation_governance import (
+    evaluate_snapshot_dataset_admission,
+)
+
 
 def test_generate_participant_export_uses_public_snapshot_only():
     session = ParticipantSession(
@@ -158,3 +162,36 @@ def test_generate_research_export_returns_bounded_snapshot():
     assert export["purpose"] == "research_snapshot_export"
     assert "research_snapshot" in export
     assert "raw_engine_result" not in export
+
+
+def test_research_export_generation_is_not_dataset_admission():
+    session = ParticipantSession(
+        session_id="session-7",
+        participant_id="participant-7",
+        status=SessionStatus.RUN_COMPLETED,
+    )
+
+    session.public_output = {
+        "summary_text": "Research export",
+        "result_level": "low",
+    }
+
+    export = generate_research_export(session)
+    snapshot = export["research_snapshot"]
+    policy = snapshot["snapshot_policy_status"]
+
+    assert export["export_valid"] is True
+    assert policy["consent_status"] == "not_evaluated"
+    assert policy["retention_status"] == "not_evaluated"
+    assert policy["policy_restricted"] == "not_evaluated"
+    assert policy["usable_for_research_preliminary"] is True
+
+    verdict = evaluate_snapshot_dataset_admission(snapshot)
+
+    assert verdict["admission_allowed"] is False
+    assert "CONSENT_NOT_GRANTED" in verdict["blockers"]
+    assert "RETENTION_NOT_EVALUATED" in verdict["blockers"]
+    assert (
+        "POLICY_RESTRICTED_OR_NOT_EVALUATED"
+        in verdict["blockers"]
+    )
