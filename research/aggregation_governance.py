@@ -150,10 +150,16 @@ def evaluate_snapshot_dataset_admission(snapshot: dict) -> dict:
     if consent_status != "granted":
         blockers.append("CONSENT_NOT_GRANTED")
 
-    if retention_status == "expired":
+    if retention_status == "active":
+        pass
+    elif retention_status == "expired":
         blockers.append("RETENTION_EXPIRED")
     elif retention_status == "not_evaluated":
-        warnings.append("RETENTION_NOT_EVALUATED")
+        blockers.append("RETENTION_NOT_EVALUATED")
+    elif retention_status == "unknown":
+        blockers.append("RETENTION_UNKNOWN")
+    else:
+        blockers.append("RETENTION_NOT_ACTIVE")
 
     if policy_restricted not in [False, "not_restricted"]:
         blockers.append("POLICY_RESTRICTED_OR_NOT_EVALUATED")

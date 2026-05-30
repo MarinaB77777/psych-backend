@@ -188,7 +188,7 @@ def test_dataset_admission_blocks_retention_expired():
     assert "RETENTION_EXPIRED" in verdict["blockers"]
 
 
-def test_dataset_admission_warns_retention_not_evaluated():
+def test_dataset_admission_blocks_retention_not_evaluated_after_retention_contract():
     snapshot = make_snapshot()
     snapshot["snapshot_policy_status"][
         "retention_status"
@@ -196,8 +196,36 @@ def test_dataset_admission_warns_retention_not_evaluated():
 
     verdict = evaluate_snapshot_dataset_admission(snapshot)
 
-    assert verdict["admission_allowed"] is True
-    assert "RETENTION_NOT_EVALUATED" in verdict["warnings"]
+    assert verdict["admission_allowed"] is False
+    assert verdict["admission_status"] == "blocked"
+    assert "RETENTION_NOT_EVALUATED" in verdict["blockers"]
+    assert "RETENTION_NOT_EVALUATED" not in verdict["warnings"]
+
+
+def test_dataset_admission_blocks_retention_unknown():
+    snapshot = make_snapshot()
+    snapshot["snapshot_policy_status"].pop(
+        "retention_status"
+    )
+
+    verdict = evaluate_snapshot_dataset_admission(snapshot)
+
+    assert verdict["admission_allowed"] is False
+    assert verdict["admission_status"] == "blocked"
+    assert "RETENTION_UNKNOWN" in verdict["blockers"]
+
+
+def test_dataset_admission_blocks_retention_not_active():
+    snapshot = make_snapshot()
+    snapshot["snapshot_policy_status"][
+        "retention_status"
+    ] = "deletion_requested"
+
+    verdict = evaluate_snapshot_dataset_admission(snapshot)
+
+    assert verdict["admission_allowed"] is False
+    assert verdict["admission_status"] == "blocked"
+    assert "RETENTION_NOT_ACTIVE" in verdict["blockers"]
 
 
 def test_dataset_admission_blocks_policy_not_evaluated():
