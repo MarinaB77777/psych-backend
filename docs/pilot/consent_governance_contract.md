@@ -367,6 +367,42 @@ Future exports must respect revocation rules.
 
 ---
 
+# Consent Expiration Boundary
+
+Consent may expire when an explicit expiration condition exists.
+
+Expiration must remain:
+- explicit;
+- reviewable;
+- auditable.
+
+expired
+≠
+revoked.
+
+expired
+≠
+denied.
+
+Expiration may require:
+- explicit renewal;
+- participant notification;
+- institutional review requirements.
+
+silence
+≠
+consent renewal.
+
+missing renewal
+≠
+consent renewal.
+
+Future implementation may support consent renewal workflows.
+
+Automatic renewal by participant inactivity must not be assumed.
+
+---
+
 Revocation handling may depend on:
 - retention governance;
 - dataset governance;
@@ -486,6 +522,7 @@ Future implementation may introduce:
 - consent registry;
 - consent validator;
 - consent revocation workflow;
+- consent renewal workflow;
 - consent expiration handling;
 - dataset-level consent checks;
 - consent audit trail.
