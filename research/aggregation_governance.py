@@ -210,12 +210,24 @@ def evaluate_snapshot_dataset_admission(snapshot: dict) -> dict:
     ) is not True:
         blockers.append("RAW_ENGINE_RESULT_NOT_EXCLUDED")
 
-    if _get_path(
+    raw_answers_excluded = _get_path(
+        snapshot,
+        ["limitations", "raw_answers_excluded"],
+        None,
+    )
+
+    legacy_answers_excluded = _get_path(
         snapshot,
         ["limitations", "answers_excluded"],
-        False,
-    ) is not True:
-        blockers.append("ANSWERS_NOT_EXCLUDED")
+        None,
+    )
+
+    if (
+        raw_answers_excluded is not True
+        and legacy_answers_excluded is not True
+    ):
+        blockers.append("RAW_ANSWERS_NOT_EXCLUDED")
+
 
     if _get_path(
         snapshot,

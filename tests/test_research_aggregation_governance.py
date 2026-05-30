@@ -36,7 +36,7 @@ def make_snapshot():
         },
         "limitations": {
             "raw_engine_result_excluded": True,
-            "answers_excluded": True,
+            "raw_answers_excluded": True,
             "snapshot_is_not_runtime_memory": True,
             "no_longitudinal_aggregation": True,
         },
@@ -355,14 +355,36 @@ def test_dataset_admission_blocks_if_raw_engine_result_not_excluded():
     )
 
 
-def test_dataset_admission_blocks_if_answers_not_excluded():
+def test_dataset_admission_accepts_legacy_answers_excluded_field():
     snapshot = make_snapshot()
-    snapshot["limitations"]["answers_excluded"] = False
+
+    snapshot["limitations"].pop(
+        "raw_answers_excluded"
+    )
+
+    snapshot["limitations"]["answers_excluded"] = True
+
+    verdict = evaluate_snapshot_dataset_admission(
+        snapshot
+    )
+
+    assert (
+        "RAW_ANSWERS_NOT_EXCLUDED"
+        not in verdict["blockers"]
+    )
+
+
+
+def test_dataset_admission_blocks_if_no_answer_exclusion_marker():
+    snapshot = make_snapshot()
+
+    snapshot["limitations"].pop("raw_answers_excluded", None)
+    snapshot["limitations"].pop("answers_excluded", None)
 
     verdict = evaluate_snapshot_dataset_admission(snapshot)
 
     assert verdict["admission_allowed"] is False
-    assert "ANSWERS_NOT_EXCLUDED" in verdict["blockers"]
+    assert "RAW_ANSWERS_NOT_EXCLUDED" in verdict["blockers"]
 
 
 def test_dataset_admission_result_is_not_longitudinal_permission():
