@@ -221,6 +221,12 @@ Consent evaluation
 ≠
 participant classification.
 
+For research export and dataset admission:
+
+not_evaluated
+=
+blocked until consent evaluation occurs.
+
 ---
 
 # Consent Record Shape
@@ -257,14 +263,6 @@ entire consent history.
 Consent history
 ≠
 permission to ignore current consent state.
-
-Это закрывает:
-
-granted
-↓
-revoked
-↓
-granted
 
 ---
 
@@ -306,10 +304,6 @@ Future consent expansion
 ≠
 implicit consent expansion.
 
-Это закрывает риск с:
-
-future studies
-
 ---
 
 # Missing Consent Boundary
@@ -322,7 +316,7 @@ implied approval.
 
 missing consent
 ≠
-implied approval.
+denied consent.
 
 missing consent
 ≠
@@ -450,9 +444,9 @@ dataset admission
 ≠
 future longitudinal permission.
 
-dataset admission
+dataset allowed
 ≠
-future longitudinal permission.
+future dataset reuse.
 
 ---
 
@@ -493,7 +487,7 @@ Future implementation may introduce:
 - consent validator;
 - consent revocation workflow;
 - consent expiration handling;
-- dataset-level consent checks.
+- dataset-level consent checks;
 - consent audit trail.
 
 Future implementation
