@@ -4,6 +4,9 @@ from pilot_session.schemas import (
 )
 from research.snapshot_builder import build_research_snapshot
 
+from research.aggregation_governance import (
+    evaluate_snapshot_dataset_admission,
+)
 
 def make_completed_session():
     session = ParticipantSession(
@@ -141,6 +144,8 @@ def test_research_snapshot_uses_preliminary_policy_status():
     )
     assert policy["consent_status"] == "not_evaluated"
     assert policy["retention_status"] == "not_evaluated"
+    assert policy["policy_restricted"] == "not_evaluated"
+    assert policy["exclusion_status"] == "not_evaluated"
 
 
 def test_research_snapshot_marks_invalidated_session_unusable():
@@ -352,3 +357,17 @@ def test_research_snapshot_preserves_builder_non_authority_flags():
     assert answer_summary["builder_is_not_answer_policy_authority"] is True
     assert answer_summary["builder_is_not_consent_authority"] is True
     assert answer_summary["builder_is_not_retention_authority"] is True
+
+def test_preliminary_research_snapshot_is_not_dataset_admissible():
+    session = make_completed_session()
+
+    snapshot = build_research_snapshot(session)
+    verdict = evaluate_snapshot_dataset_admission(snapshot)
+
+    assert verdict["admission_allowed"] is False
+    assert "CONSENT_NOT_GRANTED" in verdict["blockers"]
+    assert "RETENTION_NOT_EVALUATED" in verdict["blockers"]
+    assert (
+        "POLICY_RESTRICTED_OR_NOT_EVALUATED"
+        in verdict["blockers"]
+    )
