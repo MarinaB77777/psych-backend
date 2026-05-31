@@ -464,3 +464,29 @@ def test_consent_policy_declares_record_and_scope_boundaries():
     assert result["consent_record_is_not_identity"] is True
     assert result["consent_version_checked"] is True
     assert result["consent_scope_checked"] is True
+
+
+def test_consent_policy_declares_session_collection_boundary():
+    result = evaluate_consent_for_scope(
+        get_default_consent_record(),
+        "pilot_participation",
+    )
+
+    assert (
+        result[
+            "consent_evaluation_is_not_session_collection_permission"
+        ]
+        is True
+    )
+    assert (
+        result[
+            "session_collection_requires_session_level_agreement"
+        ]
+        is True
+    )
+    assert (
+        result[
+            "declined_session_agreement_blocks_new_collection"
+        ]
+        is True
+    )

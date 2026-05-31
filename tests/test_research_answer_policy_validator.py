@@ -261,3 +261,19 @@ def test_validate_restricted_categories_cannot_allow_aggregation():
         "RESTRICTED_CATEGORY_CANNOT_ALLOW_AGGREGATION"
         in result["reason_codes"]
     )
+
+
+def test_validate_requires_additional_consent_cannot_export_by_default():
+    policy = deepcopy(DEFAULT_POLICY)
+    policy["policy_category"] = "requires_additional_consent"
+    policy["export_allowed"] = True
+    policy["review_status"] = "reviewed"
+    policy["allowed_export_scope"] = ["research_snapshot"]
+
+    result = validate_answer_policy(policy)
+
+    assert result["valid"] is False
+    assert (
+        "RESTRICTED_CATEGORY_CANNOT_EXPORT"
+        in result["reason_codes"]
+    )

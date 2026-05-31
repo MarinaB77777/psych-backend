@@ -55,6 +55,7 @@ RESTRICTED_NON_EXPORT_CATEGORIES = {
     "not_exportable",
     "transient_only",
     "not_yet_classified",
+    "requires_additional_consent",
 }
 
 
