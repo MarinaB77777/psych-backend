@@ -296,3 +296,16 @@ def test_validator_declares_static_and_non_storage_boundaries():
     assert result["validator_is_static_structural_validator"] is True
     assert result["validator_does_not_store_consent"] is True
     assert result["validator_does_not_modify_record"] is True
+
+
+def test_consent_validator_declares_session_collection_boundaries():
+    result = validate_consent_record(make_valid_granted_record())
+
+    assert result["valid"] is True
+    assert result["validator_does_not_authorize_session_creation"] is True
+    assert result["validator_does_not_authorize_collection"] is True
+    assert result["session_collection_requires_session_level_agreement"] is True
+    assert (
+        result["declined_session_agreement_blocks_new_collection"]
+        is True
+    )
