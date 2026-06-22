@@ -3,6 +3,8 @@ from pilot_session.schemas import (
     SessionStatus,
 )
 from research.snapshot_builder import build_research_snapshot
+from pilot_session.schemas import ParticipantSession, SessionStatus
+from research.snapshot_builder import build_research_snapshot
 
 from research.aggregation_governance import (
     evaluate_snapshot_dataset_admission,
@@ -371,3 +373,29 @@ def test_preliminary_research_snapshot_is_not_dataset_admissible():
         "POLICY_RESTRICTED_OR_NOT_EVALUATED"
         in verdict["blockers"]
     )
+
+def test_snapshot_builder_applies_policy_status_override(monkeypatch):
+    monkeypatch.setenv("RESEARCH_PSEUDONYMIZATION_SALT", "test-salt")
+
+    session = ParticipantSession(
+        session_id="session-1",
+        participant_id="participant-1",
+        status=SessionStatus.RUN_COMPLETED,
+        public_output={"summary_text": "ok"},
+    )
+
+    snapshot = build_research_snapshot(
+        session,
+        policy_status_override={
+            "consent_status": "granted",
+            "retention_status": "active",
+            "policy_restricted": "not_restricted",
+        },
+    )
+
+    policy_status = snapshot["snapshot_policy_status"]
+
+    assert policy_status["consent_status"] == "granted"
+    assert policy_status["retention_status"] == "active"
+    assert policy_status["policy_restricted"] == "not_restricted"
+    assert policy_status["policy_status_override_applied"] is True

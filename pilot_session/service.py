@@ -56,6 +56,71 @@ class PilotSessionService:
             )
 
         session.answers = answers
+
+        session.answer_revision_count += 1
+        session.answer_merge_history.append({
+            "type": "initial_answers",
+            "answered_keys": list(answers.keys()),
+            "answers_count_after_merge": len(session.answers),
+            "created_at": datetime.now(UTC).isoformat(),
+        })
+
+        session.status = SessionStatus.ANSWERS_RECEIVED
+        session.updated_at = datetime.now(UTC)
+
+        self.store.save(session)
+        return session
+
+    def submit_followup_answers(
+        self,
+        session_id: str,
+        answers: dict,
+    ) -> ParticipantSession:
+        session = self.store.get(session_id)
+
+        if session is None:
+            raise SessionNotFoundError(
+                "Session not found"
+            )
+
+        if session.invalidated:
+            raise SessionInvalidatedError(
+                "Session is invalidated"
+            )
+
+        if session.status not in {
+            SessionStatus.RUN_COMPLETED,
+            SessionStatus.WAITING_FOR_INPUT,
+            SessionStatus.PARTIAL_RESULT,
+        }:
+            raise InvalidStatusTransitionError(
+                "Invalid session status transition"
+            )
+
+        previous_keys = set(session.answers.keys())
+
+        session.answers.update(answers)
+
+        new_keys = [
+            key for key in answers.keys()
+            if key not in previous_keys
+        ]
+
+        updated_keys = [
+            key for key in answers.keys()
+            if key in previous_keys
+        ]
+
+        session.answer_revision_count += 1
+        session.answer_merge_history.append({
+            "type": "followup_answers",
+            "answered_keys": list(answers.keys()),
+            "new_keys": new_keys,
+            "updated_keys": updated_keys,
+            "answers_count_after_merge": len(session.answers),
+            "created_at": datetime.now(UTC).isoformat(),
+        })
+
         session.status = SessionStatus.ANSWERS_RECEIVED
         session.updated_at = datetime.now(UTC)
 
@@ -103,8 +168,22 @@ class PilotSessionService:
                 "Session run failed"
             ) from exc
 
+        session.run_count += 1
+        session.run_history.append({
+            "type": "engine_run",
+            "run_number": session.run_count,
+            "answers_count": len(session.answers),
+            "next_questions_count": len(
+                result.get("next_questions", [])
+            ),
+            "created_at": datetime.now(UTC).isoformat(),
+        })
+
         session.raw_engine_result = result
-        session.public_output = result.get("output", {})
+        session.public_output = result.get(
+            "pilot_public_output",
+            result.get("output", {}),
+        )
         session.next_question_snapshots = result.get(
             "next_questions",
             [],

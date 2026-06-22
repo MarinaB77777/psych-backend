@@ -49,6 +49,8 @@ def test_export_allowed_for_completed_valid_session():
     )
 
     session.status = SessionStatus.RUN_COMPLETED
+    
+    session.public_output = {"summary_text": "ok"}
 
     assert can_generate_export(session) is True
 

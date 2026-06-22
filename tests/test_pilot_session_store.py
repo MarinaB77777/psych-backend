@@ -52,3 +52,34 @@ def test_store_list_all_sessions():
     sessions = store.list_all()
 
     assert len(sessions) == 2
+
+from datetime import UTC, datetime
+
+from pilot_session.persistent_store import PilotSessionPersistentStore
+from pilot_session.schemas import ParticipantSession
+
+
+def test_persistent_store_preserves_agreement_fields(tmp_path):
+    path = tmp_path / "pilot_sessions.json"
+
+    store = PilotSessionPersistentStore(str(path))
+
+    session = ParticipantSession(
+        session_id="agreement-session-1",
+        participant_id="participant-1",
+        agreement_id="agreement-1",
+        agreement_version="session-agreement-1",
+        agreement_signed_at=datetime(2026, 1, 1, tzinfo=UTC),
+        collection_agreement_status="accepted",
+    )
+
+    store.save(session)
+
+    reloaded_store = PilotSessionPersistentStore(str(path))
+    loaded = reloaded_store.get("agreement-session-1")
+
+    assert loaded is not None
+    assert loaded.agreement_id == "agreement-1"
+    assert loaded.agreement_version == "session-agreement-1"
+    assert loaded.agreement_signed_at == datetime(2026, 1, 1, tzinfo=UTC)
+    assert loaded.collection_agreement_status == "accepted"

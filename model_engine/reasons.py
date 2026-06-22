@@ -49,6 +49,29 @@ REASON_REGISTRY = {
         "type": "consistency",
         "public": True,
     },
+"VNEXT_OPTION_SPACE_COLLAPSE": {
+        "severity": "caution",
+        "type": "vnext",
+        "public": True,
+    },
+
+    "VNEXT_HOPELESSNESS_SIGNAL": {
+        "severity": "caution",
+        "type": "vnext",
+        "public": True,
+    },
+
+    "VNEXT_NEGATIVE_SPIRAL": {
+        "severity": "caution",
+        "type": "vnext",
+        "public": True,
+    },
+
+    "VNEXT_RESOURCE_EXHAUSTION": {
+        "severity": "caution",
+        "type": "vnext",
+        "public": True,
+    },
 }
 
 

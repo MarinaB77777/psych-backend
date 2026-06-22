@@ -11,7 +11,7 @@ The purpose of this contract is:
 - define storage validity boundaries;
 - define retention expiration semantics;
 - define retention review boundaries;
-- prevent silent indefinite retention;
+- prevent silent ungoverned retention;
 - preserve auditability;
 - preserve future compatibility.
 
@@ -60,11 +60,11 @@ research authority.
 
 # Core Principle
 
-Retention governance defines storage and use-validity boundaries.
+Retention governance defines whether stored research data remains within the approved research scope.
 
 retention governance
 =
-storage/use-validity boundary
+approved-scope storage/use-validity boundary
 
 Retention governance does NOT define:
 - consent authority;
@@ -126,8 +126,8 @@ not_evaluated
 expired
 
 active
-≠
-indefinite retention
+=
+retention remains valid within the originally approved research scope
 
 expired
 ≠
@@ -282,6 +282,16 @@ automatic deletion
 retention active
 ≠
 consent granted
+Consent for a new session controls future collection.
+
+Refusal or absence of consent for a new session
+does not automatically invalidate previously collected,
+properly consented, anonymized research data.
+
+Previously completed sessions may remain usable
+within the originally approved research scope
+unless retention status, withdrawal rules,
+institutional requirements, or policy restrictions say otherwise.
 
 ---
 
@@ -324,12 +334,12 @@ retention active
 reuse approved
 
 retention valid
-≠
-future reuse approved
+=
+continued use is allowed only within the originally approved research scope
 
 stored data
 ≠
-reusable data
+unrestricted reusable data
 
 Reuse governance may later impose additional restrictions.
 
@@ -499,17 +509,21 @@ Retention governance exists to define bounded storage validity.
 Retention governance must never become:
 - unrestricted storage authority;
 - hidden profiling infrastructure;
-- silent indefinite retention mechanism;
+- silent ungoverned retention mechanism;
 - participant scoring system;
 - unrestricted reuse authority.
 
 stored data
 ≠
-reusable data
+unrestricted reusable data
+
+retention allowed
+=
+continued use allowed only within the originally approved research scope
 
 retention allowed
 ≠
-future reuse allowed
+new research purpose approval
 
 research usefulness
 ≠

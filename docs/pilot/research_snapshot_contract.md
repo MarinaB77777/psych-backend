@@ -329,6 +329,37 @@ operational truth.
 
 ---
 
+# Operational Event Boundary
+
+Operational event records may exist before a research snapshot is generated.
+
+Operational event records support:
+- auditability;
+- provenance preservation;
+- session reconstruction;
+- processing traceability.
+
+Operational event records are NOT:
+- research snapshots;
+- dataset admission artifacts;
+- research exports;
+- participant profiles.
+
+Incomplete collection attempts may generate operational event records.
+
+Incomplete collection attempts must NOT automatically generate:
+- research snapshots;
+- dataset admission records;
+- research exports.
+
+Research snapshot generation requires explicit snapshot eligibility evaluation.
+
+ResearchEventRecord
+≠
+Research Snapshot
+
+---
+
 # Final Principle
 
 Research snapshots exist to support:

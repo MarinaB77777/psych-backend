@@ -64,13 +64,29 @@ class PilotSessionPersistentStore:
             if session.closed_at is not None
             else None
         )
-
+        data["agreement_signed_at"] = (
+            session.agreement_signed_at.isoformat()
+            if session.agreement_signed_at is not None
+            else None
+        )
         return data
 
     def _deserialize_session(self, data: dict) -> ParticipantSession:
         return ParticipantSession(
             session_id=data["session_id"],
             participant_id=data["participant_id"],
+            subject_link_id=data.get("subject_link_id"),
+            study_id=data.get("study_id"),
+            participant_role=data.get("participant_role"),
+            synchronization_reference=data.get("synchronization_reference"),
+            agreement_id=data.get("agreement_id"),
+            agreement_version=data.get("agreement_version"),
+            agreement_signed_at=(
+                datetime.fromisoformat(data["agreement_signed_at"])
+                if data.get("agreement_signed_at") is not None
+                else None
+            ),
+            collection_agreement_status=data.get("collection_agreement_status"),
             status=SessionStatus(data["status"]),
             created_at=datetime.fromisoformat(data["created_at"]),
             updated_at=datetime.fromisoformat(data["updated_at"]),
@@ -80,6 +96,10 @@ class PilotSessionPersistentStore:
                 else None
             ),
             answers=data.get("answers", {}),
+                        answer_revision_count=data.get("answer_revision_count", 0),
+                        answer_merge_history=data.get("answer_merge_history", []),
+                        run_count=data.get("run_count", 0),
+                        run_history=data.get("run_history", []),
             engine_version=data.get("engine_version", "mvp-1"),
             engine_snapshot_schema_version=data.get(
                 "engine_snapshot_schema_version",

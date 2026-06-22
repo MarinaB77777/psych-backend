@@ -71,7 +71,13 @@ def test_run_session_stores_engine_snapshots():
 
     assert updated.status == SessionStatus.RUN_COMPLETED
     assert updated.raw_engine_result != {}
-    assert updated.public_output == updated.raw_engine_result["output"]
+
+    expected_public_output = updated.raw_engine_result.get(
+        "pilot_public_output",
+        updated.raw_engine_result["output"],
+    )
+    assert updated.public_output == expected_public_output
+
     assert updated.next_question_snapshots == updated.raw_engine_result["next_questions"]
     assert (
         updated.acquisition_request_snapshots

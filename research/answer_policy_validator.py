@@ -153,6 +153,14 @@ def _add_export_consistency_reasons(
                 "EXPORT_ALLOWED_REQUIRES_NON_EMPTY_SCOPE"
             )
 
+    if (
+        policy.get("individual_snapshot_allowed") is True
+        and policy.get("export_allowed") is not True
+    ):
+        reason_codes.append(
+            "INDIVIDUAL_SNAPSHOT_REQUIRES_EXPORT_ALLOWED"
+        )
+
     if policy_category in RESTRICTED_NON_EXPORT_CATEGORIES:
         if policy.get("export_allowed") is True:
             reason_codes.append(

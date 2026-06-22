@@ -82,14 +82,37 @@ Participants receive:
 - participant_id
 - pilot-scoped session linkage identifier
 
+For longitudinal trajectory analysis, the system may also use:
+
+- subject_link_id
+
+subject_link_id is a consent-bound pseudonymous linkage identifier
+used only to determine that multiple sessions belong to the same participant
+within an approved longitudinal research or personal-account context.
+
+subject_link_id does NOT represent:
+- legal identity;
+- real-world identity;
+- psychological identity;
+- unrestricted behavioral identity;
+- permission for hidden profiling.
+
+subject_link_id may be used only when:
+- the participant has an active consent/agreement for longitudinal tracking;
+- the linkage purpose is explicit;
+- the linkage scope is bounded;
+- the linkage can be reviewed, revoked, or governed according to retention rules.
+
 The pilot should minimize:
 - personally identifying information;
 - unnecessary identity linkage;
 - unrestricted identity persistence.
 
-Participant identifiers
-must not silently become
-cross-context behavioral identity infrastructure.
+Participant identifiers, including subject_link_id,
+must not silently become cross-context behavioral identity infrastructure.
+
+Longitudinal linkage is allowed only as an explicit,
+consent-bound, scope-limited trajectory analysis mechanism.
 
 ---
 
@@ -127,8 +150,62 @@ Timestamp granularity
 must remain limited
 to operational and approved research necessity.
 
+Each session may also contain:
+- subject_link_id when longitudinal tracking is explicitly consented;
+- study_id;
+- participant_role;
+- synchronization_reference;
+- global_time_utc event timestamps.
+
+synchronization_reference links events collected within the same synchronized session or collection window.
+
+synchronization_reference does NOT imply causation, correlation, or participant identity expansion.
+
 Questionnaire completeness
 ≠ participant reliability
+
+---
+
+## Session State and Event History Boundary
+
+Session stores the current operational state of an interaction.
+
+Session may include:
+- session_id;
+- participant_id;
+- subject_link_id when consented;
+- study_id;
+- synchronization_reference;
+- created_at;
+- updated_at;
+- closed_at;
+- current status;
+- current knowledge snapshot;
+- current block;
+- turn summaries.
+
+ResearchEventRecord stores immutable event history.
+
+Each event records:
+- what happened;
+- when it happened on the global UTC time axis;
+- what input was received;
+- what was extracted;
+- what the knowledge/status/output snapshots were at that moment;
+- which model, logic, and extraction versions produced the result.
+
+Session
+≠
+Event History
+
+Session is current state.
+Event History is reproducible record.
+
+Session may be reconstructed from events.
+Events must not be rewritten to match later session state.
+
+Corrections, recalculations, or reinterpretations must create new events or derived records,
+not silently overwrite historical events.
 
 ---
 

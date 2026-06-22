@@ -62,6 +62,30 @@ def analyze_readiness(engine_result: dict) -> dict:
         source_failure
     )
 
+    structural_forecast = analyze_structural_forecast_readiness(
+        core,
+        activity,
+        data_consistency,
+        risk
+    )
+
+    state_risk = analyze_state_risk_readiness(
+        structural_forecast,
+        risk
+    )
+
+    trajectory = analyze_trajectory_readiness(
+        engine_result,
+        core,
+        activity,
+        data_consistency,
+        risk
+    )
+
+    vnext_signals = analyze_vnext_signal_readiness(
+        engine_result
+    )
+
     learning = analyze_learning_governance(
         engine_result,
         sensor,
@@ -88,9 +112,12 @@ def analyze_readiness(engine_result: dict) -> dict:
         context,
         data_consistency,
         risk,
+        structural_forecast,
+        state_risk,
+        trajectory,
+        vnext_signals,
         learning,
         investigations
-
     )
 
 
@@ -940,6 +967,377 @@ def analyze_risk_governance(
         "blocked_components": blocked_components,
     }
 
+# =========================================================
+# STRUCTURAL FORECAST READINESS
+# =========================================================
+
+def analyze_structural_forecast_readiness(
+    core: dict,
+    activity: dict,
+    data_consistency: dict,
+    risk: dict
+) -> dict:
+    reason_codes = []
+    blocked_components = []
+
+    critical = risk.get("risk_level") == "critical"
+
+    base_ready = (
+        core.get("state_conclusion_ready", False)
+        and core.get("pressure_ready", False)
+        and activity.get("activity_context_ready", False)
+        and data_consistency.get("status") != "contradiction"
+        and not critical
+    )
+
+    delta_interpretation_ready = (
+        base_ready
+        and core.get("delta_ready", False)
+    )
+
+    hidden_factor_detection_ready = (
+        delta_interpretation_ready
+    )
+
+    constellation_interpretation_ready = (
+        base_ready
+    )
+
+    structural_forecast_ready = (
+        base_ready
+        and delta_interpretation_ready
+    )
+
+    if not core.get("state_conclusion_ready", False):
+        reason_codes.append("STRUCTURAL_FORECAST_BLOCKED_STATE_NOT_READY")
+        blocked_components.append("structural_forecast")
+
+    if not core.get("pressure_ready", False):
+        reason_codes.append("STRUCTURAL_FORECAST_BLOCKED_PRESSURE_NOT_READY")
+        blocked_components.append("structural_forecast")
+
+    if base_ready and not core.get("delta_ready", False):
+        reason_codes.append("STRUCTURAL_FORECAST_DELTA_NOT_READY_LIMITED_MODE")
+        blocked_components.append("delta_interpretation")
+        blocked_components.append("hidden_factor_detection")
+
+    elif not core.get("delta_ready", False):
+        reason_codes.append("DELTA_NOT_READY")
+        blocked_components.append("delta_interpretation")
+        blocked_components.append("hidden_factor_detection")
+
+    if not activity.get("activity_context_ready", False):
+        reason_codes.append("STRUCTURAL_FORECAST_BLOCKED_ACTIVITY_CONTEXT_UNKNOWN")
+        blocked_components.append("structural_forecast")
+
+    if data_consistency.get("status") == "contradiction":
+        reason_codes.append("STRUCTURAL_FORECAST_BLOCKED_DATA_CONTRADICTION")
+        blocked_components.append("structural_forecast")
+
+    if critical:
+        reason_codes.append("STRUCTURAL_FORECAST_BLOCKED_CRITICAL")
+        blocked_components.append("structural_forecast")
+
+    if structural_forecast_ready:
+        structural_forecast_mode = "full"
+        forecast_scope = "structural_full"
+    elif base_ready:
+        structural_forecast_mode = "limited"
+        forecast_scope = "structural_limited"
+    else:
+        structural_forecast_mode = "none"
+        forecast_scope = "none"
+
+    return {
+        "base_ready": base_ready,
+        "structural_forecast_ready": structural_forecast_ready,
+        "structural_forecast_mode": structural_forecast_mode,
+        "forecast_scope": forecast_scope,
+        "delta_interpretation_ready": delta_interpretation_ready,
+        "hidden_factor_detection_ready": hidden_factor_detection_ready,
+        "constellation_interpretation_ready": constellation_interpretation_ready,
+        "reason_codes": reason_codes,
+        "blocked_components": blocked_components,
+    }
+
+
+# =========================================================
+# STATE RISK READINESS
+# =========================================================
+
+def analyze_state_risk_readiness(
+    structural_forecast: dict,
+    risk: dict
+) -> dict:
+    reason_codes = []
+    blocked_components = []
+
+    critical = risk.get("risk_level") == "critical"
+
+    state_risk_initial_ready = (
+        structural_forecast.get("base_ready", False)
+        and not critical
+    )
+
+    state_risk_full_ready = (
+        structural_forecast.get("structural_forecast_ready", False)
+        and not critical
+    )
+
+    if not structural_forecast.get("base_ready", False):
+        reason_codes.append("STATE_RISK_INITIAL_BLOCKED_BASE_NOT_READY")
+        blocked_components.append("state_risk_initial")
+
+    if (
+        structural_forecast.get("base_ready", False)
+        and not structural_forecast.get("structural_forecast_ready", False)
+    ):
+        reason_codes.append("STATE_RISK_FULL_BLOCKED_STRUCTURAL_FORECAST_NOT_FULL")
+        blocked_components.append("state_risk_full")
+
+    if critical:
+        reason_codes.append("STATE_RISK_INITIAL_BLOCKED_CRITICAL")
+        blocked_components.append("state_risk_initial")
+        blocked_components.append("state_risk_full")
+
+    if state_risk_full_ready:
+        state_risk_mode = "initial_full"
+    elif state_risk_initial_ready:
+        state_risk_mode = "initial_limited"
+    else:
+        state_risk_mode = "none"
+
+    return {
+        "state_risk_initial_ready": state_risk_initial_ready,
+        "state_risk_full_ready": state_risk_full_ready,
+        "state_risk_mode": state_risk_mode,
+        "reason_codes": reason_codes,
+        "blocked_components": blocked_components,
+    }
+
+
+# =========================================================
+# TRAJECTORY READINESS
+# =========================================================
+
+def analyze_trajectory_readiness(
+    engine_result: dict,
+    core: dict,
+    activity: dict,
+    data_consistency: dict,
+    risk: dict
+) -> dict:
+    reason_codes = []
+    blocked_components = []
+
+    history = engine_result.get("history", {})
+    metadata = engine_result.get("metadata", {})
+
+    if not isinstance(history, dict):
+        history = {}
+
+    if not isinstance(metadata, dict):
+        metadata = {}
+
+    repeated_measurements_count = history.get(
+        "repeated_measurements_count",
+        0
+    )
+
+    comparable_measurements = bool(
+        history.get("comparable_measurements", False)
+    )
+
+    shared_time_reference_ready = bool(
+        metadata.get("shared_time_reference_ready", False)
+    )
+
+    coverage_comparable = bool(
+        history.get("coverage_comparable", False)
+    )
+
+    q_comparable = bool(
+        history.get("q_comparable", False)
+    )
+
+    critical = risk.get("risk_level") == "critical"
+
+    trajectory_analysis_ready = (
+        repeated_measurements_count >= 2
+        and comparable_measurements
+        and shared_time_reference_ready
+        and coverage_comparable
+        and q_comparable
+        and core.get("state_conclusion_ready", False)
+        and activity.get("activity_context_ready", False)
+        and data_consistency.get("status") != "contradiction"
+        and not critical
+    )
+
+    if repeated_measurements_count < 2:
+        reason_codes.append("TRAJECTORY_NOT_READY_INSUFFICIENT_REPEATED_MEASUREMENTS")
+        blocked_components.append("trajectory_analysis")
+
+    if not comparable_measurements:
+        reason_codes.append("TRAJECTORY_NOT_READY_MEASUREMENTS_NOT_COMPARABLE")
+        blocked_components.append("trajectory_analysis")
+
+    if not shared_time_reference_ready:
+        reason_codes.append("TRAJECTORY_NOT_READY_SHARED_TIME_REFERENCE_MISSING")
+        blocked_components.append("trajectory_analysis")
+
+    if not coverage_comparable:
+        reason_codes.append("TRAJECTORY_NOT_READY_COVERAGE_NOT_COMPARABLE")
+        blocked_components.append("trajectory_analysis")
+
+    if not q_comparable:
+        reason_codes.append("TRAJECTORY_NOT_READY_Q_NOT_COMPARABLE")
+        blocked_components.append("trajectory_analysis")
+
+    if data_consistency.get("status") == "contradiction":
+        reason_codes.append("TRAJECTORY_NOT_READY_DATA_CONTRADICTION")
+        blocked_components.append("trajectory_analysis")
+
+    if critical:
+        reason_codes.append("TRAJECTORY_NOT_READY_CRITICAL")
+        blocked_components.append("trajectory_analysis")
+
+    
+    comparable_history_ready = (
+        repeated_measurements_count >= 2
+        and comparable_measurements
+        and shared_time_reference_ready
+    )
+
+    limited_trajectory_ready = (
+        comparable_history_ready
+        and core.get("state_conclusion_ready", False)
+        and activity.get("activity_context_ready", False)
+        and data_consistency.get("status") != "contradiction"
+        and not critical
+    )
+
+    if trajectory_analysis_ready:
+        readiness_status = "ready"
+    elif limited_trajectory_ready:
+        readiness_status = "limited"
+    elif repeated_measurements_count >= 2:
+        readiness_status = "not_comparable"
+    else:
+        readiness_status = "not_ready"
+
+    return {
+        "trajectory_analysis_ready": trajectory_analysis_ready,
+        "trajectory_risk_ready": trajectory_analysis_ready,
+        "trajectory_readiness_status": readiness_status,
+        "comparable_history_ready": comparable_history_ready,
+        "limited_trajectory_ready": limited_trajectory_ready,
+        "repeated_measurements_count": repeated_measurements_count,
+        "comparable_measurements": comparable_measurements,
+        "shared_time_reference_ready": shared_time_reference_ready,
+        "coverage_comparable": coverage_comparable,
+        "q_comparable": q_comparable,
+        "reason_codes": reason_codes,
+        "blocked_components": blocked_components,
+    }
+
+# =========================================================
+# VNEXT SIGNAL READINESS
+# =========================================================
+
+def analyze_vnext_signal_readiness(engine_result: dict) -> dict:
+    reason_codes = []
+    blocked_components = []
+
+    vnext_data = engine_result.get("vnext_signals", {})
+    signals = vnext_data.get("signals", {})
+
+    if not isinstance(signals, dict):
+        signals = {}
+
+    def signal_ready(name: str, min_coverage: float = 0.5) -> bool:
+        item = signals.get(name, {})
+
+        if not isinstance(item, dict):
+            return False
+
+        return (
+            item.get("score") is not None
+            and (item.get("coverage") or 0) >= min_coverage
+        )
+
+    decision_degradation_ready = signal_ready("DecisionDegradation", 0.5)
+    recovery_vulnerability_ready = signal_ready("RecoveryVulnerability", 0.5)
+    learning_failure_ready = signal_ready("LearningFailure", 0.5)
+    commitment_trap_ready = signal_ready("CommitmentTrap", 0.5)
+    negative_spiral_ready = signal_ready("NegativeSpiral", 1.0)
+    pep_ready = signal_ready("PEP", 0.5)
+
+    vnext_signal_ready = any([
+        decision_degradation_ready,
+        recovery_vulnerability_ready,
+        learning_failure_ready,
+        commitment_trap_ready,
+        negative_spiral_ready,
+        pep_ready,
+    ])
+    
+    ready_signal_count = sum([
+        decision_degradation_ready,
+        recovery_vulnerability_ready,
+        learning_failure_ready,
+        commitment_trap_ready,
+        negative_spiral_ready,
+        pep_ready,
+    ])
+
+    if ready_signal_count == 0:
+        vnext_signal_scope = "none"
+    elif ready_signal_count < 3:
+        vnext_signal_scope = "limited"
+    else:
+        vnext_signal_scope = "broad"
+
+    vnext_interpretation_allowed = (
+        vnext_signal_ready
+        and vnext_signal_scope in ["limited", "broad"]
+    )
+
+    if not decision_degradation_ready:
+        reason_codes.append("VNEXT_DECISION_DEGRADATION_NOT_READY")
+
+    if not recovery_vulnerability_ready:
+        reason_codes.append("VNEXT_RECOVERY_VULNERABILITY_NOT_READY")
+
+    if not learning_failure_ready:
+        reason_codes.append("VNEXT_LEARNING_FAILURE_NOT_READY")
+
+    if not commitment_trap_ready:
+        reason_codes.append("VNEXT_COMMITMENT_TRAP_NOT_READY")
+
+    if not negative_spiral_ready:
+        reason_codes.append("VNEXT_NEGATIVE_SPIRAL_NOT_READY")
+
+    if not pep_ready:
+        reason_codes.append("VNEXT_PEP_NOT_READY")
+
+    if not vnext_signal_ready:
+        blocked_components.append("vnext_signals")
+
+    return {
+        "vnext_signal_ready": vnext_signal_ready,
+        "vnext_signal_scope": vnext_signal_scope,
+        "vnext_interpretation_allowed": vnext_interpretation_allowed,
+        "ready_signal_count": ready_signal_count,
+        "decision_degradation_ready": decision_degradation_ready,
+        "recovery_vulnerability_ready": recovery_vulnerability_ready,
+        "learning_failure_ready": learning_failure_ready,
+        "commitment_trap_ready": commitment_trap_ready,
+        "negative_spiral_ready": negative_spiral_ready,
+        "pep_ready": pep_ready,
+        "reason_codes": reason_codes,
+        "blocked_components": blocked_components,
+    }
 
 # =========================================================
 # LEARNING GOVERNANCE
@@ -977,8 +1375,12 @@ def build_readiness_output(
     context: dict,
     data_consistency: dict,
     risk: dict,
+    structural_forecast: dict,
+    state_risk: dict,
+    trajectory: dict,
+    vnext_signals: dict,
     learning: dict,
-    investigations: dict
+    investigations: dict,
 ) -> dict:
 
     internal_reason_codes = (
@@ -991,6 +1393,10 @@ def build_readiness_output(
         + data_freshness["reason_codes"]
         + source_failure["reason_codes"]
         + risk["reason_codes"]
+        + structural_forecast["reason_codes"]
+        + state_risk["reason_codes"]
+        + trajectory["reason_codes"]
+        + vnext_signals["reason_codes"]
         + learning["reason_codes"]
     )
 
@@ -1003,6 +1409,10 @@ def build_readiness_output(
         + data_reliability["blocked_components"]
         + data_freshness["blocked_components"]
         + source_failure["blocked_components"]
+        + structural_forecast["blocked_components"]
+        + state_risk["blocked_components"]
+        + trajectory["blocked_components"]
+        + vnext_signals["blocked_components"]
         + risk["blocked_components"]
     )
 
@@ -1034,6 +1444,16 @@ def build_readiness_output(
         data_consistency
     )
 
+    vnext_summary = build_vnext_summary(
+        vnext_signals
+    )
+
+    investigation_summary = build_investigation_summary(
+        investigations
+    )
+    investigation_questions = build_investigation_questions(
+        investigations
+    )
     human_questions = build_human_questions(
         risk,
         data_consistency
@@ -1076,6 +1496,14 @@ def build_readiness_output(
             "data_acquisition_requests": data_acquisition_requests,
             "learning": learning,
             "trust_level": trust_level,
+            "structural_forecast": structural_forecast,
+            "state_risk": state_risk,
+            "trajectory": trajectory,
+            "investigations": investigations,
+            "investigation_summary": investigation_summary,
+            "investigation_questions": investigation_questions,
+            "vnext_signals": vnext_signals,
+            "vnext_summary": vnext_summary,
             "reason_codes": list(dict.fromkeys(
                 internal_reason_codes
             )),
@@ -1091,6 +1519,14 @@ def build_readiness_output(
                 human_questions,
             "safe_summary":
                 public_summary,
+            "investigation_summary":
+                investigation_summary,
+            "investigation_questions":
+                investigation_questions,
+            "vnext_summary":
+                vnext_summary["summary"],
+            "vnext_interpretation_allowed":
+                vnext_signals["vnext_interpretation_allowed"],
         },
 
         "public": {
@@ -1101,10 +1537,85 @@ def build_readiness_output(
                 safety_result_valid,
             "state_conclusion_ready":
                 core["state_conclusion_ready"],
+            "structural_forecast_allowed":
+                structural_forecast["structural_forecast_ready"],
+       
+            "structural_forecast_mode":
+                structural_forecast["structural_forecast_mode"],
+
+            "delta_interpretation_allowed":
+                structural_forecast["delta_interpretation_ready"],
+
+            "hidden_factor_detection_allowed":
+                structural_forecast["hidden_factor_detection_ready"],
+
+            "constellation_interpretation_allowed":
+                structural_forecast["constellation_interpretation_ready"],
+
+            "state_risk_initial_allowed":
+                state_risk["state_risk_initial_ready"],
+        
+            "state_risk_full_allowed":
+                state_risk["state_risk_full_ready"],
+
+            "state_risk_mode":
+                state_risk["state_risk_mode"],
+
+            "trajectory_analysis_allowed":
+                trajectory["trajectory_analysis_ready"],
+
+            "trajectory_risk_allowed":
+                trajectory["trajectory_risk_ready"],
+
+            "trajectory_readiness_status":
+                trajectory["trajectory_readiness_status"],
+    
+            "limited_trajectory_allowed":
+                trajectory["limited_trajectory_ready"],
+
+            "comparable_history_ready":
+                trajectory["comparable_history_ready"],
+           
+            "vnext_signal_ready":
+                vnext_signals["vnext_signal_ready"],
+          
+            "vnext_signal_scope":
+                vnext_signals["vnext_signal_scope"],
+
+            "vnext_interpretation_allowed":
+                vnext_signals["vnext_interpretation_allowed"],
+
+            "vnext_ready_signal_count":
+                vnext_signals["ready_signal_count"],
+
+            "vnext_summary":
+                vnext_summary["summary"],            
+
+            "decision_degradation_signal_ready":
+                vnext_signals["decision_degradation_ready"],
+
+            "recovery_vulnerability_signal_ready":
+                vnext_signals["recovery_vulnerability_ready"],
+
+            "learning_failure_signal_ready":
+                vnext_signals["learning_failure_ready"],
+
+            "commitment_trap_signal_ready":
+                vnext_signals["commitment_trap_ready"],
+
+            "negative_spiral_signal_ready":
+                vnext_signals["negative_spiral_ready"],
+
+            "pep_signal_ready":
+                vnext_signals["pep_ready"],
+
             "forecast_allowed":
-                risk["forecast_ready"],
+                structural_forecast["structural_forecast_ready"],
+
             "forecast_scope":
-                "short_term" if risk["forecast_ready"] else "none",
+                structural_forecast["forecast_scope"],
+            "interpretation_scope":
+                structural_forecast["forecast_scope"],
             "recommendation_allowed":
                 risk["recommendation_ready"],
             "trust_level":
@@ -1117,6 +1628,10 @@ def build_readiness_output(
                 data_acquisition_requests["data_acquisition_required"],
             "investigation_active":
                 investigations["investigation_active"],
+            "active_investigation_count":
+                len(investigations.get("active_hypotheses", [])),
+            "investigation_summary":
+                investigation_summary,
             "data_reliability": 
                 data_reliability["overall_reliability"],
             "data_freshness": data_freshness["overall_freshness"],
@@ -1141,6 +1656,130 @@ def build_readiness_output(
         }
     }
 
+# =========================================================
+# INVESTIGATION QUESTIONS
+# =========================================================
+
+def build_investigation_questions(
+    investigations: dict
+) -> list:
+
+    questions = []
+
+    active = investigations.get(
+        "active_hypotheses",
+        []
+    )
+
+    if not isinstance(active, list):
+        active = []
+
+    for item in active:
+
+        if not isinstance(item, dict):
+            continue
+
+        if item.get("type") == "r_k_mismatch":
+
+            domain = item.get("domain")
+
+            questions.append({
+                "code": "ASK_R_K_MISMATCH",
+                "domain": domain,
+                "reason_code": item.get("reason_code"),
+                "text": {
+                    "ru": (
+                        "Проявления в этой области выглядят сильнее, "
+                        "чем ожидается по указанному ресурсу. "
+                        "Есть ли сейчас боль, болезнь, недосып, перегрузка "
+                        "или другой фактор, который может это объяснить?"
+                    ),
+                    "en": (
+                        "The manifestations in this area look stronger "
+                        "than expected from the reported resource level. "
+                        "Is there pain, illness, lack of sleep, overload, "
+                        "or another factor that may explain this?"
+                    ),
+                    "es": (
+                        "Las manifestaciones en esta área parecen más fuertes "
+                        "de lo esperado según el nivel de recurso indicado. "
+                        "¿Hay dolor, enfermedad, falta de sueño, sobrecarga "
+                        "u otro factor que pueda explicarlo?"
+                    ),
+                },
+            })
+
+    return questions
+
+# =========================================================
+# INVESTIGATION SUMMARY
+# =========================================================
+
+def build_investigation_summary(
+    investigations: dict
+) -> str:
+
+    active = investigations.get(
+        "active_hypotheses",
+        []
+    )
+
+    if not active:
+        return ""
+
+    count = len(active)
+
+    if count == 1:
+        return (
+            "Есть один сигнал, который требует уточнения, "
+            "но сам по себе не является противоречием или выводом."
+        )
+
+    return (
+        f"Есть {count} сигналов, которые требуют уточнения, "
+        "но сами по себе не являются противоречиями или выводами."
+    )
+
+# =========================================================
+# VNEXT SUMMARY
+# =========================================================
+
+def build_vnext_summary(
+    vnext_signals: dict
+) -> dict:
+
+    ready_count = vnext_signals.get(
+        "ready_signal_count",
+        0
+    )
+
+    scope = vnext_signals.get(
+        "vnext_signal_scope",
+        "none"
+    )
+
+    if ready_count == 0:
+        summary = (
+            "Недостаточно данных для оценки vNext-сигналов."
+        )
+
+    elif ready_count < 3:
+        summary = (
+            "Доступны отдельные vNext-сигналы, "
+            "но интерпретация ограничена."
+        )
+
+    else:
+        summary = (
+            "Доступно несколько vNext-сигналов "
+            "для расширенной интерпретации."
+        )
+
+    return {
+        "ready_signal_count": ready_count,
+        "scope": scope,
+        "summary": summary,
+    }
 
 # =========================================================
 # OUTPUT HELPERS
@@ -1197,6 +1836,60 @@ def build_human_questions(
     return questions
 
 # =========================================================
+# INVESTIGATION SIGNAL HELPERS
+# =========================================================
+
+def detect_r_k_mismatch_investigations(
+    engine_result: dict
+) -> list:
+
+    delta_data = engine_result.get("delta", {})
+
+    if not isinstance(delta_data, dict):
+        return []
+
+    findings = []
+
+    for domain, item in delta_data.items():
+
+        if not isinstance(item, dict):
+            continue
+
+        if item.get("calculated") is not True:
+            continue
+
+        delta_value = item.get("delta")
+
+        if delta_value is None:
+            continue
+
+        abs_delta = abs(delta_value)
+
+        if abs_delta < 2.0:
+            continue
+
+        if delta_value <= -2.0:
+            direction = "manifestations_higher_than_resource_deficit"
+        else:
+            direction = "resource_deficit_higher_than_manifestations"
+
+        findings.append({
+            "id": f"r_k_mismatch_{domain}",
+            "type": "r_k_mismatch",
+            "domain": domain,
+            "status": "active",
+            "confidence": "medium",
+            "reason_code": "R_K_MISMATCH_DETECTED",
+            "delta": delta_value,
+            "abs_delta": abs_delta,
+            "direction": direction,
+            "requires_clarification": True,
+            "ttl": "short_term",
+        })
+
+    return findings
+
+# =========================================================
 # INVESTIGATIONS / HYPOTHESES
 # =========================================================
 
@@ -1219,11 +1912,12 @@ def analyze_investigations(
         []
     )
 
-    if not isinstance(
-        previous_investigations,
-        list
-    ):
+    if not isinstance(previous_investigations, list):
         previous_investigations = []
+
+    r_k_mismatch_findings = detect_r_k_mismatch_investigations(
+        engine_result
+    )
 
     previous_ids = set()
 
@@ -1239,6 +1933,12 @@ def analyze_investigations(
 
     continued_investigations = []
     revalidation_needed = []
+
+    current_r_k_ids = {
+        finding.get("id")
+        for finding in r_k_mismatch_findings
+        if isinstance(finding, dict)
+    }
 
     for item in previous_investigations:
 
@@ -1295,6 +1995,35 @@ def analyze_investigations(
                     "reason_code": "PREVIOUS_CRITICAL_STATE_NOT_SEEN_NOW",
                 })
 
+        if (
+            isinstance(item_id, str)
+            and item_id.startswith("r_k_mismatch_")
+        ):
+
+            if item_id in current_r_k_ids:
+                continued_investigations.append({
+                    **item,
+                    "status": "continued",
+                    "current_signal": True,
+                })
+            else:
+                revalidation_needed.append({
+                    **item,
+                    "status": "needs_revalidation",
+                    "current_signal": False,
+                    "reason_code": "PREVIOUS_R_K_MISMATCH_NOT_SEEN_NOW",
+                })
+
+    for finding in r_k_mismatch_findings:
+
+        finding_id = finding.get("id")
+
+        if finding_id in previous_ids:
+            continue
+
+        investigation_active = True
+        active_hypotheses.append(finding)
+
     if data_consistency.get("status") == "contradiction":
 
         investigation_active = True
@@ -1344,9 +2073,9 @@ def analyze_investigations(
 
     if (
         risk.get("risk_level") == "critical"
-        and "critical_state_monitoring"
-            not in previous_ids
+        and "critical_state_monitoring" not in previous_ids
     ):
+
         investigation_active = True
 
         active_hypotheses.append({
@@ -1366,10 +2095,8 @@ def analyze_investigations(
         "resolved_items": resolved_items,
         "previous_investigations_count":
             len(previous_investigations),
-
         "continued_investigations":
             continued_investigations,
-
         "revalidation_needed":
             revalidation_needed,
     }
@@ -1596,6 +2323,23 @@ def build_communication_requests(
             "reason_code": "INVESTIGATION_REVALIDATION_NEEDED",
         })
 
+    if investigations.get("active_hypotheses"):
+
+        internal_requests.append({
+            "type": "investigation_clarification_needed",
+            "priority": "medium",
+            "target": "ray_communicator",
+            "reason_code": "INVESTIGATION_CLARIFICATION_REQUIRED",
+            "items": investigations.get("active_hypotheses", []),
+        })
+
+        human_requests.append({
+            "type": "investigation_clarification",
+            "priority": "medium",
+            "route": "personal_human_channel",
+            "reason_code": "INVESTIGATION_CLARIFICATION_REQUIRED",
+        })
+
     return {
         "communication_required": bool(
             internal_requests
@@ -1631,8 +2375,62 @@ PUBLIC_REASON_MAP = {
     "NO_SENSOR_BASELINE":
         "baseline unavailable",
 
+    "STATE_RISK_INITIAL_BLOCKED_BASE_NOT_READY":
+        "state risk unavailable",
+
+    "STATE_RISK_FULL_BLOCKED_STRUCTURAL_FORECAST_NOT_FULL":
+        "state risk limited",
+
     "FRESHNESS_UNKNOWN":
         "data freshness unknown",
+
+    "STRUCTURAL_FORECAST_BLOCKED_STATE_NOT_READY":
+        "structural forecast unavailable",
+
+    "STRUCTURAL_FORECAST_BLOCKED_DELTA_NOT_READY":
+        "structural forecast unavailable",
+
+    "STRUCTURAL_FORECAST_DELTA_NOT_READY_LIMITED_MODE":
+        "structural forecast limited",
+
+    "STRUCTURAL_FORECAST_BLOCKED_PRESSURE_NOT_READY":
+        "structural forecast unavailable",
+
+    "STATE_RISK_INITIAL_BLOCKED_STRUCTURAL_FORECAST_NOT_READY":
+        "state risk unavailable",
+
+    "TRAJECTORY_NOT_READY_INSUFFICIENT_REPEATED_MEASUREMENTS":
+        "trajectory analysis unavailable",
+
+    "TRAJECTORY_NOT_READY_MEASUREMENTS_NOT_COMPARABLE":
+        "trajectory analysis unavailable",
+
+    "TRAJECTORY_NOT_READY_SHARED_TIME_REFERENCE_MISSING":
+        "trajectory analysis unavailable",
+
+    "STRUCTURAL_FORECAST_BLOCKED_ACTIVITY_CONTEXT_UNKNOWN":
+        "structural forecast unavailable",
+
+    "STRUCTURAL_FORECAST_BLOCKED_DATA_CONTRADICTION":
+        "structural forecast unavailable",
+
+    "STRUCTURAL_FORECAST_BLOCKED_CRITICAL":
+        "structural forecast unavailable",
+
+    "STATE_RISK_INITIAL_BLOCKED_CRITICAL":
+        "state risk unavailable",
+
+    "TRAJECTORY_NOT_READY_COVERAGE_NOT_COMPARABLE":
+        "trajectory analysis unavailable",
+
+    "TRAJECTORY_NOT_READY_Q_NOT_COMPARABLE":
+        "trajectory analysis unavailable",
+
+    "TRAJECTORY_NOT_READY_DATA_CONTRADICTION":
+        "trajectory analysis unavailable",
+
+    "TRAJECTORY_NOT_READY_CRITICAL":
+        "trajectory analysis unavailable",
 
     "ACTIVITY_CONTEXT_UNKNOWN":
         "activity context unavailable",

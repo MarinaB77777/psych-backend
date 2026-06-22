@@ -22,12 +22,24 @@ class ParticipantSession:
     session_id: str
     participant_id: str
     status: SessionStatus = SessionStatus.CREATED
+    subject_link_id: Optional[str] = None
+    study_id: Optional[str] = None
+    participant_role: Optional[str] = None
+    synchronization_reference: Optional[str] = None
+    agreement_id: Optional[str] = None
+    agreement_version: Optional[str] = None
+    agreement_signed_at: Optional[datetime] = None
+    collection_agreement_status: Optional[str] = None    
 
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     closed_at: Optional[datetime] = None
 
     answers: dict = field(default_factory=dict)
+    answer_revision_count: int = 0
+    answer_merge_history: list = field(default_factory=list)
+    run_count: int = 0
+    run_history: list = field(default_factory=list)
 
     engine_version: str = "mvp-1"
     engine_snapshot_schema_version: str = "mvp-1"

@@ -64,7 +64,7 @@ def filter_answers_for_research_snapshot(
     for raw_variable_code, value in answers.items():
         policy = get_answer_policy(raw_variable_code)
         variable_code = policy["variable_code"]
-         
+
         validation = validate_answer_policy(policy)
 
         if validation["valid"] is not True:
@@ -79,7 +79,7 @@ def filter_answers_for_research_snapshot(
                 ),
                 "policy_validation": validation,
             }
-            continue 
+            continue
 
         if variable_code in seen_variable_codes:
             duplicate_variable_codes.append(variable_code)
@@ -87,7 +87,7 @@ def filter_answers_for_research_snapshot(
                 {
                     "variable_code": variable_code,
                     "reason_code": "DUPLICATE_NORMALIZED_VARIABLE_CODE",
-                 }
+                }
             )
             excluded_answers[variable_code] = {
                 "policy_category": policy.get("policy_category"),

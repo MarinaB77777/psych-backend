@@ -66,3 +66,11 @@ def build_export_scoped_participant_reference(
         "runtime_identity_authority": False,
         "pseudonymization_is_not_anonymization": True,
     }
+
+# TODO:
+# Add a separate consent-bound longitudinal reference builder later.
+# It must use subject_link_id, not participant_id.
+# It must explicitly mark longitudinal_linkage_allowed=True
+# and requires_longitudinal_consent=True.
+# Do not change build_export_scoped_participant_reference()
+# because it intentionally remains non-longitudinal.

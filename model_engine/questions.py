@@ -1,21 +1,32 @@
+from model_engine.questionnaire_vnext import (
+    VNEXT_SIGNAL_GROUPS,
+    VNEXT_QUESTION_TEXTS,
+)
+from model_engine.question_bank import get_question
+
 QUESTION_TEXTS = {
     "d0": {
+       "ru": "Есть ли у тебя сейчас работа, учёба или другая основная деятельность?",
         "en": "Do you currently have work, studies, or another main activity?",
         "es": "¿Actualmente tienes trabajo, estudios u otra actividad principal?",
     },
     "d8": {
+        "ru": "Какой объём задач сейчас приходится выполнять?",
         "en": "How heavy is your current task load?",
         "es": "¿Qué tan alta es tu carga actual de tareas?",
     },
     "d9": {
+        "ru": "Насколько жёсткие сейчас сроки или дедлайны?",
         "en": "How strict are your current deadlines?",
         "es": "¿Qué tan estrictos son tus plazos actuales?",
     },
     "e4": {
+        "ru": "Есть ли сейчас нерешённая или неопределённая ситуация, которая влияет на тебя?",
         "en": "Is there an unresolved or uncertain situation affecting you now?",
         "es": "¿Hay alguna situación pendiente o incierta que te esté afectando ahora?",
     },
     "e8": {
+        "ru": "Создаёт ли сейчас давление нестабильность в работе, учёбе или основной деятельности?",
         "en": "Is work or study instability currently creating pressure?",
         "es": "¿La inestabilidad laboral o académica te está generando presión actualmente?",
     },
@@ -144,10 +155,28 @@ K_FIELDS_BY_DOMAIN = {
 
 
 def build_question(variable_code: str, priority: int, reason_code: str):
+    bank_question = get_question(variable_code)
+
+    if bank_question is not None:
+        texts = {
+            "ru": bank_question.get("prompt", ""),
+        }
+        return {
+            "variable_code": variable_code,
+            "priority": priority,
+            "reason_code": reason_code,
+            "text": texts,
+            "question_meta": bank_question,
+        }
+
     texts = QUESTION_TEXTS.get(variable_code)
 
     if texts is None:
+        texts = VNEXT_QUESTION_TEXTS.get(variable_code)
+
+    if texts is None:
         texts = {
+            "ru": f"Пожалуйста, укажите значение для {variable_code}.",
             "en": f"Please provide a value for {variable_code}.",
             "es": f"Por favor proporciona un valor para {variable_code}.",
         }
@@ -244,11 +273,49 @@ def build_delta_gap_questions(delta_data: dict, answers: dict):
 
     return candidates
 
+def build_vnext_gap_questions(
+    vnext_signals_data: dict,
+    answers: dict,
+    min_coverage: float = 0.5,
+):
+    candidates = []
+
+    signals = vnext_signals_data.get("signals", {})
+
+    if not isinstance(signals, dict):
+        return candidates
+
+    for signal_name, signal_data in signals.items():
+        if not isinstance(signal_data, dict):
+            continue
+
+        coverage = signal_data.get("coverage", 0) or 0
+
+        if coverage >= min_coverage:
+            continue
+
+        config = VNEXT_SIGNAL_GROUPS.get(signal_name, {})
+        questions = config.get("questions", [])
+
+        for question_id in questions:
+            if answers.get(question_id) is None:
+                candidates.append({
+                    "field": question_id,
+                    "priority": 3,
+                    "reason_code": "VNEXT_SIGNAL_GAP",
+                    "signal": signal_name,
+                    "coverage": coverage,
+                })
+                break
+
+    return candidates
+
 
 def build_next_questions(
     coverage_data: dict,
     delta_data: dict,
     consistency_data: dict,
+    vnext_signals_data: dict = None,
     answers: dict = None,
     state: str = None,
     limit: int = 3,
@@ -289,11 +356,31 @@ def build_next_questions(
 
         if len(questions) >= limit:
             return questions[:limit]
+    if vnext_signals_data is None:
+        vnext_signals_data = {}
+
+    vnext_gap_candidates = build_vnext_gap_questions(
+        vnext_signals_data=vnext_signals_data,
+        answers=answers,
+    )
+
+    for candidate in vnext_gap_candidates:
+        add_question_if_new(
+            questions=questions,
+            variable_code=candidate["field"],
+            priority=candidate["priority"],
+            reason_code=candidate["reason_code"],
+        )
+
+        if len(questions) >= limit:
+            return questions[:limit]
 
     # Later:
     # consistency-based questions
     # pressure-specific questions
     # repeated missing-domain routing
+
+
 
     return questions[:limit]
 
