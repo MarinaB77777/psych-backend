@@ -3,6 +3,11 @@ import pytest
 from pilot_session.schemas import SessionStatus
 from pilot_session.service import PilotSessionService
 from pilot_session.store import PilotSessionStore
+from pilot_session.agreement import build_session_agreement_record
+from research.consent_policy import (
+    CONSENT_POLICY_VERSION,
+    get_default_consent_record,
+)
 from pilot_session.errors import (
     ExportBlockedError,
     InvalidStatusTransitionError,
@@ -71,7 +76,13 @@ def test_run_session_stores_engine_snapshots():
 
     assert updated.status == SessionStatus.RUN_COMPLETED
     assert updated.raw_engine_result != {}
-    assert updated.public_output == updated.raw_engine_result["output"]
+
+    expected_public_output = updated.raw_engine_result.get(
+        "pilot_public_output",
+        updated.raw_engine_result["output"],
+    )
+    assert updated.public_output == expected_public_output
+
     assert updated.next_question_snapshots == updated.raw_engine_result["next_questions"]
     assert (
         updated.acquisition_request_snapshots
@@ -177,3 +188,59 @@ def test_close_session_blocks_invalidated_session():
 
     with pytest.raises(SessionInvalidatedError):
         service.close_session(session.session_id)
+
+def make_granted_pilot_participation_consent():
+    record = get_default_consent_record()
+    record["consent_status"] = "granted"
+    record["consent_version"] = CONSENT_POLICY_VERSION
+    record["consent_scope"] = ["pilot_participation"]
+    record["granted_at"] = "2026-01-01T00:00:00Z"
+    record["consent_basis"] = "explicit"
+    return record
+
+
+def test_create_session_from_accepted_agreement():
+    store = PilotSessionStore()
+    service = PilotSessionService(store)
+
+    agreement = build_session_agreement_record(
+        participant_id="participant-1",
+        consent_record=make_granted_pilot_participation_consent(),
+    )
+
+    session = service.create_session_from_agreement(
+        agreement_record=agreement,
+        subject_link_id="subject-1",
+        study_id="pilot-study-1",
+        participant_role="participant",
+        synchronization_reference="sync-1",
+    )
+
+    assert session.participant_id == "participant-1"
+    assert session.subject_link_id == "subject-1"
+    assert session.study_id == "pilot-study-1"
+    assert session.participant_role == "participant"
+    assert session.synchronization_reference == "sync-1"
+    assert session.agreement_id == agreement["agreement_id"]
+    assert session.agreement_version == agreement["agreement_version"]
+    assert session.agreement_signed_at is not None
+    assert session.collection_agreement_status == "accepted"
+
+
+def test_create_session_from_blocked_agreement_fails():
+    store = PilotSessionStore()
+    service = PilotSessionService(store)
+
+    consent = make_granted_pilot_participation_consent()
+    consent["consent_scope"] = ["research_snapshot_export"]
+
+    agreement = build_session_agreement_record(
+        participant_id="participant-1",
+        consent_record=consent,
+    )
+
+    try:
+        service.create_session_from_agreement(agreement)
+        assert False
+    except InvalidStatusTransitionError:
+        assert True

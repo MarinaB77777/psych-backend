@@ -343,6 +343,15 @@ These contracts govern:
 
 ---
 
+`../../docs/architecture/offline_independent_ai_core_contract.md`
+- local-first offline learning boundary;
+- explicit learning event storage;
+- explainable profile and suggestion boundary;
+- no autonomous execution;
+- pilot separation rules.
+
+---
+
 `sensor_calibration_governance.md`
 - calibration legitimacy;
 - calibration governance boundaries;

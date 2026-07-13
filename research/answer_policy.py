@@ -22,6 +22,10 @@ DEFAULT_POLICY = {
     ),
 }
 
+# Only explicitly reviewed structured variables may be marked exportable.
+# Free-text dialogue, raw personal narratives, and unrestricted adaptive
+# interview messages must remain default-deny unless a separate reviewed
+# policy explicitly allows a bounded derived representation.
 
 ANSWER_POLICY_REGISTRY = {
     "__example_d1": {

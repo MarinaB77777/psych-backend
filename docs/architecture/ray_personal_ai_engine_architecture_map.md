@@ -61,6 +61,7 @@ Ray Personal AI Engine
 │   ├── Shared Action
 │   ├── Communication Layers
 │   ├── Memory Foundations
+│   ├── Offline Independent AI Core
 │   ├── Human Profiles Layer
 │   ├── Calibration / Research Layers
 │   ├── Device / Sensor Integration
@@ -311,7 +312,43 @@ Memory ≠ authority
 
 ---
 
-# 14. Human Profiles Layer
+# 14. Offline Independent AI Core
+
+Offline Independent AI Core is a separate local-first learning layer inside
+External Core memory/adaptive learning boundaries.
+
+Offline Independent AI Core may:
+- store explicit local learning events;
+- build explainable learning profiles;
+- surface suggestions for human review;
+- support offline AI continuity;
+- preserve workflow, language, correction, and boundary patterns.
+
+Offline Independent AI Core must not:
+- execute actions autonomously;
+- silently expand permissions;
+- become a hidden identity model;
+- treat candidate patterns as truth;
+- mix individual AI learning with pilot research evidence;
+- access Inner Core directly;
+- override Governance or Runtime.
+
+Core principles:
+
+Offline learning ≠ autonomous execution
+
+Learning profile ≠ identity
+
+Suggestion ≠ permission
+
+Local memory ≠ research evidence
+
+Contract:
+- `docs/architecture/offline_independent_ai_core_contract.md`
+
+---
+
+# 15. Human Profiles Layer
 
 Human Profiles provide operational orientation.
 
@@ -357,7 +394,7 @@ Better profile understanding ≠ authority expansion
 
 ---
 
-# 15. Projection Layer
+# 16. Projection Layer
 
 Projection Layer is the bounded bridge between Inner Core and operational systems.
 

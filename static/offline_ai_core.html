@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Offline Independent AI Core</title>
+<script src="/static/platform_i18n.js?v=20260712-sync"></script>
+<style>
+body { font-family: Arial, sans-serif; margin: 0; background: #f5f6f8; color: #20242d; }
+.shell { max-width: 1180px; margin: 0 auto; padding: 28px; }
+.topbar { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:18px; }
+.card { background:#fff; border:1px solid #d8dde6; border-radius:8px; padding:18px; margin-bottom:14px; }
+.grid { display:grid; grid-template-columns: minmax(320px, 0.8fr) minmax(360px, 1.2fr); gap:14px; align-items:start; }
+.status { display:inline-block; padding:6px 10px; border-radius:999px; background:#eef6ef; color:#276738; border:1px solid #bfdfc5; font-size:13px; }
+label { display:block; margin:12px 0; font-size:14px; color:#475569; }
+input, select, textarea { width:100%; box-sizing:border-box; padding:10px; border:1px solid #cfd6e3; border-radius:8px; margin-top:6px; font:inherit; }
+textarea { min-height:100px; resize:vertical; }
+button { padding:10px 14px; border:1px solid #d6dbe6; border-radius:8px; background:#fff; cursor:pointer; }
+button.primary { background:#111827; color:white; border:0; }
+.row { display:flex; gap:8px; flex-wrap:wrap; }
+.small { color:#64748b; font-size:13px; }
+pre { white-space:pre-wrap; background:#f8fafc; border:1px solid #d8dde6; border-radius:8px; padding:12px; max-height:360px; overflow:auto; }
+.suggestion { padding:12px; border:1px solid #d8dde6; border-radius:8px; margin:8px 0; background:#fbfcfe; }
+.route-list { display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:8px; margin-top:10px; }
+.route-pill { border:1px solid #d8dde6; background:#fbfcfe; border-radius:8px; padding:9px 10px; font-size:13px; }
+@media (max-width: 860px) { .grid, .topbar { display:block; } }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div>
+      <h1>Offline Independent AI Core</h1>
+      <p class="small">
+        Local-first learning core for offline AI work. It stores allowed events,
+        trains an explainable local profile, and never executes actions autonomously.
+      </p>
+    </div>
+    <div class="row">
+      <button onclick="location.href='/research-workspace'">Workspace</button>
+      <button class="primary" onclick="refreshAll()">Refresh</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="status" id="coreStatus">Loading...</span>
+    <p class="small" id="coreBoundaries"></p>
+  </div>
+
+  <div class="card">
+    <h2>Health Model connection</h2>
+    <span class="status" id="healthModelStatus">Loading...</span>
+    <p class="small" id="healthModelBoundary"></p>
+    <div id="healthModelRoutes" class="route-list"></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Add learning event</h2>
+      <label>Event type
+        <select id="eventType">
+          <option value="user_preference">User preference</option>
+          <option value="correction">Correction</option>
+          <option value="decision">Decision</option>
+          <option value="research_observation">Research observation</option>
+          <option value="workflow_pattern">Workflow pattern</option>
+          <option value="boundary_rule">Boundary rule</option>
+          <option value="language_preference">Language preference</option>
+        </select>
+      </label>
+
+      <label>Content
+        <textarea id="eventContent" placeholder="What should the offline core learn?"></textarea>
+      </label>
+
+      <label>Tags
+        <input id="eventTags" placeholder="pilot, workspace, boundary">
+      </label>
+
+      <label>Importance
+        <select id="eventImportance">
+          <option value="1">1 - low</option>
+          <option value="3" selected>3 - normal</option>
+          <option value="5">5 - high</option>
+        </select>
+      </label>
+
+      <div class="row">
+        <button class="primary" onclick="addLearningEvent()">Add and train</button>
+        <button onclick="trainCore()">Train now</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h2>Suggestions</h2>
+        <div id="suggestionsBox" class="small">Loading...</div>
+      </div>
+
+      <div class="card">
+        <h2>Learning profile</h2>
+        <pre id="profileBox">Loading...</pre>
+      </div>
+
+      <div class="card">
+        <h2>Events</h2>
+        <pre id="eventsBox">Loading...</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function currentLang() {
+  return window.PlatformLanguage?.get() || "ru";
+}
+
+async function api(path, options) {
+  const response = await fetch(path, options);
+  const data = await response.json();
+  if (!response.ok || !data.ok) {
+    throw new Error(JSON.stringify(data));
+  }
+  return data;
+}
+
+async function refreshAll() {
+  const [status, events, suggestions, healthModel] = await Promise.all([
+    api("/offline-ai-core/status"),
+    api("/offline-ai-core/events"),
+    api("/offline-ai-core/suggestions?language=" + encodeURIComponent(currentLang())),
+    api("/offline-ai-core/health-model/context"),
+  ]);
+
+  document.getElementById("coreStatus").innerText =
+    status.core_id + " | " + status.mode + " | events: " + status.events_count;
+
+  document.getElementById("coreBoundaries").innerText =
+    "Boundaries: " + (status.boundaries || []).join(", ");
+
+  document.getElementById("profileBox").innerText =
+    JSON.stringify(status.profile || suggestions.profile || {}, null, 2);
+
+  document.getElementById("eventsBox").innerText =
+    JSON.stringify(events.events || [], null, 2);
+
+  document.getElementById("suggestionsBox").innerHTML =
+    (suggestions.suggestions || []).map(item => `
+      <div class="suggestion">
+        <b>${item.priority || ""}</b> · ${item.suggestion_type || ""}
+        <div>${item.text || ""}</div>
+        <div class="small">${item.reason || ""}</div>
+      </div>
+    `).join("") || "No suggestions.";
+
+  document.getElementById("healthModelStatus").innerText =
+    healthModel.integration_status || "connected";
+
+  document.getElementById("healthModelBoundary").innerText =
+    healthModel.offline_core_mode || "";
+
+  document.getElementById("healthModelRoutes").innerHTML =
+    Object.entries(healthModel.routes || {}).map(([name, route]) => `
+      <div class="route-pill">
+        <b>${name.replaceAll("_", " ")}</b><br>
+        <span class="small">${route}</span>
+      </div>
+    `).join("");
+}
+
+async function addLearningEvent() {
+  const tags = document.getElementById("eventTags").value
+    .split(",")
+    .map(item => item.trim())
+    .filter(Boolean);
+
+  await api("/offline-ai-core/events", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      event_type: document.getElementById("eventType").value,
+      content: document.getElementById("eventContent").value.trim(),
+      tags,
+      importance: Number(document.getElementById("eventImportance").value),
+      language: currentLang(),
+      source: "offline_core_ui"
+    })
+  });
+
+  document.getElementById("eventContent").value = "";
+  await refreshAll();
+}
+
+async function trainCore() {
+  await api("/offline-ai-core/train", { method: "POST" });
+  await refreshAll();
+}
+
+window.addEventListener("platform-language-change", refreshAll);
+refreshAll().catch(error => {
+  document.getElementById("coreStatus").innerText = "Failed";
+  document.getElementById("profileBox").innerText = error.message;
+});
+</script>
+</body>
+</html>

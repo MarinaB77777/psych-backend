@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Результат</title>
+<style>
+body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; }
+.card { border: 1px solid #ddd; border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+.small { color: #665; font-size: 14px; }
+.hidden { display: none; }
+.status-pill { display: inline-block; border: 1px solid #d8dde6; border-radius: 999px; padding: 5px 10px; background: #f9fafb; }
+</style>
+<script src="/static/platform_i18n.js?v=20260712-sync"></script>
+</head>
+<body>
+
+<h1>Результат</h1>
+<p id="status" class="small">Загрузка...</p>
+
+<div id="sessionSummary" class="card hidden"></div>
+<div id="participantReport" class="card hidden"></div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const sessionId = params.get("session_id");
+
+function setStatus(text) {
+  document.getElementById("status").innerText = text;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function renderSessionSummary(result) {
+  const box = document.getElementById("sessionSummary");
+  const publicOutput = result.public_output || {};
+  const uncertainty = result.uncertainty || {};
+  box.classList.remove("hidden");
+
+  box.innerHTML = `
+    <h2>${escapeHtml(publicOutput.title || "Результат сессии")}</h2>
+    <p>${escapeHtml(publicOutput.message || publicOutput.summary || "")}</p>
+    <p class="status-pill"><b>Status:</b> ${escapeHtml(result.status || "not_found")}</p>
+    <p class="small">
+      Показан только результат для участника. Технические данные и
+      исследовательские записи здесь не отображаются.
+    </p>
+    ${uncertainty.status || uncertainty.reason ? `
+      <div class="card">
+        <h3>Неопределённость</h3>
+        <p>${escapeHtml(uncertainty.reason || uncertainty.status || "")}</p>
+      </div>
+    ` : ""}
+  `;
+  window.PlatformLanguage?.refresh?.();
+}
+
+function renderParticipantReport(report) {
+  const box = document.getElementById("participantReport");
+
+  if (!report || !report.resource_cards || report.resource_cards.length === 0) {
+    box.classList.add("hidden");
+    return;
+  }
+
+  box.classList.remove("hidden");
+
+  box.innerHTML = `
+    <h2>${escapeHtml(report.title || "Индивидуальный отчёт")}</h2>
+    <p>${escapeHtml(report.summary || "")}</p>
+
+    ${report.resource_cards.map(card => `
+      <div class="card">
+        <h3>${escapeHtml(card.title)}</h3>
+        <p><b>${escapeHtml(card.level_label)}</b></p>
+        <p>${escapeHtml(card.summary || "")}</p>
+
+        <h4>На что стоит обратить внимание</h4>
+        <p>${escapeHtml(card.what_may_be_sensitive || "")}</p>
+
+        <h4>Как это может влиять на решения</h4>
+        <p>${escapeHtml(card.decision_context || "")}</p>
+      </div>
+    `).join("")}
+
+    <h3>Ограничения</h3>
+    <ul>
+      ${(report.limitations || []).map(item => `<li>${escapeHtml(item)}</li>`).join("")}
+    </ul>
+  `;
+  window.PlatformLanguage?.refresh?.();
+}
+
+async function loadResult() {
+  if (!sessionId) {
+    setStatus("session_id не найден");
+    return;
+  }
+
+  setStatus("Загрузка результата...");
+
+  const resultResponse = await fetch(
+      "/pilot/sessions/" + encodeURIComponent(sessionId) + "/result"
+  );
+  const resultData = await resultResponse.json();
+
+  if (resultResponse.ok && resultData.ok) {
+    renderSessionSummary(resultData);
+  }
+
+  const reportResponse = await fetch("/pilot/sessions/" + encodeURIComponent(sessionId) + "/participant-report");
+  const reportData = await reportResponse.json();
+
+  if (reportResponse.ok && reportData.ok) {
+    renderParticipantReport(reportData.participant_report);
+  }
+
+  setStatus("Готово");
+}
+
+loadResult();
+</script>
+
+</body>
+</html>

@@ -442,3 +442,80 @@ Research Analysis Layer must never become:
 - silent behavioral scoring system;
 - fabricated certainty engine.
 
+---
+
+# Research OS Boundary Addendum
+
+## Research OS Position
+
+The Research Analysis Layer belongs to the Research OS ecosystem, but it is not
+the Research OS Core. It provides scientific analysis services while Research OS
+coordinates scientific work and infrastructure.
+
+## Project Boundary
+
+Research Analysis belongs to Projects, but a Project is not Research Analysis.
+An analysis may support multiple Projects. Projects do not own analytical
+methods.
+
+## Experiment Boundary
+
+An Experiment produces observations. Analysis consumes observations. Analysis is
+not an Experiment.
+
+## Dataset Boundary
+
+Dataset != Analysis != Finding. Analysis must preserve dataset provenance.
+
+## Validation Layer
+
+Analysis produces candidate findings. Validation evaluates findings. Validated
+knowledge requires validation. Analysis is not Validation.
+
+## Knowledge Boundary
+
+Finding != Knowledge. Validated knowledge is not an analytical output by itself.
+Analysis does not create scientific knowledge.
+
+## Asset Boundary
+
+Analysis may reference Assets, but does not own Assets. Model != Evidence.
+Parameter != Finding.
+
+## AI Boundary
+
+AI-assisted analysis is not scientific evidence. LLM interpretation is not a
+scientific conclusion. AI hypothesis is not a validated finding.
+
+## Human Scientific Responsibility
+
+Scientific interpretation remains human responsibility.
+
+## Traceability
+
+Every finding must remain traceable to Dataset, Experiment, Project, Method,
+Version and Evidence.
+
+## Adaptive Calibration Boundary
+
+Research findings may initiate model review. They must not directly modify the
+Health Model, Projection, Runtime or Governance layers.
+
+## Cross-project Generalization
+
+Project findings remain project findings. Cross-project knowledge requires
+independent validation.
+
+## Applications Boundary
+
+Applications may consume analysis outputs. They must not reinterpret outputs as
+scientific truth.
+
+## Publication Boundary
+
+Publication does not validate findings. Publication is not consensus.
+
+## Statistical Boundary
+
+Statistical significance is not scientific importance. A statistical result is
+not an explanation. Model fit is not a causal mechanism.

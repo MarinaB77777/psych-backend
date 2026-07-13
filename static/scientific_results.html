@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<title>Scientific Results</title>
+<style>
+:root {
+  --bg: #f4f6fb;
+  --card: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+  --border: #d9dee8;
+  --soft: #eef2f7;
+  --blue: #2563eb;
+  --green: #059669;
+  --red: #dc2626;
+  --amber: #d97706;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+header {
+  padding: 22px 28px;
+  background: #111827;
+  color: white;
+}
+
+header h1 {
+  margin: 0 0 6px 0;
+  font-size: 26px;
+}
+
+header p {
+  margin: 0;
+  color: #cbd5e1;
+}
+
+main {
+  padding: 20px 28px 40px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.grid {
+  display: grid;
+  gap: 16px;
+}
+
+.grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.grid-2 {
+  grid-template-columns: 1.2fr 1fr;
+}
+
+.metric {
+  font-size: 28px;
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+.label {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+button, select, input {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: white;
+}
+
+button {
+  cursor: pointer;
+  background: var(--blue);
+  color: white;
+  border-color: var(--blue);
+}
+
+button.secondary {
+  background: white;
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.tab {
+  padding: 9px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: white;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: var(--blue);
+  color: white;
+  border-color: var(--blue);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+th, td {
+  border: 1px solid var(--border);
+  padding: 8px;
+  font-size: 12px;
+  vertical-align: top;
+}
+
+th {
+  background: var(--soft);
+  cursor: pointer;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.table-wrap {
+  max-height: 520px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  background: var(--soft);
+}
+
+.badge.green { color: var(--green); border-color: #a7f3d0; background: #ecfdf5; }
+.badge.red { color: var(--red); border-color: #fecaca; background: #fef2f2; }
+.badge.amber { color: var(--amber); border-color: #fed7aa; background: #fff7ed; }
+
+pre {
+  background: #0f172a;
+  color: #e5e7eb;
+  padding: 12px;
+  border-radius: 10px;
+  overflow: auto;
+  max-height: 420px;
+  font-size: 12px;
+}
+
+.hidden { display: none; }
+
+.section-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.section-title h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.row-selected {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
+}
+
+@media (max-width: 1000px) {
+  .grid-4, .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+<script src="/static/platform_i18n.js?v=20260712-sync"></script>
+</head>
+<body>
+
+<header>
+  <h1>Research Workbench</h1>
+  <p>Исследовательский кабинет: snapshots, coverage, UUID → parameter mapping, calculated model parameters.</p>
+</header>
+
+<main>
+  <div class="card">
+    <div class="controls">
+      <button onclick="loadRecords()">Reload</button>
+
+      <select id="studyFilter" onchange="handleStudyChange()">
+        <option value="">All studies</option>
+      </select>
+
+      <select id="statusFilter" onchange="handleStatusChange()">
+        <option value="">All statuses</option>
+      </select>
+
+      <input id="searchInput" placeholder="Search session / participant / parameter..." oninput="renderAll()" />
+
+      <select id="parameterSelect" onchange="renderStatistics()"></select>
+    </div>
+    <p id="status" class="small">Loading...</p>
+  </div>
+
+  <div class="grid grid-4">
+    <div class="card">
+      <div class="label">Records</div>
+      <div id="metricRecords" class="metric">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Studies</div>
+      <div id="metricStudies" class="metric">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Participants / references</div>
+      <div id="metricParticipants" class="metric">—</div>
+    </div>
+    <div class="card">
+      <div class="label">Average coverage</div>
+      <div id="metricCoverage" class="metric">—</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="setTab('records')">Records</div>
+    <div class="tab" onclick="setTab('parameters')">Model Parameters</div>
+    <div class="tab" onclick="setTab('mapping')">UUID Mapping</div>
+    <div class="tab" onclick="setTab('coverage')">Coverage</div>
+    <div class="tab" onclick="setTab('statistics')">Statistics</div>
+    <div class="tab" onclick="setTab('raw')">Raw Snapshot</div>
+  </div>
+
+  <section id="tab-records" class="card">
+    <div class="section-title">
+      <h2>Research records</h2>
+      <span class="small">Click row to inspect record</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortRecords('updated_at')">updated_at</th>
+            <th onclick="sortRecords('study_id')">study_id</th>
+            <th onclick="sortRecords('status')">status</th>
+            <th onclick="sortRecords('session_id')">session_id</th>
+            <th onclick="sortRecords('participant_ref')">participant_ref</th>
+            <th onclick="sortRecords('readiness_status')">readiness</th>
+            <th onclick="sortRecords('forecast_allowed')">forecast</th>
+            <th onclick="sortRecords('coverage_ratio')">coverage</th>
+            <th onclick="sortRecords('provided_count')">provided</th>
+            <th onclick="sortRecords('missing_critical_count')">missing critical</th>
+            <th onclick="sortRecords('mapped_parameters_count')">mapped params</th>
+            <th onclick="sortRecords('calculated_parameters_count')">calculated params</th>
+            <th onclick="sortRecords('current_state_final')">current_state</th>
+            <th onclick="sortRecords('stress_burden_final')">stress</th>
+          </tr>
+        </thead>
+        <tbody id="recordsBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="tab-parameters" class="card hidden">
+    <div class="section-title">
+      <h2>Calculated model parameters</h2>
+      <span id="parameterCount" class="small"></span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>session_id</th>
+            <th>parameter_code</th>
+            <th>value</th>
+            <th>value_type</th>
+            <th>scale_type</th>
+            <th>model_id</th>
+            <th>source_mode</th>
+          </tr>
+        </thead>
+        <tbody id="parametersBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="tab-mapping" class="card hidden">
+    <div class="section-title">
+      <h2>Question UUID → model parameter mapping</h2>
+      <span id="mappingCount" class="small"></span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>session_id</th>
+            <th>question_uuid</th>
+            <th>question_code</th>
+            <th>model_parameter_code</th>
+            <th>answer_value</th>
+            <th>mapping_type</th>
+          </tr>
+        </thead>
+        <tbody id="mappingBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="tab-coverage" class="card hidden">
+    <div class="section-title">
+      <h2>Coverage / missing data</h2>
+      <span class="small">Selected record or first visible record</span>
+    </div>
+    <div id="coverageBox"></div>
+  </section>
+
+  <section id="tab-statistics" class="card hidden">
+    <div class="section-title">
+      <h2>Parameter statistics</h2>
+      <span class="small">Uses calculated parameter records when available</span>
+    </div>
+    <div id="statsBox"></div>
+  </section>
+
+  <section id="tab-raw" class="card hidden">
+    <div class="section-title">
+      <h2>Raw selected research snapshot</h2>
+      <button class="secondary" onclick="copySelectedJson()">Copy JSON</button>
+    </div>
+    <pre id="rawBox">Select a record.</pre>
+  </section>
+</main>
+
+<script>
+let rawRecords = [];
+let rows = [];
+let selectedRecordId = null;
+let activeTab = "records";
+let recordSortKey = "updated_at";
+let recordSortDirection = -1;
+
+function setStatus(text) {
+  document.getElementById("status").innerText = text;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function scalar(value) {
+  if (value === undefined || value === null) return "";
+  if (typeof value === "object") return "";
+  return value;
+}
+
+function fmtNumber(value, digits = 3) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "";
+  return n.toFixed(digits);
+}
+
+function getSnapshot(record) {
+  return record.research_snapshot || {};
+}
+
+function getRawResult(record) {
+  const snapshot = getSnapshot(record);
+  const healthSummary = snapshot.health_model_research_model_summary || {};
+
+  return (
+    record.raw_engine_result ||
+    record.analysis_output ||
+    record.result ||
+    healthSummary ||
+    {}
+  );
+}
+
+function getHealthSummary(record) {
+  const snapshot = getSnapshot(record);
+  const raw = getRawResult(record);
+
+  return (
+    snapshot.health_model_research_model_summary ||
+    raw.health_model_research_model_summary ||
+    {}
+  );
+}
+
+function getCoverage(record) {
+  const healthSummary = getHealthSummary(record);
+  const raw = getRawResult(record);
+  return healthSummary.coverage || raw.coverage || {};
+}
+
+function getMappingRecords(record) {
+  const healthSummary = getHealthSummary(record);
+  const raw = getRawResult(record);
+
+  return (
+    healthSummary.question_parameter_mapping_records ||
+    raw.question_parameter_mapping_records ||
+    []
+  );
+}
+
+function getCalculatedParameterRecords(record) {
+  const healthSummary = getHealthSummary(record);
+  const raw = getRawResult(record);
+
+  return (
+    healthSummary.research_calculated_parameter_records ||
+    raw.research_calculated_parameter_records ||
+    record.research_calculated_parameter_records ||
+    []
+  );
+}
+
+    function getParticipantRef(record) {
+      const snapshot =
+        getSnapshot(record);
+
+      const reference =
+        snapshot.participant_reference || {};
+
+      const sourceSession =
+        snapshot.source_session || {};
+
+      const domainIdentity =
+        record.domain_data_identity || {};
+
+      const firstAnswerRecord =
+        Array.isArray(record.research_answer_records)
+          ? record.research_answer_records[0] || {}
+          : {};
+
+      return (
+        record.participant_id ||
+        domainIdentity.participant_id ||
+        sourceSession.participant_id ||
+        firstAnswerRecord.participant_id ||
+        record.account_id ||
+        reference.participant_id ||
+        reference.participant_reference ||
+        reference.export_scoped_participant_reference ||
+        ""
+      );
+    }
+
+function normalizeRecord(record) {
+  const raw = getRawResult(record);
+  const snapshot = getSnapshot(record);
+  const coverage = getCoverage(record);
+  const mappingRecords = getMappingRecords(record);
+  const parameterRecords = getCalculatedParameterRecords(record);
+  const sourceSession = snapshot.source_session || {};
+
+  return {
+    record_id: record.record_id || snapshot.snapshot_id || record.session_id,
+    record_source: record.record_source || record.record_type || "",
+    study_id: record.study_id || sourceSession.study_id || raw.study_id || "",
+    participant_ref: getParticipantRef(record),
+    session_id: record.session_id || sourceSession.session_id || "",
+    status: record.status || sourceSession.source_session_status || "",
+    updated_at: record.updated_at || sourceSession.updated_at || record.created_at || "",
+
+    result_type: raw.result_type || raw.model_id || "",
+    readiness_status:
+      raw.readiness_status ||
+      raw.readiness?.status ||
+      raw.state ||
+      "",
+
+    forecast_allowed:
+      raw.forecast_allowed ??
+      raw.forecast?.forecast_allowed ??
+      snapshot.forecast_summary?.allowed ??
+      "",
+
+    coverage_ratio: scalar(coverage.coverage_ratio),
+    provided_count: scalar(coverage.provided_count),
+    core_required_count: scalar(coverage.core_required_count),
+
+    missing_critical_count:
+      Array.isArray(coverage.missing_critical_data)
+        ? coverage.missing_critical_data.length
+        : "",
+
+    missing_required_count:
+      Array.isArray(coverage.missing_required_data)
+        ? coverage.missing_required_data.length
+        : "",
+
+    mapped_parameters_count:
+      Array.isArray(mappingRecords)
+        ? mappingRecords.length
+        : "",
+
+    calculated_parameters_count:
+      Array.isArray(parameterRecords)
+        ? parameterRecords.length
+        : "",
+
+    current_state_final:
+      scalar(raw.current_state?.current_state_final) ||
+      findParameterValue(parameterRecords, "current_state.current_state_final"),
+
+    stress_burden_final:
+      scalar(raw.stress_burden?.stress_burden_final) ||
+      findParameterValue(parameterRecords, "stress_burden.stress_burden_final"),
+
+    modeled_burden:
+      scalar(raw.modeled_burden?.modeled_burden) ||
+      findParameterValue(parameterRecords, "modeled_burden.modeled_burden"),
+
+    resource_deficit:
+      scalar(raw.modeled_burden?.resource_deficit) ||
+      scalar(raw.resource_deficit_domains?.resource_deficit_global) ||
+      findParameterValue(parameterRecords, "resource_deficit_domains.resource_deficit_global"),
+
+    raw_record: record,
+  };
+}
+
+function findParameterValue(records, code) {
+  const item = (records || []).find(r => r.parameter_code === code);
+  return item ? item.parameter_value : "";
+}
+
+function uiLabel(key) {
+  const params = new URLSearchParams(window.location.search);
+  const requestedLanguage = String(
+    document.documentElement.lang ||
+    localStorage.getItem("platform_language") ||
+    params.get("lang") ||
+    params.get("language") ||
+    "ru"
+  ).slice(0, 2).toLowerCase();
+  const language = ["ru", "en", "es"].includes(requestedLanguage)
+    ? requestedLanguage
+    : "ru";
+  const labels = {
+    "All studies": {
+      ru: "Все исследования",
+      en: "All studies",
+      es: "Todos los estudios",
+    },
+    "All statuses": {
+      ru: "Все статусы",
+      en: "All statuses",
+      es: "Todos los estados",
+    },
+    "Provided inputs": {
+      ru: "Предоставленные данные",
+      en: "Provided inputs",
+      es: "Datos proporcionados",
+    },
+    "Missing critical data": {
+      ru: "Отсутствуют критически важные данные",
+      en: "Missing critical data",
+      es: "Faltan datos críticos",
+    },
+    "Missing required data": {
+      ru: "Отсутствуют обязательные данные",
+      en: "Missing required data",
+      es: "Faltan datos obligatorios",
+    },
+  };
+
+  return labels[key]?.[language] || labels[key]?.ru || key;
+}
+
+function localizeFilterPlaceholders() {
+  const studyOption = document.querySelector('#studyFilter option[value=""]');
+  if (studyOption) studyOption.textContent = uiLabel("All studies");
+
+  const statusOption = document.querySelector('#statusFilter option[value=""]');
+  if (statusOption) statusOption.textContent = uiLabel("All statuses");
+}
+
+async function loadRecords() {
+  localizeFilterPlaceholders();
+  setStatus("Loading research records...");
+
+  const response = await fetch("/research/participant-data/records");
+  const data = await response.json();
+
+  if (!response.ok || !data.ok) {
+    setStatus("Failed to load records");
+    return;
+  }
+
+  const summaryRecords = data.records || [];
+
+  const detailedRecords = await Promise.all(
+    summaryRecords.map(async item => {
+      const id = item.record_id || item.session_id;
+      if (!id) return item;
+
+      const detailResponse = await fetch(
+        "/research/participant-data/records/" + encodeURIComponent(id)
+      );
+
+      if (!detailResponse.ok) return item;
+
+      const detailData = await detailResponse.json();
+      if (!detailData.ok || !detailData.record) return item;
+
+      return detailData.record;
+    })
+  );
+
+  rawRecords = detailedRecords;
+  rows = rawRecords.map(normalizeRecord);
+
+  if (!selectedRecordId && rows.length) {
+    selectedRecordId = rows[0].record_id;
+  }
+
+  buildFilters();
+  buildParameterSelect();
+  renderAll();
+
+  setStatus("Loaded: " + rows.length + " records");
+}
+
+    function buildFilters() {
+      const studySelect = document.getElementById("studyFilter");
+      const currentStudy = studySelect.value;
+
+      const studies = [
+        ...new Set(
+          rows
+            .map(row => row.study_id)
+            .filter(Boolean)
+        )
+      ].sort();
+
+      studySelect.innerHTML =
+        `<option value="">${escapeHtml(uiLabel("All studies"))}</option>` +
+        studies.map(study => `
+          <option value="${escapeHtml(study)}">
+            ${escapeHtml(study)}
+          </option>
+        `).join("");
+
+      if (currentStudy && studies.includes(currentStudy)) {
+        studySelect.value = currentStudy;
+      } else {
+        studySelect.value = "";
+      }
+
+      buildStatusFilter();
+    }
+
+
+    function buildStatusFilter() {
+      const studySelect = document.getElementById("studyFilter");
+      const statusSelect = document.getElementById("statusFilter");
+
+      const selectedStudy = studySelect.value;
+      const currentStatus = statusSelect.value;
+
+      const studyRows = rows.filter(row => {
+        return !selectedStudy || row.study_id === selectedStudy;
+      });
+
+      const statuses = [
+        ...new Set(
+          studyRows
+            .map(row => row.status)
+            .filter(Boolean)
+        )
+      ].sort();
+
+      statusSelect.innerHTML =
+        `<option value="">${escapeHtml(uiLabel("All statuses"))}</option>` +
+        statuses.map(status => `
+          <option value="${escapeHtml(status)}">
+            ${escapeHtml(status)}
+          </option>
+        `).join("");
+
+      if (currentStatus && statuses.includes(currentStatus)) {
+        statusSelect.value = currentStatus;
+      } else {
+        statusSelect.value = "";
+      }
+      localizeFilterPlaceholders();
+    }
+
+
+    function buildParameterSelect() {
+      const select = document.getElementById("parameterSelect");
+      const currentParameter = select.value;
+
+      const visibleRows = getFilteredRows();
+      const parameterCodes = new Set();
+
+      visibleRows.forEach(row => {
+        getCalculatedParameterRecords(row.raw_record).forEach(record => {
+          if (record.parameter_code) {
+            parameterCodes.add(record.parameter_code);
+          }
+        });
+      });
+
+      const sortedCodes = [...parameterCodes].sort();
+
+      if (!sortedCodes.length) {
+        select.innerHTML = `
+          <option value="">
+            No parameters for current selection
+          </option>
+        `;
+        select.value = "";
+        return;
+      }
+
+      select.innerHTML = sortedCodes.map(code => `
+        <option value="${escapeHtml(code)}">
+          ${escapeHtml(code)}
+        </option>
+      `).join("");
+
+      if (
+        currentParameter &&
+        sortedCodes.includes(currentParameter)
+      ) {
+        select.value = currentParameter;
+      } else {
+        select.value = sortedCodes[0];
+      }
+    }
+
+
+    function handleStudyChange() {
+      buildStatusFilter();
+      buildParameterSelect();
+
+      const visibleRows = getFilteredRows();
+
+      selectedRecordId = visibleRows.length
+        ? visibleRows[0].record_id
+        : null;
+
+      renderAll();
+    }
+
+
+    function handleStatusChange() {
+      buildParameterSelect();
+
+      const visibleRows = getFilteredRows();
+
+      selectedRecordId = visibleRows.length
+        ? visibleRows[0].record_id
+        : null;
+
+      renderAll();
+    }
+
+function getFilteredRows() {
+  const study = document.getElementById("studyFilter").value;
+  const status = document.getElementById("statusFilter").value;
+  const query = document.getElementById("searchInput").value.trim().toLowerCase();
+
+  return rows.filter(row => {
+    if (study && row.study_id !== study) return false;
+    if (status && row.status !== status) return false;
+
+    if (query) {
+      const haystack = [
+        row.study_id,
+        row.status,
+        row.session_id,
+        row.participant_ref,
+        row.readiness_status,
+      ].join(" ").toLowerCase();
+
+      if (!haystack.includes(query)) return false;
+    }
+
+    return true;
+  });
+}
+
+function sortRecords(key) {
+  if (recordSortKey === key) {
+    recordSortDirection *= -1;
+  } else {
+    recordSortKey = key;
+    recordSortDirection = 1;
+  }
+  renderRecords();
+}
+
+function setTab(tab) {
+  activeTab = tab;
+
+  document.querySelectorAll(".tab").forEach(el => {
+    el.classList.remove("active");
+  });
+
+  [...document.querySelectorAll(".tab")]
+    .find(el => el.textContent.toLowerCase().includes(tab === "raw" ? "raw" : tab))
+    ?.classList.add("active");
+
+  ["records", "parameters", "mapping", "coverage", "statistics", "raw"].forEach(id => {
+    document.getElementById("tab-" + id).classList.toggle("hidden", id !== tab);
+  });
+
+  renderAll();
+}
+
+function renderAll() {
+  renderMetrics();
+  renderRecords();
+  renderParameters();
+  renderMapping();
+  renderCoverage();
+  renderStatistics();
+  renderRaw();
+}
+
+function renderMetrics() {
+  const visible = getFilteredRows();
+  const studies = new Set(visible.map(r => r.study_id).filter(Boolean));
+  const participants = new Set(visible.map(r => r.participant_ref || r.session_id).filter(Boolean));
+
+  const coverageValues = visible
+    .map(r => Number(r.coverage_ratio))
+    .filter(Number.isFinite);
+
+  const avgCoverage = coverageValues.length
+    ? mean(coverageValues) * 100
+    : null;
+
+  document.getElementById("metricRecords").innerText = visible.length;
+  document.getElementById("metricStudies").innerText = studies.size;
+  document.getElementById("metricParticipants").innerText = participants.size;
+  document.getElementById("metricCoverage").innerText =
+    avgCoverage === null ? "—" : avgCoverage.toFixed(1) + "%";
+}
+
+function renderRecords() {
+  const body = document.getElementById("recordsBody");
+
+  const visible = getFilteredRows().slice().sort((a, b) => {
+    const av = a[recordSortKey];
+    const bv = b[recordSortKey];
+
+    if (av === bv) return 0;
+    if (av === undefined || av === null || av === "") return 1;
+    if (bv === undefined || bv === null || bv === "") return -1;
+
+    return av > bv ? recordSortDirection : -recordSortDirection;
+  });
+
+  body.innerHTML = visible.map(row => {
+    const coveragePercent =
+      row.coverage_ratio === "" ? "" : (Number(row.coverage_ratio) * 100).toFixed(1) + "%";
+
+    const forecastBadge =
+      row.forecast_allowed === true
+        ? `<span class="badge green">true</span>`
+        : row.forecast_allowed === false
+          ? `<span class="badge red">false</span>`
+          : escapeHtml(row.forecast_allowed ?? "");
+
+    return `
+      <tr onclick="selectRecord('${escapeHtml(row.record_id)}')" class="${row.record_id === selectedRecordId ? "row-selected" : ""}">
+        <td>${escapeHtml(row.updated_at)}</td>
+        <td>${escapeHtml(row.study_id)}</td>
+        <td>${escapeHtml(row.status)}</td>
+        <td>${escapeHtml(row.session_id)}</td>
+        <td>${escapeHtml(row.participant_ref)}</td>
+        <td>${escapeHtml(row.readiness_status)}</td>
+        <td>${forecastBadge}</td>
+        <td>${escapeHtml(coveragePercent)}</td>
+        <td>${escapeHtml(row.provided_count)}</td>
+        <td>${escapeHtml(row.missing_critical_count)}</td>
+        <td>${escapeHtml(row.mapped_parameters_count)}</td>
+        <td>${escapeHtml(row.calculated_parameters_count)}</td>
+        <td>${escapeHtml(row.current_state_final)}</td>
+        <td>${escapeHtml(row.stress_burden_final)}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+    function selectRecord(recordId) {
+      const row = rows.find(
+        item => item.record_id === recordId
+      );
+
+      if (!row || !row.participant_ref) {
+        return;
+      }
+
+      window.location.href =
+        "/data-check?participant_ref=" +
+        encodeURIComponent(row.participant_ref);
+    }
+
+function getSelectedRecord() {
+  return rows.find(r => r.record_id === selectedRecordId) || rows[0] || null;
+}
+
+function renderParameters() {
+  const body = document.getElementById("parametersBody");
+  const visibleRows = getFilteredRows();
+
+  const items = [];
+
+  visibleRows.forEach(row => {
+    getCalculatedParameterRecords(row.raw_record).forEach(record => {
+      items.push({
+        session_id: row.session_id,
+        ...record,
+      });
+    });
+  });
+
+  document.getElementById("parameterCount").innerText = items.length + " parameter records";
+
+  body.innerHTML = items.map(item => `
+    <tr>
+      <td>${escapeHtml(item.session_id)}</td>
+      <td>${escapeHtml(item.parameter_code)}</td>
+      <td>${escapeHtml(item.parameter_value)}</td>
+      <td>${escapeHtml(item.parameter_value_type)}</td>
+      <td>${escapeHtml(item.scale_type)}</td>
+      <td>${escapeHtml(item.model_id)}</td>
+      <td>${escapeHtml(item.source_mode)}</td>
+    </tr>
+  `).join("");
+}
+
+function renderMapping() {
+  const body = document.getElementById("mappingBody");
+  const visibleRows = getFilteredRows();
+
+  const items = [];
+
+  visibleRows.forEach(row => {
+    getMappingRecords(row.raw_record).forEach(record => {
+      items.push({
+        session_id: row.session_id,
+        ...record,
+      });
+    });
+  });
+
+  document.getElementById("mappingCount").innerText = items.length + " mapping records";
+
+  body.innerHTML = items.map(item => `
+    <tr>
+      <td>${escapeHtml(item.session_id)}</td>
+      <td>${escapeHtml(item.question_uuid)}</td>
+      <td>${escapeHtml(item.question_code)}</td>
+      <td>${escapeHtml(item.model_parameter_code)}</td>
+      <td>${escapeHtml(item.answer_value)}</td>
+      <td>${escapeHtml(item.mapping_type)}</td>
+    </tr>
+  `).join("");
+}
+
+function renderCoverage() {
+  const box = document.getElementById("coverageBox");
+  const selected = getSelectedRecord();
+
+  if (!selected) {
+    box.innerHTML = "<p>No record selected.</p>";
+    return;
+  }
+
+  const coverage = getCoverage(selected.raw_record);
+  const missingRequired = coverage.missing_required_data || [];
+  const missingCritical = coverage.missing_critical_data || [];
+  const provided = coverage.provided_inputs || [];
+
+  box.innerHTML = `
+    <p><b>Session:</b> ${escapeHtml(selected.session_id)}</p>
+    <p><b>Coverage:</b> ${coverage.coverage_ratio === undefined ? "" : (Number(coverage.coverage_ratio) * 100).toFixed(1) + "%"}</p>
+    <p><b>Provided:</b> ${escapeHtml(coverage.provided_count ?? "")} / ${escapeHtml(coverage.core_required_count ?? "")}</p>
+    <p><b>Missing critical:</b> ${missingCritical.length}</p>
+
+    <h3>${uiLabel("Provided inputs")}</h3>
+    <p>${provided.map(v => `<span class="badge green">${escapeHtml(v)}</span>`).join(" ") || "—"}</p>
+
+    <h3>${uiLabel("Missing critical data")}</h3>
+    <p>${missingCritical.map(v => `<span class="badge red">${escapeHtml(v)}</span>`).join(" ") || "—"}</p>
+
+    <h3>${uiLabel("Missing required data")}</h3>
+    <pre>${escapeHtml(JSON.stringify(missingRequired, null, 2))}</pre>
+  `;
+}
+
+function mean(values) {
+  return values.reduce((a, b) => a + b, 0) / values.length;
+}
+
+function median(values) {
+  const sorted = values.slice().sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+function std(values) {
+  if (values.length < 2) return 0;
+  const m = mean(values);
+  return Math.sqrt(mean(values.map(v => (v - m) ** 2)));
+}
+
+function renderStatistics() {
+  const box = document.getElementById("statsBox");
+  const code = document.getElementById("parameterSelect").value;
+
+  if (!code) {
+    box.innerHTML = "<p>No parameter selected.</p>";
+    return;
+  }
+
+  const visibleRows = getFilteredRows();
+  const values = [];
+
+  visibleRows.forEach(row => {
+    const records = getCalculatedParameterRecords(row.raw_record);
+    const item = records.find(r => r.parameter_code === code);
+    if (item && item.parameter_value !== null && item.parameter_value !== undefined && item.parameter_value !== "") {
+      values.push(item.parameter_value);
+    }
+  });
+
+  const nums = values.map(Number).filter(Number.isFinite);
+
+  let html = `
+    <p><b>Parameter:</b> ${escapeHtml(code)}</p>
+    <p><b>Total visible records:</b> ${visibleRows.length}</p>
+    <p><b>Available values:</b> ${values.length}</p>
+    <p><b>Missing:</b> ${visibleRows.length - values.length}</p>
+  `;
+
+  if (nums.length >= 2 && nums.length === values.length) {
+    html += `
+      <h3>Numeric statistics</h3>
+      <p><b>n:</b> ${nums.length}</p>
+      <p><b>mean:</b> ${mean(nums).toFixed(3)}</p>
+      <p><b>median:</b> ${median(nums).toFixed(3)}</p>
+      <p><b>min:</b> ${Math.min(...nums)}</p>
+      <p><b>max:</b> ${Math.max(...nums)}</p>
+      <p><b>std:</b> ${std(nums).toFixed(3)}</p>
+    `;
+  } else {
+    const counts = {};
+    values.forEach(v => {
+      const key = String(v);
+      counts[key] = (counts[key] || 0) + 1;
+    });
+
+    html += `
+      <h3>Distribution</h3>
+      <table>
+        <thead>
+          <tr><th>value</th><th>count</th><th>percent</th></tr>
+        </thead>
+        <tbody>
+          ${Object.entries(counts).map(([key, count]) => `
+            <tr>
+              <td>${escapeHtml(key)}</td>
+              <td>${count}</td>
+              <td>${((count / values.length) * 100).toFixed(1)}%</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  box.innerHTML = html;
+}
+
+function renderRaw() {
+  const selected = getSelectedRecord();
+  const box = document.getElementById("rawBox");
+
+  if (!selected) {
+    box.innerText = "Select a record.";
+    return;
+  }
+
+  box.innerText = JSON.stringify(selected.raw_record, null, 2);
+}
+
+function copySelectedJson() {
+  const selected = getSelectedRecord();
+  if (!selected) return;
+  navigator.clipboard.writeText(JSON.stringify(selected.raw_record, null, 2));
+}
+
+window.addEventListener("platform-language-change", () => {
+  localizeFilterPlaceholders();
+  renderCoverage();
+});
+
+loadRecords();
+</script>
+
+</body>
+</html>

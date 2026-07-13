@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Measurement Setup</title>
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+  color: #1f2937;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 300px 1fr 360px;
+  height: 100vh;
+}
+
+.sidebar {
+  background: #111827;
+  color: white;
+  padding: 20px;
+  overflow: auto;
+}
+
+.main,
+.right {
+  padding: 22px;
+  overflow: auto;
+}
+
+.right {
+  background: white;
+  border-left: 1px solid #ddd;
+}
+
+.card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.small {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.sidebar .small {
+  color: #cbd5e1;
+}
+
+.source-btn,
+.connector-btn {
+  width: 100%;
+  display: block;
+  text-align: left;
+  border: 1px solid #d1d5db;
+  border-radius: 14px;
+  padding: 14px;
+  margin: 10px 0;
+  background: white;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.source-btn:hover,
+.connector-btn:hover {
+  background: #eef2ff;
+}
+
+.source-btn.active,
+.connector-btn.active {
+  border-color: #111827;
+  background: #eef2ff;
+}
+
+.primary {
+  background: #111827;
+  color: white;
+  border: 0;
+  border-radius: 12px;
+  padding: 11px 15px;
+  cursor: pointer;
+}
+
+.secondary {
+  background: white;
+  color: #111827;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 13px;
+}
+
+.badge.planned {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge.empty {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.hidden {
+  display: none;
+}
+
+pre {
+  white-space: pre-wrap;
+  background: #111827;
+  color: #e5e7eb;
+  padding: 14px;
+  border-radius: 14px;
+  max-height: 420px;
+  overflow: auto;
+}
+</style>
+<script src="/static/platform_i18n.js?v=20260712-sync"></script>
+</head>
+
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <h2>Measurement Setup</h2>
+    <p class="small">
+      Select a real connection mechanism. The system discovers what is actually available.
+    </p>
+
+    <button class="source-btn" onclick="selectCategory('questionnaires', event)">
+      📋 Questionnaires
+    </button>
+
+    <button class="source-btn" onclick="selectCategory('cameras', event)">
+      🎥 Cameras
+    </button>
+
+    <button class="source-btn" onclick="selectCategory('serial_devices', event)">
+      🔌 USB / Serial Devices
+    </button>
+
+    <button class="source-btn" onclick="selectCategory('file_import', event)">
+      📄 File Import
+    </button>
+
+    <button class="source-btn" onclick="selectCategory('extensions', event)">
+      🧩 Extension Connectors
+    </button>
+
+    <hr style="border:0;border-top:1px solid #374151;margin:20px 0;">
+
+    <button class="source-btn" onclick="loadConnectors()">
+      🔄 Refresh connections
+    </button>
+
+    <button class="source-btn" onclick="location.href='/research-workspace'">
+      ← Workspace
+    </button>
+  </aside>
+
+  <main class="main">
+    <div class="card">
+      <h1>Measurement Setup</h1>
+      <p class="small">
+        This screen is only for setting up measurements: questionnaires, cameras,
+        USB/serial devices and files. No analysis is performed here.
+      </p>
+    </div>
+    
+    <div class="card">
+      <h2>Registered instruments</h2>
+      <p class="small">
+        Only registered instruments participate in measurement sessions.
+      </p>
+      <div id="registeredInstrumentsBox" class="small">
+        No instruments registered yet.
+      </div>
+    </div>
+    
+    <div class="card">
+      <h2 id="categoryTitle">No category selected</h2>
+      <p id="categoryHelp" class="small">
+        Choose a connection type on the left.
+      </p>
+
+      <div id="connectorsBox"></div>
+    </div>
+
+    <div id="selectedCard" class="card hidden">
+      <h2>Selected connection</h2>
+      <div id="selectedBox"></div>
+
+      <div style="margin-top:14px;">
+        <button class="primary" onclick="createMeasurementPackage()">
+            Create Measurement Package
+        </button>
+      </div>
+    </div>
+
+    <div id="graphCard" class="card hidden">
+        <h2>Measurement Package for Cube 1</h2>
+      <p class="small">
+      This package is created after the measurement is finished.
+        Cube 1 will read this package, not the instrument directly.
+      </p>
+      <pre id="graphOutput"></pre>
+    </div>
+  </main>
+
+  <aside class="right">
+    <h2>Status</h2>
+
+    <div class="card">
+      <h3>Connection scan</h3>
+      <p id="scanStatus" class="small">Not scanned yet.</p>
+    </div>
+
+    <div class="card">
+      <h3>Current rule</h3>
+      <p class="small">
+        This page must show only real discovered connections or real extension mechanisms.
+        No fake device list.
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>Extension mechanisms</h3>
+      <p class="small">
+        Extensions are allowed as connector mechanisms, but they do not pretend
+        that a device is already connected.
+      </p>
+    </div>
+  </aside>
+
+</div>
+
+<script>
+let connectors = {};
+let selectedCategory = null;
+let selectedConnector = null;
+let currentMeasurementPackage = null;
+let registeredInstruments = [];
+
+const CATEGORY_LABELS = {
+  questionnaires: { title: "📋 Questionnaires", help: "Registered questionnaires found in the system." },
+  cameras: { title: "🎥 Cameras", help: "Camera devices detected by the backend." },
+  serial_devices: { title: "🔌 USB / Serial Devices", help: "Registered USB / serial devices." },
+  file_import: { title: "📄 File Import", help: "Real file picker connection for measurement files." },
+  manual: { title: "✍️ Manual", help: "Manual measurement description." },
+  gps: { title: "📍 GPS", help: "GPS/location measurement connector." }
+};
+
+async function loadConnectors() {
+  document.getElementById("scanStatus").innerText = "Scanning...";
+
+  const response = await fetch("/measurement/connectors");
+  const data = await response.json();
+
+  if (!response.ok || !data.ok) {
+    document.getElementById("scanStatus").innerText =
+      "Scan failed: " + JSON.stringify(data);
+    return;
+  }
+
+  connectors = data.connectors || {};
+  document.getElementById("scanStatus").innerText = "Scan complete.";
+
+  if (selectedCategory) renderCategory();
+}
+
+async function loadRegisteredInstruments() {
+  const response = await fetch("/measurement/instruments");
+  const data = await response.json();
+
+  if (!response.ok || !data.ok) {
+    alert("Failed to load registered instruments: " + JSON.stringify(data));
+    return;
+  }
+
+  registeredInstruments = data.instruments || [];
+  renderRegisteredInstruments();
+}
+
+function selectCategory(category, event) {
+  selectedCategory = category;
+  selectedConnector = null;
+
+  document.querySelectorAll(".source-btn").forEach(btn => {
+    btn.classList.remove("active");
+  });
+
+  if (event && event.currentTarget) {
+    event.currentTarget.classList.add("active");
+  }
+
+  document.getElementById("selectedCard").classList.add("hidden");
+  document.getElementById("graphCard").classList.add("hidden");
+
+  renderCategory();
+}
+
+function renderCategory() {
+  const meta = CATEGORY_LABELS[selectedCategory];
+
+  document.getElementById("categoryTitle").innerText =
+    meta ? meta.title : selectedCategory;
+
+  document.getElementById("categoryHelp").innerText =
+    meta ? meta.help : "";
+
+  const list = connectors[selectedCategory] || [];
+  const box = document.getElementById("connectorsBox");
+
+  if (!list.length) {
+    box.innerHTML = `
+      <p class="small">
+        <span class="badge empty">none detected</span>
+        No registered or available instrument found for this category.
+      </p>
+    `;
+    return;
+  }
+
+  box.innerHTML = list.map((item, index) => `
+    <button class="connector-btn" onclick="selectConnector(${index}, event)">
+      <b>${escapeHtml(item.title || item.connector_id)}</b><br>
+      <span class="small">
+        ${escapeHtml(item.connector_type || "")}
+        · ${escapeHtml(item.connection_method || "")}
+        · ${escapeHtml(item.status || "")}
+      </span>
+    </button>
+  `).join("");
+}
+
+function selectConnector(index, event) {
+  const list = connectors[selectedCategory] || [];
+  selectedConnector = list[index];
+
+  document.querySelectorAll(".connector-btn").forEach(btn => {
+    btn.classList.remove("active");
+  });
+
+  if (event && event.currentTarget) {
+    event.currentTarget.classList.add("active");
+  }
+
+  renderSelectedConnector();
+}
+
+function renderSelectedConnector() {
+  document.getElementById("selectedCard").classList.remove("hidden");
+  document.getElementById("graphCard").classList.add("hidden");
+
+  document.getElementById("selectedBox").innerHTML =
+    Object.entries(selectedConnector).map(([key, value]) => `
+      <div class="kv">
+        <b>${escapeHtml(key)}</b>
+        <span>${escapeHtml(formatValue(value))}</span>
+      </div>
+    `).join("") + `
+      <div style="margin-top:14px;">
+        <button class="primary" onclick="registerSelectedInstrument()">
+          Register instrument
+        </button>
+      </div>
+    `;
+}
+
+async function registerSelectedInstrument() {
+  if (!selectedConnector) {
+    alert("Select an instrument first.");
+    return;
+  }
+
+  const instrumentId =
+    selectedConnector.connector_type + "_" +
+    selectedConnector.connector_id;
+
+  const response = await fetch("/measurement/instruments/register", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      instrument_id: instrumentId,
+      connector: selectedConnector,
+      measurement_type: selectedConnector.connector_type,
+      study_id: "health_model",
+      participant_id: "anonymous_participant",
+      session_id: "manual_session",
+      context: {
+        lang: "en",
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      }
+    })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || !data.ok) {
+    alert("Registration failed: " + JSON.stringify(data));
+    return;
+  }
+
+  await loadRegisteredInstruments();
+}
+
+function renderRegisteredInstruments() {
+  const box = document.getElementById("registeredInstrumentsBox");
+
+  if (!registeredInstruments.length) {
+    box.innerHTML = "No instruments registered yet.";
+    return;
+  }
+
+  box.innerHTML = registeredInstruments.map((item, index) => `
+    <div style="border:1px solid #ddd;border-radius:14px;padding:12px;margin-bottom:10px;background:#f9fafb;">
+      <b>${escapeHtml(item.connector.title || item.instrument_id)}</b>
+      <div class="small">
+        ${escapeHtml(item.connector.connector_type)}
+        · ${escapeHtml(item.status)}
+      </div>
+
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="primary" onclick="instrumentOn(${index})">
+          ON / Start session
+        </button>
+        <button class="secondary" onclick="instrumentOff(${index})">
+          OFF / Finish session
+        </button>
+      </div>
+    </div>
+  `).join("");
+}
+
+async function instrumentOn(index) {
+  const item = registeredInstruments[index];
+
+  const response = await fetch(
+    "/measurement/instruments/" + encodeURIComponent(item.instrument_id) + "/on",
+    { method: "POST" }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok || !data.ok) {
+    alert("ON failed: " + JSON.stringify(data));
+    return;
+  }
+
+  await loadRegisteredInstruments();
+}
+
+async function instrumentOff(index) {
+  const item = registeredInstruments[index];
+
+  const response = await fetch(
+    "/measurement/instruments/" + encodeURIComponent(item.instrument_id) + "/off",
+    {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        raw_file_path: null,
+        original_file_name: null,
+        file_type: null,
+        checksum: null
+      })
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok || !data.ok) {
+    alert("OFF failed: " + JSON.stringify(data));
+    return;
+  }
+
+  currentMeasurementPackage = data.measurement_package;
+
+  document.getElementById("graphOutput").innerText =
+    JSON.stringify(currentMeasurementPackage, null, 2);
+
+  document.getElementById("graphCard").classList.remove("hidden");
+
+  await loadRegisteredInstruments();
+}
+
+function formatValue(value) {
+  if (value === null || value === undefined) return "—";
+  if (Array.isArray(value)) return value.join(", ");
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+loadConnectors();
+loadRegisteredInstruments();
+</script>
+
+</body>
+</html>

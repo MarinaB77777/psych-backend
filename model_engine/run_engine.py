@@ -1,5 +1,7 @@
 from model_engine.coverage import compute_coverage
 from model_engine.quality import compute_q_basic
+from model_engine.readiness import analyze_readiness
+from model_engine.vnext_signals import compute_vnext_signals
 from model_engine.states import (
     determine_initial_state,
     determine_final_state,
@@ -11,6 +13,7 @@ from model_engine.stress import compute_s
 from model_engine.delta import compute_delta
 from model_engine.consistency import compute_consistency
 from model_engine.outputs import build_output
+from model_engine.pilot_public_output import build_pilot_public_output
 from model_engine.pressure import compute_pressure
 from model_engine.multipliers import compute_multipliers
 from model_engine.questions import (
@@ -27,6 +30,7 @@ from model_engine.warnings_engine import (
 )
 from model_engine.forecast import build_forecast_governance
 from model_engine.uncertainty import build_uncertainty_profile
+from model_engine.vnext_reasons import build_vnext_reason_codes
 
 def dedupe_list(items: list):
     result = []
@@ -59,6 +63,10 @@ def run_engine_logic(answers: dict):
     k_self_data = compute_k_self(answers)
     loads_data = compute_loads(answers)
 
+    vnext_signals_data = compute_vnext_signals(answers)
+    vnext_reason_codes = build_vnext_reason_codes(
+        vnext_signals_data
+    )
     pressure_data = compute_pressure(
         answers=answers,
         loads_data=loads_data,
@@ -108,6 +116,7 @@ def run_engine_logic(answers: dict):
         coverage_data=coverage_data,
         delta_data=delta_data,
         consistency_data=c_data,
+        vnext_signals_data=vnext_signals_data,
         answers=answers,
         state=final_state_data["state"],
         limit=3,
@@ -129,8 +138,8 @@ def run_engine_logic(answers: dict):
         state_data.get("reason_codes", [])
         + final_state_data.get("reason_codes", [])
         + pressure_data.get("reason_codes", [])
+        + vnext_reason_codes
     )
-
     combined_raw_warnings = (
         state_data.get("warnings", [])
         + pressure_data.get("warnings", [])
@@ -185,6 +194,23 @@ def run_engine_logic(answers: dict):
         "confidence": confidence,
         "engine_location": "backend",
 
+        # Readiness compatibility
+
+        "history": {},
+
+        "metadata": {
+            "shared_time_reference_ready": False,
+        },
+
+        "sources": {
+            "questionnaires": True,
+            "sensors": False,
+            "baselines": False,
+            "history": False,
+            "context": False,
+            "external_verification": False,
+        },
+
         "coverage": coverage_data["coverage"],
         "missing_fields": coverage_data["missing_fields"],
         "q_global": q_data["q_global"],
@@ -202,6 +228,7 @@ def run_engine_logic(answers: dict):
 
         "r": r_data,
         "k_self": k_self_data,
+        "vnext_signals": vnext_signals_data,
         "loads": loads_data,
         "pressure": pressure_data,
         "multipliers": multipliers_data,
@@ -216,5 +243,12 @@ def run_engine_logic(answers: dict):
         ),
         "output": output_data,
     }
+    readiness_data = analyze_readiness(result)
+
+    result["readiness"] = readiness_data
+
+    pilot_public_output = build_pilot_public_output(result)
+
+    result["pilot_public_output"] = pilot_public_output
 
     return result

@@ -1,0 +1,1494 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Living World</title>
+  <style>
+    :root {
+      --bg: #eef2f1;
+      --panel: #ffffff;
+      --ink: #1f2933;
+      --muted: #637083;
+      --line: #d9e1ea;
+      --primary: #24505f;
+      --primary-soft: #e7f1f2;
+      --green: #537b62;
+      --gold: #a56f2a;
+      --danger: #8a3b3b;
+      --shadow: 0 10px 24px rgba(30, 45, 55, 0.10);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      color: var(--ink);
+      background: linear-gradient(#eaf0f3, #f4f6f4);
+    }
+    header {
+      min-height: 72px;
+      padding: 16px 22px;
+      background: rgba(255,255,255,0.94);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+    main {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+    h1, h2, h3 { margin: 0 0 8px; letter-spacing: 0; }
+    p { line-height: 1.45; }
+    button, input {
+      font: inherit;
+      border-radius: 7px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink);
+      padding: 10px 13px;
+      cursor: pointer;
+    }
+    button.primary {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+      font-weight: 700;
+    }
+    button.danger {
+      border-color: #e8caca;
+      color: var(--danger);
+    }
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    input {
+      width: 100%;
+      max-width: 340px;
+      padding: 10px;
+      border: 1px solid var(--line);
+    }
+    .small { color: var(--muted); font-size: 13px; }
+    .hidden { display: none !important; }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .stage-line {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .stage-line span {
+      padding: 6px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .stage-line span.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin: 10px 0;
+    }
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 9px;
+      background: #f9fbfb;
+      min-height: 58px;
+    }
+    .stat strong {
+      display: block;
+      font-size: 18px;
+      margin-top: 2px;
+    }
+    .palette {
+      display: grid;
+      gap: 8px;
+      max-height: 55vh;
+      overflow: auto;
+      padding-right: 2px;
+    }
+    .palette button {
+      text-align: left;
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 8px;
+      align-items: center;
+      min-height: 56px;
+    }
+    .palette button.added {
+      background: var(--primary-soft);
+      border-color: var(--primary);
+    }
+    .icon {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #edf3ef;
+      color: var(--primary);
+      font-weight: 700;
+    }
+    .world-wrap {
+      min-height: 650px;
+    }
+    .world-scene {
+      position: relative;
+      min-height: 520px;
+      overflow: hidden;
+      border: 1px solid #cbd8df;
+      border-radius: 8px;
+      background:
+        linear-gradient(to bottom, rgba(255,255,255,0.22), rgba(255,255,255,0)),
+        linear-gradient(to bottom, #dcecf5 0 48%, #cfe1ca 49% 100%);
+      transition: background 250ms ease;
+    }
+    .world-scene.spring { background: linear-gradient(to bottom, #d9edf4 0 48%, #cfe8d0 49% 100%); }
+    .world-scene.summer { background: linear-gradient(to bottom, #d8edf7 0 48%, #b9dcaa 49% 100%); }
+    .world-scene.autumn { background: linear-gradient(to bottom, #e5eef5 0 48%, #d8c48d 49% 100%); }
+    .world-scene.winter { background: linear-gradient(to bottom, #e7f0f5 0 48%, #e8eeee 49% 100%); }
+    .road {
+      position: absolute;
+      left: -4%;
+      right: -4%;
+      bottom: 78px;
+      height: 54px;
+      background: #a5a7a0;
+      transform: rotate(-2deg);
+      opacity: 0.88;
+    }
+    .casino-building {
+      position: absolute;
+      right: 24px;
+      bottom: 150px;
+      width: 94px;
+      height: 76px;
+      border: 2px solid #935f2c;
+      background: #f4d191;
+      border-radius: 7px 7px 4px 4px;
+      display: grid;
+      place-items: center;
+      color: #5b3c1f;
+      font-weight: 700;
+      opacity: 0.42;
+      transition: opacity 200ms ease, transform 200ms ease;
+    }
+    .casino-building.active {
+      opacity: 1;
+      transform: translateY(-4px);
+    }
+    .avatar {
+      position: absolute;
+      left: 42px;
+      bottom: 122px;
+      width: 34px;
+      height: 46px;
+      border-radius: 16px 16px 10px 10px;
+      background: var(--primary);
+      box-shadow: 0 5px 0 rgba(0,0,0,0.08);
+      transition: left 300ms ease, bottom 300ms ease;
+      z-index: 3;
+    }
+    .world-object {
+      position: absolute;
+      width: 92px;
+      min-height: 72px;
+      padding: 8px;
+      border: 2px solid rgba(36,80,95,0.22);
+      background: rgba(255,255,255,0.92);
+      border-radius: 8px;
+      box-shadow: 0 7px 16px rgba(25,40,50,0.12);
+      text-align: center;
+      transition: transform 220ms ease, opacity 240ms ease, filter 240ms ease;
+      cursor: default;
+    }
+    .world-object .glyph {
+      font-size: 24px;
+      line-height: 1;
+      margin-bottom: 5px;
+    }
+    .world-object button {
+      padding: 3px 6px;
+      margin-top: 5px;
+      font-size: 12px;
+    }
+    .world-object.changed {
+      border-color: var(--gold);
+      background: #fff6e5;
+    }
+    .world-object.damaged, .world-object.unavailable {
+      filter: grayscale(0.45);
+      opacity: 0.68;
+      border-color: #a98787;
+    }
+    .world-object.lost {
+      opacity: 0.12;
+      transform: translateY(18px) scale(0.86);
+      pointer-events: none;
+      filter: grayscale(1);
+    }
+    .world-object.preserved {
+      border-color: var(--green);
+      background: #eef7ee;
+    }
+    .world-object.selectable {
+      cursor: pointer;
+    }
+    .world-object.selectable:hover {
+      transform: translateY(-4px);
+    }
+    .world-object.selected {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      transform: translateY(-6px);
+    }
+    .event-feed {
+      margin-top: 12px;
+      display: grid;
+      gap: 6px;
+      max-height: 150px;
+      overflow: auto;
+    }
+    .event-feed div {
+      padding: 7px 9px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fafbfb;
+      font-size: 13px;
+    }
+    .notice {
+      padding: 11px;
+      border: 1px solid #efd495;
+      background: #fff8e7;
+      border-radius: 8px;
+    }
+    @media (max-width: 820px) {
+      header { display: block; }
+      main { padding: 12px; }
+      .layout { grid-template-columns: 1fr; }
+      .world-wrap { min-height: 540px; }
+      .world-scene { min-height: 430px; }
+      .stats { grid-template-columns: 1fr; }
+      .palette { max-height: none; }
+      .world-object { width: 78px; min-height: 66px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1 id="pageTitle"></h1>
+      <p class="small" id="pageSubtitle"></p>
+    </div>
+    <div class="toolbar" aria-label="Language">
+      <button type="button" onclick="setLang('ru')">RU</button>
+      <button type="button" onclick="setLang('en')">EN</button>
+      <button type="button" onclick="setLang('es')">ES</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="intro" class="panel">
+      <h2 data-t="introTitle"></h2>
+      <p data-t="introText"></p>
+      <label class="small" for="participantId" data-t="participantLabel"></label>
+      <div class="toolbar">
+        <input id="participantId" autocomplete="off" />
+        <button id="startGameButton" class="primary" type="button" onclick="startGame()" data-t="start"></button>
+      </div>
+      <p class="small" data-t="sensorNote"></p>
+    </section>
+
+    <section id="game" class="hidden">
+      <div class="stage-line" id="stageLine"></div>
+      <div class="layout">
+        <aside class="panel">
+          <h2 id="phaseTitle"></h2>
+          <p id="phaseText"></p>
+          <div class="stats">
+            <div class="stat"><span data-t="period"></span><strong id="periodValue">-</strong></div>
+            <div class="stat"><span data-t="season"></span><strong id="seasonValue">-</strong></div>
+            <div class="stat"><span data-t="balance"></span><strong id="balanceValue">0</strong></div>
+            <div class="stat"><span data-t="debt"></span><strong id="debtValue">0</strong></div>
+            <div class="stat"><span data-t="income"></span><strong id="incomeValue">0</strong></div>
+            <div class="stat"><span data-t="expenses"></span><strong id="expensesValue">0</strong></div>
+          </div>
+
+          <div id="buildControls">
+            <p class="small" id="buildCounter"></p>
+            <div id="builderPalette" class="palette"></div>
+            <div class="toolbar" style="margin-top:12px;">
+              <button id="confirmBuild1" class="primary" type="button" onclick="armBuildConfirm()" data-t="finishBuild"></button>
+              <button id="confirmBuild2" class="hidden" type="button" onclick="confirmBuildWorld()" data-t="confirmBuild"></button>
+              <button type="button" class="danger" onclick="exitGame()" data-t="exit"></button>
+            </div>
+            <p id="buildConfirmHint" class="small hidden" data-t="confirmHint"></p>
+          </div>
+
+          <div id="livingControls" class="hidden">
+            <div class="toolbar">
+              <button id="advanceTimeButton" type="button" onclick="advanceMonth()" data-t="advanceMonth"></button>
+              <button id="runLivingButton" class="primary" type="button" onclick="runLivingSlice()" data-t="runLiving"></button>
+              <button type="button" class="danger" onclick="exitGame()" data-t="exit"></button>
+            </div>
+          </div>
+
+          <div id="casinoControls" class="hidden">
+            <div class="notice"><p id="casinoText"></p></div>
+            <div class="toolbar" style="margin-top:10px;">
+              <button id="casinoPassButton" type="button" onclick="declineCasino()" data-t="casinoPass"></button>
+              <button id="casinoEnterButton" class="primary" type="button" onclick="enterCasino()" data-t="casinoEnter"></button>
+            </div>
+            <div id="casinoPlay" class="hidden" style="margin-top:10px;">
+              <label class="small" for="stakeInput" data-t="stake"></label>
+              <input id="stakeInput" type="number" min="100" max="800" step="100" value="200" />
+              <div class="toolbar" style="margin-top:8px;">
+                <button id="casinoBetButton" class="primary" type="button" onclick="playCasinoRound()" data-t="casinoBet"></button>
+                <button id="casinoDebtButton" type="button" onclick="takeCasinoDebt()" data-t="takeDebt"></button>
+                <button id="casinoStopButton" type="button" onclick="stopCasino()" data-t="casinoStop"></button>
+              </div>
+            </div>
+          </div>
+
+          <div id="localCrisisControls" class="hidden">
+            <div class="notice"><p id="localCrisisText"></p></div>
+            <button id="localCrisisContinueButton" class="primary" type="button" onclick="startGlobalCrisis()" data-t="continue"></button>
+          </div>
+
+          <div id="globalCrisisControls" class="hidden">
+            <div class="notice"><p id="globalCrisisText"></p></div>
+            <button id="globalCrisisButton" class="primary" type="button" onclick="startNarrowing()" data-t="startNarrowing"></button>
+          </div>
+
+          <div id="narrowingControls" class="hidden">
+            <p id="narrowingCounter" class="small"></p>
+            <div class="toolbar">
+              <button id="confirmStage1" class="primary" type="button" onclick="armStageConfirm()" data-t="firstConfirm"></button>
+              <button id="confirmStage2" class="hidden" type="button" onclick="confirmStage()" data-t="secondConfirm"></button>
+              <button type="button" class="danger" onclick="exitGame()" data-t="exit"></button>
+            </div>
+            <p id="stageConfirmHint" class="small hidden" data-t="confirmHint"></p>
+          </div>
+
+          <div id="finalControls" class="hidden">
+            <h3 data-t="finalTitle"></h3>
+            <p data-t="finalText"></p>
+            <div class="notice"><p data-t="boundaryText"></p></div>
+          </div>
+        </aside>
+
+        <section class="panel world-wrap">
+          <div id="worldScene" class="world-scene winter" aria-label="Living world">
+            <div class="road"></div>
+            <div id="avatar" class="avatar"></div>
+            <div id="casinoBuilding" class="casino-building">CASINO</div>
+            <div id="worldObjects"></div>
+          </div>
+          <div id="eventFeed" class="event-feed"></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const GAME_ID = "world_choice";
+    const MIN_WORLD_ITEMS = 4;
+    const params = new URLSearchParams(window.location.search);
+    let lang = normalizeLang(params.get("lang") || localStorage.getItem("platform_language") || "ru");
+    let registry = null;
+    let gameSession = null;
+    let phase = "intro";
+    let world = [];
+    let addOrder = [];
+    let removedOrder = [];
+    let eventFeed = [];
+    let buildStartedAt = 0;
+    let buildChanges = 0;
+    let buildConfirmArmed = false;
+    let stageConfirmArmed = false;
+    let activeGlobalEvent = null;
+    let activeLocalEvent = null;
+    let currentAvailable = [];
+    let currentSelection = [];
+    let currentStageIndex = 0;
+    let stageStart = 0;
+    let stageChanges = 0;
+    let stageCancellations = 0;
+    let randomSeed = Number(params.get("seed") || 7);
+    let economy = {balance: 3000, debt: 0, income: 0, expenses: 0, assets: 0};
+    let clock = {tick: 0, year: 2026, month: 1, season: "winter"};
+    let casino = {entered: false, declined: false, rounds: [], attempts: 0, debt_taken: 0};
+
+    const TEXT = {
+      ru: {
+        title: "Живой мир",
+        subtitle: "Постройте мир, проживите несколько месяцев, а затем решите, что сохранить.",
+        introTitle: "Перед началом",
+        introText: "Это спокойная игровая ситуация. Сначала вы создаёте мир, потом он живёт, меняется и сталкивается с кризисами. Здесь нет правильных или неправильных ответов.",
+        participantLabel: "ID участника, если есть",
+        start: "Начать",
+        sensorNote: "Сенсоры не используются и не требуются. Их отсутствие не мешает игре.",
+        period: "Период",
+        season: "Сезон",
+        balance: "Счёт",
+        debt: "Долг",
+        income: "Доход",
+        expenses: "Расходы",
+        finishBuild: "Завершить построение",
+        confirmBuild: "Подтвердить мир",
+        confirmHint: "Нужно второе подтверждение. До него можно спокойно изменить выбор.",
+        exit: "Выйти",
+        advanceMonth: "Прожить месяц",
+        runLiving: "Прожить до события",
+        casinoPass: "Пройти мимо",
+        casinoEnter: "Зайти",
+        stake: "Ставка",
+        casinoBet: "Сыграть раунд",
+        takeDebt: "Взять долг",
+        casinoStop: "Остановиться и выйти",
+        continue: "Продолжить",
+        startNarrowing: "Перейти к сохранению",
+        firstConfirm: "Подтвердить выбор",
+        secondConfirm: "Подтвердить ещё раз",
+        finalTitle: "Мир сохранён",
+        finalText: "Игра завершена. На сцене осталось только то, что сохранено в игровом мире.",
+        boundaryText: "Результат игры не является диагнозом, правдой об участнике или устойчивой структурой ценностей. Исследовательская интерпретация выполняется отдельно.",
+        buildTitle: "Постройте мир",
+        buildText: "Добавляйте дом, работу, людей, проекты, ресурсы и места. После добавления объект появляется на сцене.",
+        livingTitle: "Мир живёт",
+        livingText: "Проходят месяцы, меняются сезон, счёт, доходы, расходы и состояние объектов.",
+        casinoTitle: "В мире появилось казино",
+        casinoText: "Казино существует в мире независимо от выбора. Можно пройти мимо, зайти, сыграть один или несколько раундов и выйти.",
+        localTitle: "Локальный кризис",
+        globalTitle: "Глобальный кризис",
+        narrowTitle: limit => `Сохраните ${limit}`,
+        narrowText: limit => `Выберите ровно ${limit} объект(а) на сцене. Затем подтвердите выбор дважды.`,
+        buildCounter: count => `В мире: ${count}. Минимум для перехода: ${MIN_WORLD_ITEMS}.`,
+        limitCounter: (count, limit) => `Выбрано: ${count} из ${limit}.`,
+        seasons: {winter: "зима", spring: "весна", summer: "лето", autumn: "осень"},
+        added: name => `${name} появился в мире.`,
+        removed: name => `${name} убран до подтверждения.`,
+        month: label => `Наступил период ${label}.`,
+        natural: "Обычное жизненное событие изменило мир.",
+        casinoWin: amount => `Раунд завершился выигрышем: +${amount}.`,
+        casinoLose: amount => `Раунд завершился проигрышем: -${amount}.`,
+        casinoDebt: amount => `Долг увеличен на ${amount}.`,
+        localEvent: "Локальный кризис изменил ресурсы и состояние объекта.",
+        globalEvent: "Начался глобальный кризис. Теперь мир будет сужаться.",
+        lost: name => `${name} исчезает из игрового мира.`,
+      },
+      en: {
+        title: "Living World",
+        subtitle: "Build a world, live through a few months, then choose what to retain.",
+        introTitle: "Before You Start",
+        introText: "This is a calm game situation. First you create a world, then it lives, changes and meets crises. There are no right or wrong answers.",
+        participantLabel: "Participant ID, if available",
+        start: "Start",
+        sensorNote: "Sensors are not used or required. Their absence does not block the game.",
+        period: "Period",
+        season: "Season",
+        balance: "Balance",
+        debt: "Debt",
+        income: "Income",
+        expenses: "Expenses",
+        finishBuild: "Finish building",
+        confirmBuild: "Confirm world",
+        confirmHint: "A second confirmation is required. You can still change the world before it.",
+        exit: "Exit",
+        advanceMonth: "Live one month",
+        runLiving: "Live to event",
+        casinoPass: "Pass by",
+        casinoEnter: "Enter",
+        stake: "Stake",
+        casinoBet: "Play round",
+        takeDebt: "Take debt",
+        casinoStop: "Stop and leave",
+        continue: "Continue",
+        startNarrowing: "Start retaining",
+        firstConfirm: "Confirm choice",
+        secondConfirm: "Confirm again",
+        finalTitle: "World retained",
+        finalText: "The game is complete. Only retained game-world items remain on the scene.",
+        boundaryText: "The game result is not a diagnosis, not truth about the participant, and not a stable value structure. Research interpretation happens separately.",
+        buildTitle: "Build the world",
+        buildText: "Add home, work, people, projects, resources and places. Each added item appears in the scene.",
+        livingTitle: "The world lives",
+        livingText: "Months pass. Season, balance, income, expenses and item states change.",
+        casinoTitle: "A casino appears in the world",
+        casinoText: "The casino exists in the world independently of your choice. You may pass by, enter, play one or more rounds, and leave.",
+        localTitle: "Local crisis",
+        globalTitle: "Global crisis",
+        narrowTitle: limit => `Retain ${limit}`,
+        narrowText: limit => `Choose exactly ${limit} item(s) on the scene. Then confirm twice.`,
+        buildCounter: count => `In world: ${count}. Minimum to continue: ${MIN_WORLD_ITEMS}.`,
+        limitCounter: (count, limit) => `Selected: ${count} of ${limit}.`,
+        seasons: {winter: "winter", spring: "spring", summer: "summer", autumn: "autumn"},
+        added: name => `${name} appeared in the world.`,
+        removed: name => `${name} was removed before confirmation.`,
+        month: label => `Period ${label} has begun.`,
+        natural: "A regular life event changed the world.",
+        casinoWin: amount => `Round ended with a win: +${amount}.`,
+        casinoLose: amount => `Round ended with a loss: -${amount}.`,
+        casinoDebt: amount => `Debt increased by ${amount}.`,
+        localEvent: "A local crisis changed resources and one item state.",
+        globalEvent: "A global crisis began. The world will now narrow.",
+        lost: name => `${name} leaves the game world.`,
+      },
+      es: {
+        title: "Mundo vivo",
+        subtitle: "Construye un mundo, vive unos meses y luego decide que conservar.",
+        introTitle: "Antes de empezar",
+        introText: "Es una situacion tranquila de juego. Primero creas un mundo, luego vive, cambia y encuentra crisis. No hay respuestas correctas o incorrectas.",
+        participantLabel: "ID de participante, si existe",
+        start: "Empezar",
+        sensorNote: "No se usan sensores y no son necesarios. Su ausencia no bloquea el juego.",
+        period: "Periodo",
+        season: "Estacion",
+        balance: "Cuenta",
+        debt: "Deuda",
+        income: "Ingreso",
+        expenses: "Gastos",
+        finishBuild: "Terminar construccion",
+        confirmBuild: "Confirmar mundo",
+        confirmHint: "Se requiere una segunda confirmacion. Todavia puedes cambiar el mundo antes.",
+        exit: "Salir",
+        advanceMonth: "Vivir un mes",
+        runLiving: "Vivir hasta evento",
+        casinoPass: "Pasar",
+        casinoEnter: "Entrar",
+        stake: "Apuesta",
+        casinoBet: "Jugar ronda",
+        takeDebt: "Tomar deuda",
+        casinoStop: "Detenerse y salir",
+        continue: "Continuar",
+        startNarrowing: "Empezar a conservar",
+        firstConfirm: "Confirmar eleccion",
+        secondConfirm: "Confirmar otra vez",
+        finalTitle: "Mundo conservado",
+        finalText: "El juego termino. En la escena quedan solo los elementos conservados.",
+        boundaryText: "El resultado del juego no es diagnostico, verdad sobre la persona ni estructura estable de valores. La interpretacion de investigacion ocurre aparte.",
+        buildTitle: "Construye el mundo",
+        buildText: "Agrega casa, trabajo, personas, proyectos, recursos y lugares. Cada elemento aparece en la escena.",
+        livingTitle: "El mundo vive",
+        livingText: "Pasan meses. Cambian estacion, cuenta, ingresos, gastos y estados.",
+        casinoTitle: "Aparece un casino en el mundo",
+        casinoText: "El casino existe en el mundo independientemente de tu eleccion. Puedes pasar, entrar, jugar una o varias rondas y salir.",
+        localTitle: "Crisis local",
+        globalTitle: "Crisis global",
+        narrowTitle: limit => `Conserva ${limit}`,
+        narrowText: limit => `Elige exactamente ${limit} elemento(s) en la escena. Luego confirma dos veces.`,
+        buildCounter: count => `En el mundo: ${count}. Minimo para continuar: ${MIN_WORLD_ITEMS}.`,
+        limitCounter: (count, limit) => `Seleccionado: ${count} de ${limit}.`,
+        seasons: {winter: "invierno", spring: "primavera", summer: "verano", autumn: "otono"},
+        added: name => `${name} aparecio en el mundo.`,
+        removed: name => `${name} se retiro antes de confirmar.`,
+        month: label => `Comenzo el periodo ${label}.`,
+        natural: "Un evento normal de vida cambio el mundo.",
+        casinoWin: amount => `La ronda termino con ganancia: +${amount}.`,
+        casinoLose: amount => `La ronda termino con perdida: -${amount}.`,
+        casinoDebt: amount => `La deuda aumento en ${amount}.`,
+        localEvent: "Una crisis local cambio recursos y el estado de un elemento.",
+        globalEvent: "Empezo una crisis global. Ahora el mundo se reducira.",
+        lost: name => `${name} sale del mundo del juego.`,
+      },
+    };
+
+    const GLYPHS = {
+      housing: "H",
+      place: "P",
+      work: "W",
+      education: "E",
+      family_social: "F",
+      project: "R",
+      business: "B",
+      transport: "T",
+      resource: "S",
+      recreation: "A",
+    };
+    const POSITIONS = [
+      [8, 58], [24, 48], [42, 58], [60, 48], [75, 58],
+      [12, 32], [29, 24], [47, 31], [64, 25], [80, 34],
+      [18, 72], [38, 76], [58, 72], [75, 76], [46, 12],
+    ];
+
+    function normalizeLang(value) {
+      const short = String(value || "").slice(0, 2);
+      return ["ru", "en", "es"].includes(short) ? short : "ru";
+    }
+    function setLang(next) {
+      lang = normalizeLang(next);
+      localStorage.setItem("platform_language", lang);
+      document.documentElement.lang = lang;
+      renderText();
+      renderAll();
+    }
+    function t(key, ...args) {
+      const value = TEXT[lang][key] || TEXT.ru[key] || key;
+      return typeof value === "function" ? value(...args) : value;
+    }
+    function label(item) {
+      return item?.label?.[lang] || item?.label?.ru || item?.object_id || "";
+    }
+    function eventTitle(event) {
+      return event?.title?.[lang] || event?.title?.ru || event?.event_id || "";
+    }
+    function eventDescription(event) {
+      return event?.description?.[lang] || event?.description?.ru || "";
+    }
+    function itemById(id) {
+      return registry.object_catalog.find(item => item.object_id === id);
+    }
+    function activeIds() {
+      return world.filter(item => item.state !== "lost").map(item => item.item_id);
+    }
+    function deterministicIndex(length, offset = 0) {
+      if (!length) return 0;
+      return Math.abs((randomSeed * 31 + offset * 17) % length);
+    }
+
+    async function startGame() {
+      await loadRegistry();
+      const response = await fetch("/research/game-sessions/start", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          game_id: GAME_ID,
+          participant_id: document.getElementById("participantId").value.trim() || null,
+          study_id: "health_model",
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) return alert(JSON.stringify(data));
+      gameSession = data.session;
+      document.body.dataset.gameSessionId = gameSession.game_session_id;
+      phase = "build";
+      buildStartedAt = Date.now();
+      economy = buildInitialEconomy();
+      document.getElementById("intro").classList.add("hidden");
+      document.getElementById("game").classList.remove("hidden");
+      renderAll();
+    }
+
+    async function loadRegistry() {
+      if (registry) return;
+      const response = await fetch("/research/games/registry");
+      const data = await response.json();
+      registry = (data.games || []).find(item => item.game_id === GAME_ID);
+    }
+
+    function buildInitialEconomy() {
+      const rules = registry.economic_rules_registry || {};
+      return {
+        balance: Number(rules.starting_balance || 3000),
+        debt: 0,
+        income: 0,
+        expenses: 0,
+        assets: 0,
+        credit_limit: Number(rules.credit_limit || 5000),
+      };
+    }
+
+    function renderText() {
+      document.title = t("title");
+      document.getElementById("pageTitle").textContent = t("title");
+      document.getElementById("pageSubtitle").textContent = t("subtitle");
+      document.querySelectorAll("[data-t]").forEach(el => { el.textContent = t(el.getAttribute("data-t")); });
+      document.getElementById("participantId").placeholder =
+        lang === "ru" ? "например, participant-01" : lang === "es" ? "por ejemplo, participant-01" : "for example, participant-01";
+    }
+
+    function renderAll() {
+      if (!registry) return;
+      document.body.dataset.phase = phase;
+      renderStageLine();
+      renderPhase();
+      renderStats();
+      renderPalette();
+      renderWorld();
+      renderFeed();
+    }
+
+    function renderStageLine() {
+      const stages = [
+        ["build", {ru: "Мир", en: "World", es: "Mundo"}],
+        ["living", {ru: "Жизнь", en: "Living", es: "Vida"}],
+        ["casino", {ru: "Казино", en: "Casino", es: "Casino"}],
+        ["local", {ru: "Локально", en: "Local", es: "Local"}],
+        ["global", {ru: "Кризис", en: "Crisis", es: "Crisis"}],
+        ["narrowing", {ru: "3-2-1", en: "3-2-1", es: "3-2-1"}],
+        ["final", {ru: "Финал", en: "Final", es: "Final"}],
+      ];
+      document.getElementById("stageLine").innerHTML = stages.map(([id, name]) =>
+        `<span class="${id === phase ? "active" : ""}">${name[lang]}</span>`
+      ).join("");
+    }
+
+    function renderPhase() {
+      const title = document.getElementById("phaseTitle");
+      const text = document.getElementById("phaseText");
+      hide("buildControls", phase !== "build");
+      hide("livingControls", phase !== "living");
+      hide("casinoControls", phase !== "casino");
+      hide("localCrisisControls", phase !== "local");
+      hide("globalCrisisControls", phase !== "global");
+      hide("narrowingControls", phase !== "narrowing");
+      hide("finalControls", phase !== "final");
+
+      if (phase === "build") {
+        title.textContent = t("buildTitle");
+        text.textContent = t("buildText");
+        document.getElementById("buildCounter").textContent = t("buildCounter", world.length);
+        document.getElementById("confirmBuild1").disabled = world.length < MIN_WORLD_ITEMS;
+      } else if (phase === "living") {
+        title.textContent = t("livingTitle");
+        text.textContent = t("livingText");
+      } else if (phase === "casino") {
+        title.textContent = t("casinoTitle");
+        text.textContent = t("casinoText");
+        document.getElementById("casinoText").textContent = eventDescription(getEvent("casino_opportunity"));
+      } else if (phase === "local") {
+        title.textContent = t("localTitle");
+        text.textContent = "";
+        document.getElementById("localCrisisText").textContent = eventDescription(activeLocalEvent);
+      } else if (phase === "global") {
+        title.textContent = t("globalTitle");
+        text.textContent = "";
+        document.getElementById("globalCrisisText").innerHTML = `<b>${escapeHtml(eventTitle(activeGlobalEvent))}</b><br>${escapeHtml(eventDescription(activeGlobalEvent))}`;
+      } else if (phase === "narrowing") {
+        const stage = narrowingStage();
+        title.textContent = t("narrowTitle", stage.selection_limit);
+        text.textContent = t("narrowText", stage.selection_limit);
+        document.getElementById("narrowingCounter").textContent = t("limitCounter", currentSelection.length, stage.selection_limit);
+        document.getElementById("confirmStage1").disabled = currentSelection.length !== stage.selection_limit;
+      } else if (phase === "final") {
+        title.textContent = t("finalTitle");
+        text.textContent = t("finalText");
+      }
+    }
+
+    function renderStats() {
+      document.getElementById("periodValue").textContent = `${clock.year}-${String(clock.month).padStart(2, "0")}`;
+      document.getElementById("seasonValue").textContent = t("seasons")[clock.season];
+      document.getElementById("balanceValue").textContent = Math.round(economy.balance);
+      document.getElementById("debtValue").textContent = Math.round(economy.debt);
+      document.getElementById("incomeValue").textContent = Math.round(economy.income);
+      document.getElementById("expensesValue").textContent = Math.round(economy.expenses);
+    }
+
+    function renderPalette() {
+      const box = document.getElementById("builderPalette");
+      if (phase !== "build") return;
+      box.innerHTML = registry.object_catalog.map(item => {
+        const added = world.some(entry => entry.item_id === item.item_id);
+        return `<button type="button" class="${added ? "added" : ""}" onclick="toggleWorldItem('${item.item_id}')">
+          <span class="icon">${escapeHtml(GLYPHS[item.category] || "I")}</span>
+          <span><strong>${escapeHtml(label(item))}</strong><br><span class="small">${escapeHtml(localCategory(item.category))}</span></span>
+        </button>`;
+      }).join("");
+    }
+
+    function renderWorld() {
+      const scene = document.getElementById("worldScene");
+      scene.className = `world-scene ${clock.season}`;
+      document.getElementById("casinoBuilding").classList.toggle("active", ["casino", "local", "global", "narrowing", "final"].includes(phase));
+      const avatar = document.getElementById("avatar");
+      avatar.style.left = `${42 + (clock.tick % 6) * 38}px`;
+      avatar.style.bottom = `${122 + (clock.tick % 2) * 18}px`;
+      document.getElementById("worldObjects").innerHTML = world.map((entry, index) => {
+        const item = itemById(entry.item_id);
+        const pos = POSITIONS[index % POSITIONS.length];
+        const selectable = phase === "narrowing" && entry.state !== "lost" && currentAvailable.includes(entry.item_id);
+        const selected = currentSelection.includes(entry.item_id);
+        return `<div class="world-object ${escapeHtml(entry.state)} ${selectable ? "selectable" : ""} ${selected ? "selected" : ""}"
+          data-item-id="${escapeHtml(entry.item_id)}"
+          style="left:${pos[0]}%; top:${pos[1]}%;"
+          onclick="${selectable ? `toggleStageItem('${entry.item_id}')` : ""}">
+          <div class="glyph">${escapeHtml(GLYPHS[item.category] || "I")}</div>
+          <strong>${escapeHtml(label(item))}</strong>
+          ${phase === "build" ? `<button type="button" onclick="event.stopPropagation(); toggleWorldItem('${entry.item_id}')">${escapeHtml(removeText())}</button>` : ""}
+        </div>`;
+      }).join("");
+    }
+
+    function renderFeed() {
+      document.getElementById("eventFeed").innerHTML = eventFeed.slice(-8).map(text => `<div>${escapeHtml(text)}</div>`).join("");
+    }
+
+    function hide(id, shouldHide) {
+      document.getElementById(id).classList.toggle("hidden", shouldHide);
+    }
+
+    function localCategory(category) {
+      const map = {
+        ru: {housing: "дом", place: "место", work: "работа", education: "образование", family_social: "люди", project: "проект", business: "бизнес", transport: "транспорт", resource: "ресурс", recreation: "занятие"},
+        en: {housing: "home", place: "place", work: "work", education: "education", family_social: "people", project: "project", business: "business", transport: "transport", resource: "resource", recreation: "activity"},
+        es: {housing: "casa", place: "lugar", work: "trabajo", education: "educacion", family_social: "personas", project: "proyecto", business: "negocio", transport: "transporte", resource: "recurso", recreation: "actividad"},
+      };
+      return map[lang][category] || category;
+    }
+    function removeText() {
+      return lang === "ru" ? "убрать" : lang === "es" ? "quitar" : "remove";
+    }
+
+    async function toggleWorldItem(itemId) {
+      buildConfirmArmed = false;
+      hide("confirmBuild2", true);
+      hide("buildConfirmHint", true);
+      buildChanges += 1;
+      const existing = world.find(entry => entry.item_id === itemId);
+      const item = itemById(itemId);
+      if (existing) {
+        world = world.filter(entry => entry.item_id !== itemId);
+        removedOrder.push(itemId);
+        eventFeed.push(t("removed", label(item)));
+        await recordEvent({
+          screen_id: "world_builder",
+          event_type: "world_item_removed",
+          object_id: itemId,
+          metadata: baseMeta({
+            stage_id: "build_world",
+            item_id: itemId,
+            world_item_ids: activeIds(),
+            selected_item_ids: activeIds(),
+            removed_item_ids: [itemId],
+            order: buildChanges,
+            changes: buildChanges,
+          }),
+        });
+      } else {
+        const createdAt = currentTimestamp();
+        world.push({
+          item_id: itemId,
+          state: "active",
+          creation_timestamp: createdAt,
+          ownership_relation: item.ownership_relation,
+          dependencies: item.dependencies || [],
+          economic_parameters: item.economic_parameters || {},
+        });
+        addOrder.push(itemId);
+        eventFeed.push(t("added", label(item)));
+        await recordEvent({
+          screen_id: "world_builder",
+          event_type: "world_item_created",
+          object_id: itemId,
+          question_id: item.category === "work" ? "world_initial_work_choice" : item.category === "housing" ? "world_initial_housing_choice" : null,
+          answer: itemId,
+          value: {item_id: itemId, world_item_ids: activeIds(), creation_timestamp: createdAt},
+          metadata: baseMeta({
+            stage_id: "build_world",
+            item_id: itemId,
+            world_item_ids: activeIds(),
+            selected_item_ids: activeIds(),
+            order: buildChanges,
+            changes: buildChanges,
+          }),
+        });
+      }
+      recomputeAssets();
+      renderAll();
+    }
+
+    function armBuildConfirm() {
+      if (world.length < MIN_WORLD_ITEMS) return;
+      buildConfirmArmed = true;
+      hide("confirmBuild2", false);
+      hide("buildConfirmHint", false);
+    }
+
+    async function confirmBuildWorld() {
+      if (!buildConfirmArmed) return;
+      recomputeEconomyMonthly();
+      await recordEvent({
+        screen_id: "world_confirmation",
+        event_type: "choice_confirmed",
+        question_id: "world_initial_item_order",
+        answer: addOrder.slice(),
+        value: {
+          world_item_ids: activeIds(),
+          selected_item_ids: activeIds(),
+          add_order: addOrder.slice(),
+          removed_item_ids: removedOrder.slice(),
+        },
+        decision_time_ms: Date.now() - buildStartedAt,
+        confirmation_step: "build_world_second_confirmation",
+        metadata: baseMeta({
+          stage_id: "build_world",
+          world_item_ids: activeIds(),
+          selected_item_ids: activeIds(),
+          removed_item_ids: removedOrder.slice(),
+          order: addOrder.slice(),
+          changes: buildChanges,
+        }),
+      });
+      phase = "living";
+      eventFeed.push(t("month", `${clock.year}-${String(clock.month).padStart(2, "0")}`));
+      await recordEvent({
+        screen_id: "living_world",
+        event_type: "simulation_started",
+        question_id: "living_world_timeline",
+        value: {world_item_ids: activeIds(), economy: {...economy}},
+        metadata: baseMeta({stage_id: "living_world", world_item_ids: activeIds(), active_item_ids: activeIds(), economy: {...economy}}),
+      });
+      renderAll();
+    }
+
+    async function runLivingSlice() {
+      while (phase === "living" && clock.tick < 3) {
+        await advanceMonth();
+      }
+      if (phase === "living" && clock.tick < 5) {
+        await advanceMonth();
+        await advanceMonth();
+      }
+    }
+
+    async function advanceMonth() {
+      if (phase !== "living") return;
+      clock.tick += 1;
+      clock.month += 1;
+      if (clock.month > 12) {
+        clock.month = 1;
+        clock.year += 1;
+      }
+      clock.season = seasonForMonth(clock.month);
+      recomputeEconomyMonthly();
+      eventFeed.push(t("month", `${clock.year}-${String(clock.month).padStart(2, "0")}`));
+      await applyEconomicChange("monthly_income", economy.income, "monthly income", "simulation_tick");
+      await applyEconomicChange("monthly_expenses", -economy.expenses, "monthly expenses", "simulation_tick");
+      await recordEvent({
+        screen_id: "living_world",
+        event_type: "time_advanced",
+        question_id: "living_world_timeline",
+        value: {simulation_tick: clock.tick, world_item_ids: activeIds(), economy: {...economy}},
+        metadata: baseMeta({stage_id: "living_world", event_trace: eventFeed.slice(), world_item_ids: activeIds(), active_item_ids: activeIds(), economy: {...economy}}),
+      });
+      if (clock.tick === 3) {
+        await triggerNaturalEvent();
+        phase = "casino";
+        await recordEvent({
+          screen_id: "casino",
+          event_type: "temptation_presented",
+          question_id: "casino_behavior_trace",
+          value: {event_id: "casino_opportunity", world_item_ids: activeIds()},
+          metadata: baseMeta({stage_id: "casino", event_id: "casino_opportunity", world_item_ids: activeIds(), active_item_ids: activeIds(), casino: {...casino}}),
+        });
+      }
+      renderAll();
+    }
+
+    async function triggerNaturalEvent() {
+      const event = getEvent("home_repair");
+      const target = world.find(entry => entry.item_id === "home_suburb") || world[0];
+      if (target) target.state = "changed";
+      eventFeed.push(t("natural"));
+      await applyEconomicChange("home_repair", -700, "home repair", "natural_event");
+      await recordEvent({
+        screen_id: "living_world",
+        event_type: "natural_event_triggered",
+        question_id: "living_world_timeline",
+        object_id: target?.item_id || null,
+        value: {event_id: event.event_id, changed_item_id: target?.item_id, economy: {...economy}},
+        metadata: baseMeta({
+          stage_id: "living_world",
+          event_id: event.event_id,
+          event_version: event.event_version,
+          item_id: target?.item_id,
+          world_item_ids: activeIds(),
+          active_item_ids: activeIds(),
+          economy: {...economy},
+        }),
+      });
+    }
+
+    function recomputeEconomyMonthly() {
+      economy.income = 0;
+      economy.expenses = 0;
+      for (const entry of world.filter(item => item.state !== "lost")) {
+        const params = entry.economic_parameters || {};
+        economy.income += Number(params.monthly_income || 0);
+        economy.expenses += Number(params.monthly_expense || 0);
+      }
+      if (economy.debt > 0) economy.expenses += Math.round(economy.debt * (registry.economic_rules_registry.loan_interest_monthly || 0.03));
+      recomputeAssets();
+    }
+
+    function recomputeAssets() {
+      economy.assets = world.filter(item => item.state !== "lost").reduce((sum, entry) =>
+        sum + Number((entry.economic_parameters || {}).asset_value || 0), 0);
+      const savings = world.find(entry => entry.item_id === "emergency_savings");
+      if (savings && !savings.counted) {
+        economy.balance += Number(savings.economic_parameters.initial_balance || 0);
+        savings.counted = true;
+      }
+    }
+
+    async function applyEconomicChange(eventId, amount, reason, source) {
+      const event = getEvent(eventId);
+      const previous = economy.balance;
+      economy.balance += amount;
+      const tx = {
+        event_id: eventId,
+        reason,
+        amount,
+        previous_balance: previous,
+        new_balance: economy.balance,
+        timestamp: currentTimestamp(),
+        source,
+      };
+      await recordEvent({
+        screen_id: phase === "casino" ? "casino" : "living_world",
+        event_type: "economic_transaction",
+        question_id: "economic_state_trace",
+        value: {economic_event: tx, economy: {...economy}},
+        metadata: baseMeta({
+          stage_id: phase === "casino" ? "casino" : "living_world",
+          event_id: event?.event_id || eventId,
+          event_version: event?.event_version,
+          world_item_ids: activeIds(),
+          active_item_ids: activeIds(),
+          economic_event: tx,
+          economy: {...economy},
+        }),
+      });
+    }
+
+    async function declineCasino() {
+      casino.declined = true;
+      await recordEvent({
+        screen_id: "casino",
+        event_type: "casino_declined",
+        question_id: "casino_behavior_trace",
+        value: {casino: {...casino}},
+        metadata: baseMeta({stage_id: "casino", event_id: "casino_opportunity", world_item_ids: activeIds(), active_item_ids: activeIds(), casino: {...casino}}),
+      });
+      await beginLocalCrisis();
+    }
+
+    async function enterCasino() {
+      casino.entered = true;
+      hide("casinoPlay", false);
+      document.getElementById("casinoPassButton").disabled = true;
+      document.getElementById("casinoEnterButton").disabled = true;
+      await recordEvent({
+        screen_id: "casino",
+        event_type: "casino_entered",
+        question_id: "casino_behavior_trace",
+        value: {casino: {...casino}},
+        metadata: baseMeta({stage_id: "casino", event_id: "casino_opportunity", world_item_ids: activeIds(), active_item_ids: activeIds(), casino: {...casino}}),
+      });
+      renderAll();
+    }
+
+    async function playCasinoRound() {
+      const rules = registry.economic_rules_registry.casino;
+      const stakeInput = document.getElementById("stakeInput");
+      const stake = Math.max(rules.min_stake, Math.min(rules.max_stake, Number(stakeInput.value || rules.min_stake)));
+      if (economy.balance < stake) return;
+      casino.attempts += 1;
+      const outcome = rules.deterministic_outcomes[(casino.attempts - 1 + deterministicIndex(3)) % rules.deterministic_outcomes.length];
+      const delta = outcome === "win" ? stake * rules.win_multiplier : -stake;
+      const previous = economy.balance;
+      economy.balance += delta;
+      const round = {
+        order: casino.attempts,
+        stake,
+        outcome,
+        amount: delta,
+        previous_balance: previous,
+        new_balance: economy.balance,
+        timestamp: currentTimestamp(),
+      };
+      casino.rounds.push(round);
+      eventFeed.push(outcome === "win" ? t("casinoWin", delta) : t("casinoLose", Math.abs(delta)));
+      await recordEvent({
+        screen_id: "casino",
+        event_type: "casino_bet",
+        question_id: "casino_behavior_trace",
+        value: {casino_round: round, casino: {...casino}},
+        metadata: baseMeta({
+          stage_id: "casino",
+          event_id: "casino_bet_round",
+          world_item_ids: activeIds(),
+          active_item_ids: activeIds(),
+          casino: {...casino},
+          economy: {...economy},
+          economic_event: {
+            event_id: "casino_bet_round",
+            reason: "casino round",
+            amount: delta,
+            previous_balance: previous,
+            new_balance: economy.balance,
+            timestamp: round.timestamp,
+            source: "casino_subsystem",
+          },
+        }),
+      });
+      renderAll();
+    }
+
+    async function takeCasinoDebt() {
+      const amount = 500;
+      if (economy.debt + amount > economy.credit_limit) return;
+      economy.debt += amount;
+      economy.balance += amount;
+      casino.debt_taken += amount;
+      eventFeed.push(t("casinoDebt", amount));
+      await recordEvent({
+        screen_id: "casino",
+        event_type: "debt_taken",
+        question_id: "casino_behavior_trace",
+        value: {amount, casino: {...casino}},
+        metadata: baseMeta({stage_id: "casino", event_id: "casino_opportunity", world_item_ids: activeIds(), active_item_ids: activeIds(), casino: {...casino}, economy: {...economy}}),
+      });
+      renderAll();
+    }
+
+    async function stopCasino() {
+      await recordEvent({
+        screen_id: "casino",
+        event_type: "casino_stopped",
+        question_id: "casino_behavior_trace",
+        value: {casino: {...casino}},
+        metadata: baseMeta({stage_id: "casino", event_id: "casino_opportunity", world_item_ids: activeIds(), active_item_ids: activeIds(), casino: {...casino}, economy: {...economy}}),
+      });
+      await beginLocalCrisis();
+    }
+
+    async function beginLocalCrisis() {
+      activeLocalEvent = getEvent("local_economic_pressure");
+      phase = "local";
+      const target = world.find(entry => ["work", "business", "transport", "housing"].includes(itemById(entry.item_id)?.category) && entry.state !== "lost") || world[0];
+      if (target) target.state = "damaged";
+      await applyEconomicChange("local_economic_pressure", -900, "local economic pressure", "local_crisis");
+      eventFeed.push(t("localEvent"));
+      await recordEvent({
+        screen_id: "local_crisis",
+        event_type: "local_crisis_started",
+        question_id: "local_crisis_response",
+        object_id: target?.item_id || null,
+        value: {event_id: activeLocalEvent.event_id, changed_item_id: target?.item_id, economy: {...economy}},
+        metadata: baseMeta({
+          stage_id: "local_crisis",
+          event_id: activeLocalEvent.event_id,
+          event_version: activeLocalEvent.event_version,
+          item_id: target?.item_id,
+          world_item_ids: activeIds(),
+          active_item_ids: activeIds(),
+          economy: {...economy},
+        }),
+      });
+      renderAll();
+    }
+
+    async function startGlobalCrisis() {
+      const globals = registry.event_registry.filter(event => event.scope === "global_crisis");
+      activeGlobalEvent = globals[deterministicIndex(globals.length, clock.tick)];
+      phase = "global";
+      eventFeed.push(t("globalEvent"));
+      await recordEvent({
+        screen_id: "global_crisis",
+        event_type: "global_crisis_started",
+        question_id: "crisis_event_presented",
+        answer: activeGlobalEvent.event_id,
+        value: {event_id: activeGlobalEvent.event_id, event_version: activeGlobalEvent.event_version, available_item_ids: activeIds()},
+        metadata: baseMeta({
+          stage_id: "global_crisis",
+          event_id: activeGlobalEvent.event_id,
+          event_version: activeGlobalEvent.event_version,
+          available_item_ids: activeIds(),
+          selected_item_ids: activeIds(),
+          world_item_ids: activeIds(),
+          active_item_ids: activeIds(),
+          economy: {...economy},
+        }),
+      });
+      renderAll();
+    }
+
+    function startNarrowing() {
+      phase = "narrowing";
+      currentStageIndex = 0;
+      currentAvailable = activeIds();
+      currentSelection = [];
+      stageStart = Date.now();
+      stageChanges = 0;
+      stageCancellations = 0;
+      stageConfirmArmed = false;
+      renderAll();
+    }
+
+    function narrowingStage() {
+      return registry.stage_config.filter(stage => stage.phase === "narrowing")[currentStageIndex];
+    }
+
+    async function toggleStageItem(itemId) {
+      const stage = narrowingStage();
+      if (!stage || !currentAvailable.includes(itemId)) return;
+      stageConfirmArmed = false;
+      hide("confirmStage2", true);
+      hide("stageConfirmHint", true);
+      stageChanges += 1;
+      if (currentSelection.includes(itemId)) {
+        currentSelection = currentSelection.filter(id => id !== itemId);
+        stageCancellations += 1;
+      } else {
+        if (currentSelection.length >= stage.selection_limit) {
+          currentSelection.shift();
+          stageCancellations += 1;
+        }
+        currentSelection.push(itemId);
+      }
+      await recordEvent({
+        screen_id: stage.screen_id,
+        event_type: "narrowing_selection",
+        question_id: stage.question_id,
+        answer: currentSelection.slice(),
+        value: {available_item_ids: currentAvailable.slice(), selected_item_ids: currentSelection.slice()},
+        decision_time_ms: Date.now() - stageStart,
+        cancel_count: stageCancellations,
+        metadata: baseMeta({
+          stage_id: stage.stage_id,
+          event_id: activeGlobalEvent.event_id,
+          event_version: activeGlobalEvent.event_version,
+          available_item_ids: currentAvailable.slice(),
+          selected_item_ids: currentSelection.slice(),
+          world_item_ids: activeIds(),
+          order: stageChanges,
+          changes: stageChanges,
+        }),
+      });
+      renderAll();
+    }
+
+    function armStageConfirm() {
+      const stage = narrowingStage();
+      if (!stage || currentSelection.length !== stage.selection_limit) return;
+      stageConfirmArmed = true;
+      hide("confirmStage2", false);
+      hide("stageConfirmHint", false);
+    }
+
+    async function confirmStage() {
+      const stage = narrowingStage();
+      if (!stageConfirmArmed || !stage) return;
+      const removed = currentAvailable.filter(id => !currentSelection.includes(id));
+      await recordEvent({
+        screen_id: stage.screen_id,
+        event_type: "stage_confirmed",
+        question_id: stage.question_id,
+        answer: currentSelection.slice(),
+        value: {
+          available_item_ids: currentAvailable.slice(),
+          selected_item_ids: currentSelection.slice(),
+          removed_item_ids: removed.slice(),
+        },
+        decision_time_ms: Date.now() - stageStart,
+        confirmation_step: `${stage.stage_id}_second_confirmation`,
+        cancel_count: stageCancellations,
+        metadata: baseMeta({
+          stage_id: stage.stage_id,
+          event_id: activeGlobalEvent.event_id,
+          event_version: activeGlobalEvent.event_version,
+          available_item_ids: currentAvailable.slice(),
+          selected_item_ids: currentSelection.slice(),
+          removed_item_ids: removed.slice(),
+          explicitly_preserved_item_ids: currentSelection.slice(),
+          world_item_ids: activeIds(),
+          order: currentStageIndex + 1,
+          changes: stageChanges,
+        }),
+      });
+      for (const itemId of removed) {
+        const entry = world.find(item => item.item_id === itemId);
+        if (entry) entry.state = "lost";
+        eventFeed.push(t("lost", label(itemById(itemId))));
+        await recordEvent({
+          screen_id: stage.screen_id,
+          event_type: "loss_visualized",
+          object_id: itemId,
+          question_id: "loss_event_trace",
+          value: {
+            lost_item_id: itemId,
+            stage_id: stage.stage_id,
+            reason: activeGlobalEvent.event_id,
+            visual_transition: "fade_out",
+          },
+          metadata: baseMeta({
+            stage_id: stage.stage_id,
+            event_id: activeGlobalEvent.event_id,
+            event_version: activeGlobalEvent.event_version,
+            lost_item_id: itemId,
+            lost_item_ids: [itemId],
+            available_item_ids: currentAvailable.slice(),
+            selected_item_ids: currentSelection.slice(),
+            explicitly_selected_for_preservation: currentSelection.includes(itemId),
+            unavailable_due_to_previous_consequences: false,
+            visual_transition: "fade_out",
+            world_item_ids: activeIds(),
+          }),
+        });
+      }
+      currentAvailable = currentSelection.slice();
+      currentSelection = [];
+      currentStageIndex += 1;
+      stageStart = Date.now();
+      stageChanges = 0;
+      stageCancellations = 0;
+      stageConfirmArmed = false;
+      hide("confirmStage2", true);
+      if (!narrowingStage()) {
+        await finishGame();
+      } else {
+        renderAll();
+      }
+    }
+
+    async function finishGame() {
+      phase = "final";
+      for (const entry of world) {
+        if (currentAvailable.includes(entry.item_id)) entry.state = "preserved";
+      }
+      await recordEvent({
+        screen_id: "final_summary",
+        event_type: "session_completed",
+        question_id: "final_retained_objects",
+        answer: currentAvailable.slice(),
+        value: {available_item_ids: currentAvailable.slice(), selected_item_ids: currentAvailable.slice(), world_item_ids: activeIds()},
+        metadata: baseMeta({
+          stage_id: "final",
+          event_id: activeGlobalEvent.event_id,
+          event_version: activeGlobalEvent.event_version,
+          available_item_ids: currentAvailable.slice(),
+          selected_item_ids: currentAvailable.slice(),
+          world_item_ids: activeIds(),
+          economy: {...economy},
+          casino: {...casino},
+          event_trace: eventFeed.slice(),
+        }),
+      });
+      await fetch("/research/game-sessions/complete", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({game_session_id: gameSession.game_session_id, completed: true, abandoned: false, metadata: {}}),
+      });
+      renderAll();
+    }
+
+    async function exitGame() {
+      if (gameSession) {
+        await recordEvent({
+          screen_id: phase === "build" ? "world_builder" : "final_summary",
+          event_type: "game_exited",
+          metadata: baseMeta({stage_id: phase, world_item_ids: activeIds(), selected_item_ids: currentSelection.length ? currentSelection : activeIds()}),
+        });
+        await fetch("/research/game-sessions/complete", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({game_session_id: gameSession.game_session_id, completed: false, abandoned: true, metadata: {}}),
+        });
+      }
+      phase = "intro";
+      document.getElementById("game").classList.add("hidden");
+      document.getElementById("intro").classList.remove("hidden");
+    }
+
+    function baseMeta(extra) {
+      return {
+        simulation_version: registry.simulation_version,
+        scenario_id: registry.scenario_id,
+        scenario_version: registry.scenario_version,
+        random_seed: randomSeed,
+        language: lang,
+        simulation_tick: clock.tick,
+        simulation_period: `${clock.year}-${String(clock.month).padStart(2, "0")}`,
+        season: clock.season,
+        ...extra,
+      };
+    }
+
+    async function recordEvent(payload) {
+      if (!gameSession) return;
+      const response = await fetch("/research/game-events", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          game_session_id: gameSession.game_session_id,
+          screen_id: payload.screen_id,
+          event_type: payload.event_type,
+          object_id: payload.object_id || null,
+          question_id: payload.question_id || null,
+          answer: payload.answer ?? null,
+          value: payload.value ?? null,
+          decision_time_ms: payload.decision_time_ms || null,
+          confirmation_step: payload.confirmation_step || null,
+          cancel_count: payload.cancel_count || 0,
+          excluded_from_analysis: false,
+          metadata: payload.metadata || {},
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) alert(JSON.stringify(data));
+    }
+
+    function getEvent(eventId) {
+      return registry.event_registry.find(event => event.event_id === eventId);
+    }
+    function seasonForMonth(month) {
+      if ([12, 1, 2].includes(month)) return "winter";
+      if ([3, 4, 5].includes(month)) return "spring";
+      if ([6, 7, 8].includes(month)) return "summer";
+      return "autumn";
+    }
+    function currentTimestamp() {
+      return new Date().toISOString();
+    }
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    window.__livingWorldDebug = {
+      state: () => ({phase, world, economy, clock, casino, game_session_id: gameSession?.game_session_id}),
+    };
+    document.documentElement.lang = lang;
+    renderText();
+  </script>
+</body>
+</html>

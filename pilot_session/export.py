@@ -76,6 +76,21 @@ def generate_participant_export(session: ParticipantSession) -> dict:
         # TODO: migrate to participant_code/public pseudonymous id if needed.
         "participant_id": session.participant_id,
         "status": session.status.value,
+        "participant_id": session.participant_id,
+        "participant_id_boundary": (
+            "mvp_pilot_reference_not_public_identity_not_longitudinal_identity"
+        ),
+
+        "status": session.status.value,
+
+        "answer_collection": {
+            "answers_count": len(session.answers),
+            "answer_revision_count": session.answer_revision_count,
+            "answer_merge_history": session.answer_merge_history,
+            "run_count": session.run_count,
+            "run_history": session.run_history,
+        },
+
         "public_output": session.public_output,
         "uncertainty": session.uncertainty_snapshot or {},
         "next_questions": session.next_question_snapshots or [],
@@ -106,3 +121,5 @@ def generate_research_export(session: ParticipantSession) -> dict:
 # Temporary backward-compatible alias.
 # TODO: remove after all callers use generate_participant_export explicitly.
 generate_session_export = generate_participant_export
+# Participant-facing export uses the pilot participant_id only as an MVP reference.
+# It must not be treated as public identity or cross-session identity.

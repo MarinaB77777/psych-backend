@@ -1,0 +1,4429 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Research Workspace</title>
+<script src="/static/platform_i18n.js?v=20260712-sync"></script>
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f6f8;
+  color: #222;
+}
+.app {
+  display: grid;
+  grid-template-columns: 220px 1fr 320px;
+  height: 100vh;
+}
+.sidebar {
+  background: #151923;
+  color: white;
+  padding: 20px;
+}
+.sidebar h2 {
+  font-size: 18px;
+  margin-bottom: 24px;
+}
+.nav button {
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+  padding: 12px;
+  border: 0;
+  border-radius: 10px;
+  background: #252b38;
+  color: white;
+  text-align: left;
+  cursor: pointer;
+}
+.nav button:hover {
+  background: #343c4d;
+}
+.nav-group-label {
+  color: #8e99ad;
+  font-size: 11px;
+  text-transform: uppercase;
+  margin: 18px 0 6px;
+  letter-spacing: 0;
+}
+.main {
+  padding: 24px;
+  overflow: auto;
+}
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.card {
+  background: white;
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 16px;
+  border: 1px solid #ddd;
+}
+
+    .dashboard-block {
+      margin-bottom: 34px;
+      padding: 22px;
+      border-radius: 22px;
+      border: 2px solid #d6d9e0;
+      background: #eef1f6;
+    }
+
+    .dashboard-block-title {
+      margin: 0 0 6px;
+      font-size: 22px;
+    }
+
+    .dashboard-block-subtitle {
+      margin: 0 0 18px;
+      color: #555;
+      font-size: 14px;
+    }
+
+    .tool-card {
+      border: 1px solid #cfd6e3;
+      background: #ffffff;
+    }
+    
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+.ray {
+  background: #ffffff;
+  border-left: 1px solid #ddd;
+  padding: 20px;
+  overflow: auto;
+}
+.ray h2 {
+  margin-top: 0;
+}
+.ray-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.ray-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 1px solid #cfd6e3;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.ray-card {
+  background: #f7f7fb;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+  border: 1px solid #ddd;
+}
+.ray-card h3 {
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+.ray-card ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+.ray-card li {
+  margin: 7px 0;
+  line-height: 1.35;
+}
+.consistency-toolbar {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto auto;
+  gap: 10px;
+  align-items: end;
+}
+.consistency-toolbar input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid #cfd6e3;
+  border-radius: 8px;
+}
+.consistency-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+.consistency-item {
+  border: 1px solid #d7dfd8;
+  border-left: 5px solid #7aa37d;
+  border-radius: 8px;
+  padding: 14px;
+  background: #fbfdfb;
+}
+.consistency-item.cross-session { border-left-color: #7189b8; }
+.consistency-item.sensor { border-left-color: #b08a56; }
+.consistency-item.blocked { border-left-color: #8b95a5; background: #f8fafc; }
+.consistency-status {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #eef6ef;
+  color: #2e5633;
+  font-size: 12px;
+  margin-left: 6px;
+}
+.consistency-kv {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+.consistency-kv div {
+  border: 1px solid #e1e6eb;
+  border-radius: 8px;
+  padding: 8px;
+  background: white;
+}
+.ray-actions {
+  display: grid;
+  gap: 8px;
+}
+.ray-actions button {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d6dbe6;
+  border-radius: 10px;
+  background: white;
+  color: #1f2937;
+  cursor: pointer;
+  text-align: left;
+}
+.ray-actions button.primary {
+  background: #111827;
+  color: white;
+  border: 0;
+  text-align: center;
+}
+.ray-note {
+  padding: 10px 12px;
+  border-left: 3px solid #334155;
+  background: #ffffff;
+  border-radius: 8px;
+  color: #334155;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.ray-muted {
+  color: #64748b;
+  font-size: 13px;
+}
+.small {
+  color: #666;
+  font-size: 14px;
+}
+button.primary {
+  background: #111827;
+  color: white;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.quick-action {
+  border: 1px solid #d8dde6;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.quick-action strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 15px;
+}
+.quick-action span {
+  display: block;
+  color: #5b6472;
+  font-size: 13px;
+  line-height: 1.35;
+}
+.quick-action.primary-action {
+  background: #111827;
+  color: white;
+  border-color: #111827;
+}
+.quick-action.primary-action span {
+  color: #d8dee9;
+}
+.workflow-strip {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.workflow-step {
+  border: 1px solid #d8dde6;
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 10px;
+  min-height: 72px;
+}
+.workflow-step b {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 5px;
+}
+.workflow-step span {
+  color: #5b6472;
+  font-size: 12px;
+  line-height: 1.3;
+}
+.semantic-sections {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.semantic-section {
+  border: 1px solid #d8dde6;
+  background: white;
+  border-radius: 12px;
+  padding: 14px;
+}
+.semantic-section h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.semantic-section p {
+  margin: 0 0 12px;
+}
+.semantic-section-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.semantic-section-actions a,
+.semantic-section-actions button {
+  border: 1px solid #d8dde6;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #f9fafb;
+  color: #111827;
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 13px;
+}
+.semantic-section-actions .rc-disabled,
+.semantic-section-actions button.rc-disabled {
+  cursor: not-allowed;
+  color: #6b7280;
+  background: #f3f4f6;
+  border-style: dashed;
+}
+.semantic-section.primary-section {
+  border-color: #111827;
+}
+.semantic-section.primary-section h3 {
+  color: #111827;
+}
+.legacy-workspace {
+  border: 1px solid #d8dde6;
+  border-radius: 12px;
+  background: #ffffff;
+  margin-bottom: 18px;
+}
+.legacy-workspace summary {
+  cursor: pointer;
+  padding: 14px 16px;
+  font-weight: bold;
+}
+.legacy-workspace-inner {
+  padding: 0 16px 16px;
+}
+.page-catalog {
+  border: 1px solid #d8dde6;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+.page-catalog h2 {
+  margin: 0 0 8px;
+}
+.page-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.page-link {
+  display: block;
+  border: 1px solid #d8dde6;
+  border-radius: 10px;
+  padding: 12px;
+  background: #f9fafb;
+  color: #111827;
+  text-decoration: none;
+}
+.page-link:hover {
+  background: #eef2f7;
+}
+.page-link.rc-disabled {
+  cursor: default;
+  color: #6b7280;
+  background: #f3f4f6;
+  border-style: dashed;
+}
+.page-link.rc-disabled:hover {
+  background: #f3f4f6;
+}
+.page-link strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+.page-link span {
+  display: block;
+  color: #5b6472;
+  font-size: 12px;
+  line-height: 1.3;
+}
+.rc-status {
+  display: inline-block;
+  margin-top: 8px;
+  border: 1px solid #d8dde6;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #ffffff;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 700;
+}
+.dashboard-intro {
+  border: 1px solid #d8dde6;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+.dashboard-intro h2 {
+  margin: 0 0 8px;
+}
+.dashboard-intro p {
+  margin: 0;
+}
+.study-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.study-list {
+  display: grid;
+  gap: 10px;
+}
+.study-card {
+  border: 1px solid #d8dde6;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+.study-card.active {
+  border-color: #111827;
+  background: #f3f6fb;
+}
+.study-card strong {
+  display: block;
+  margin-bottom: 4px;
+}
+.study-toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.study-toolbar button,
+.study-toolbar a {
+  border: 1px solid #d8dde6;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #f9fafb;
+  color: #111827;
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 13px;
+}
+.study-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.study-form-grid input,
+.study-form-grid textarea,
+.study-form-grid select {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #cfd6e3;
+  border-radius: 8px;
+  font: inherit;
+}
+@media (max-width: 1100px) {
+  .app {
+    grid-template-columns: 190px 1fr;
+  }
+  .ray {
+    display: none;
+  }
+  .quick-actions,
+  .workflow-strip,
+  .semantic-sections,
+  .study-layout,
+  .study-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .page-catalog-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 760px) {
+  .app {
+    display: block;
+    height: auto;
+  }
+  .sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  .quick-actions,
+  .workflow-strip,
+  .semantic-sections,
+  .page-catalog-grid,
+    .grid,
+    .qc-editor-grid,
+    .qc-panel-grid,
+    .consistency-toolbar,
+    .consistency-kv,
+    .study-layout,
+    .study-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+    .qc-input {
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+    }
+    .qc-toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 10px;
+      background: #f7f7fb;
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      margin-bottom: 12px;
+    }
+    .qc-toolbar button {
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      background: white;
+      cursor: pointer;
+    }
+    .qc-panel {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+    .qc-panel-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .qc-choice {
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      background: #f9fafb;
+      cursor: pointer;
+      text-align: left;
+    }
+    .answer-card {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border: 1px solid #d8dde6;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin: 10px 0;
+      background: #ffffff;
+      cursor: pointer;
+      line-height: 1.35;
+    }
+    .answer-card:hover {
+      background: #f3f6ff;
+      border-color: #bcc7dc;
+    }
+    .answer-card input {
+      width: auto;
+      margin: 2px 0 0;
+      flex: 0 0 auto;
+    }
+    .answer-card.disabled {
+      cursor: default;
+      color: #333;
+    }
+    .qc-live {
+      max-width: 720px;
+      margin: 0 auto;
+      border: 1px solid #ddd;
+      border-radius: 18px;
+      padding: 24px;
+      background: white;
+    }
+    .qc-code {
+      width: 120px;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+    .qc-question {
+      width: 100%;
+      min-height: 90px;
+      font-size: 20px;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      margin-bottom: 18px;
+    }
+    .qc-answer-row {
+      display: grid;
+      grid-template-columns: 70px 1fr 180px;
+      gap: 10px;
+      align-items: center;
+      margin: 10px 0;
+    }
+    .qc-answer-row input,
+    .qc-answer-row select {
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+    }
+    .qc-editor-grid {
+      display: grid;
+      grid-template-columns: minmax(320px, 1.2fr) minmax(320px, 0.8fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .qc-panel {
+      display: block;
+      min-height: 420px;
+      max-height: 65vh;
+      overflow: auto;
+    }
+
+    .qc-live {
+      position: sticky;
+      top: 0;
+      max-height: 65vh;
+      overflow: auto;
+    }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <aside class="sidebar">
+    <h2>Research Workspace</h2>
+
+    <div class="nav">
+        <div class="nav-group-label" data-i18n="workGroup">Работа</div>
+        <button onclick="showSection('dashboard')">
+            🧭 <span data-i18n="dashboard">Dashboard</span>
+          </button>
+
+          <button onclick="showSection('pilot')">
+            🚀 <span data-i18n="pilot">Пилот</span>
+          </button>
+
+          <button onclick="showSection('projects')">
+            📂 <span data-i18n="projects">Проекты</span>
+          </button>
+
+          <div class="nav-group-label" data-i18n="researchGroup">Исследование</div>
+          <button onclick="showSection('hypotheses')">
+            🧪 <span data-i18n="independentStudies">Отдельные исследования</span>
+          </button>
+
+          <button onclick="showSection('assets')">
+            🧩 <span data-i18n="assets">Ресурсы</span>
+          </button>
+
+          <button onclick="showSection('tools')">
+            🛠 <span data-i18n="tools">Инструменты</span>
+          </button>
+
+          <div class="nav-group-label" data-i18n="systemGroup">Система</div>
+          <button onclick="showSection('platformMap')">
+            🗺 <span data-i18n="platformMap">Карта платформы</span>
+          </button>
+
+          <hr style="margin:18px 0;border:0;border-top:1px solid #394152;">
+
+          <button type="button" onclick="showSection('hypotheses')" title="Not available as a separate Pilot RC route">
+            ➕ <span data-i18n="newInvestigation">Новое исследование</span>
+          </button>
+ 
+    </div>
+  </aside>
+
+  <main class="main">
+      <div class="topbar">
+        <div>
+          <h1 id="sectionTitle">Research Workspace</h1>
+          <p class="small">
+            <span data-i18n="workspaceIntro1">Главный экран для запуска пилота, подготовки данных и исследовательской работы.</span>
+            <span data-i18n="workspaceIntro2">Сначала выбери рабочий поток, детали можно открыть ниже.</span>
+          </p>
+        </div>
+
+        <div>
+          <button class="primary"
+                  onclick="showSection('pilot')">
+            Open Pilot
+          </button>
+        </div>
+      </div>
+      
+      <section id="dashboard" class="workspace-section">
+        <div class="dashboard-intro">
+          <h2>Что делаем сейчас?</h2>
+          <p class="small">
+            Пилот — главный приоритет. Исследовательские инструменты рядом, но не мешают первому запуску.
+          </p>
+        </div>
+
+        <div class="workflow-strip">
+          <div class="workflow-step">
+            <b>1. Сбор</b>
+            <span>Согласие, анкета, измерения, сессия.</span>
+          </div>
+          <div class="workflow-step">
+            <b>2. Проверка</b>
+            <span>Покрытие, пропуски, качество данных.</span>
+          </div>
+          <div class="workflow-step">
+            <b>3. Подготовка</b>
+            <span>Prepared Domain Output и metadata.</span>
+          </div>
+          <div class="workflow-step">
+            <b>4. Анализ</b>
+            <span>Гипотезы, пары переменных, методы.</span>
+          </div>
+          <div class="workflow-step">
+            <b>5. Результаты</b>
+            <span>Scientific results и ограничения.</span>
+          </div>
+        </div>
+
+        <div class="semantic-sections">
+          <div class="semantic-section primary-section">
+            <h3>Пилот</h3>
+            <p class="small">
+              Всё, что нужно для первого запуска: согласие, анкета, участник, сессия.
+            </p>
+            <div class="semantic-section-actions">
+              <a href="/assessment">Открыть пилот</a>
+              <button type="button" onclick="showSection('pilot')">Панель пилота</button>
+            </div>
+          </div>
+
+          <div class="semantic-section">
+            <h3>Участники и сбор</h3>
+            <p class="small">
+              Записи сессий и данные, доступные для проверки пилота.
+            </p>
+            <div class="semantic-section-actions">
+              <a href="/data-check">Записи данных</a>
+              <span class="rc-disabled">Анкеты и измерения: Not available in Pilot RC</span>
+            </div>
+          </div>
+
+          <div class="semantic-section">
+            <h3>Проверка и подготовка данных</h3>
+            <p class="small">
+              Проверка записей, покрытие, пропуски и подготовленные представления.
+            </p>
+            <div class="semantic-section-actions">
+              <a href="/data-check">Data Check</a>
+              <a href="/data-preparation">Data Preparation</a>
+            </div>
+          </div>
+
+          <div class="semantic-section">
+            <h3>Исследование и гипотезы</h3>
+            <p class="small">
+              Рабочие гипотезы остаются внутри закрытого workspace; внешний Research Lab не входит в RC.
+            </p>
+            <div class="semantic-section-actions">
+              <button type="button" onclick="showSection('hypotheses')">Внутри Workspace</button>
+              <span class="rc-disabled">Research Lab: Not available in Pilot RC</span>
+            </div>
+          </div>
+
+          <div class="semantic-section">
+            <h3>Анализ</h3>
+            <p class="small">
+              Сборка анализа, проверка совместимости шкал и метод.
+            </p>
+            <div class="semantic-section-actions">
+              <a href="/analysis-builder">Analysis Builder</a>
+              <a href="/analysis-check">Analysis Check</a>
+            </div>
+          </div>
+
+          <div class="semantic-section">
+            <h3>Результаты и модель</h3>
+            <p class="small">
+              Результаты проверки доступны; model explorer и metadata остаются внутренними экранами.
+            </p>
+            <div class="semantic-section-actions">
+              <a href="/scientific-results">Results</a>
+              <span class="rc-disabled">Model Explorer / Metadata: Not available in Pilot RC</span>
+            </div>
+          </div>
+        </div>
+
+        <details class="legacy-workspace">
+          <summary>Дополнительные черновики Workspace</summary>
+          <div class="legacy-workspace-inner">
+
+          <div class="dashboard-block">
+            <h2 class="dashboard-block-title">1. Create / manage research project</h2>
+            <p class="dashboard-block-subtitle">
+              Создание проекта, обзор литературы, гипотезы, переменные, заметки и сохранение проекта.
+            </p>
+            </div>
+        <div class="card">
+          <h2>Create New Project</h2>
+          <p class="small">
+            Здесь создаётся новый проект. Всё ниже относится только к текущему черновику.
+            После сохранения проект появится во вкладке Projects и останется редактируемым.
+          </p>
+
+          <label>Research request / вопрос / задание</label>
+          <textarea
+            id="projectRequestInput"
+            rows="4"
+            placeholder="Например: найти данные о связи хронического стресса и качества принятия решений"
+            style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;margin:8px 0 12px;"
+          ></textarea>
+
+          <button class="primary" type="button">
+            Ask Ray to prepare review
+          </button>
+        </div>
+
+        <div class="card">
+          <h3>Ray Review Results</h3>
+          <p class="small">
+            Здесь Рэй будет показывать основные результаты по теме со ссылками.
+            Человек сможет выделять нужный текст и отправлять его в проектные блоки.
+          </p>
+
+          <div
+            id="rayReviewText"
+            style="background:#f7f7fb;border:1px solid #ddd;border-radius:12px;padding:14px;line-height:1.5;"
+          >
+            <p><b>Demo result:</b> Chronic stress may be associated with impaired decision-making under uncertainty. <span class="small">[Source: example]</span></p>
+            <p>Possible mechanisms include reduced cognitive control, higher emotional interference, and altered risk evaluation. <span class="small">[Source: example]</span></p>
+            <p>Some studies report mixed results depending on task type, chronicity and recovery resources. <span class="small">[Source: example]</span></p>
+          </div>
+
+          <div style="margin-top:12px;">
+            <button type="button" onclick="captureSelection('important')">Important</button>
+            <button type="button" onclick="captureSelection('hypotheses')">To hypotheses</button>
+            <button type="button" onclick="captureSelection('variables')">To variables / mechanisms</button>
+            <button type="button" onclick="captureSelection('check')">To check</button>
+            <button type="button" onclick="captureSelection('contradictions')">Contradiction</button>
+            <button type="button" onclick="captureSelection('questions')">Question</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Article / Source Viewer</h3>
+          <p class="small">
+            Окно просмотра статей и источников. Функционал выделения текста такой же.
+          </p>
+
+          <div
+            id="sourceViewerText"
+            style="background:#fff;border:1px solid #ddd;border-radius:12px;padding:14px;line-height:1.5;"
+          >
+            <p><b>Article demo:</b> Decision quality may depend not only on stress level, but also on available cognitive resources and recovery capacity. <span class="small">[Source: article demo]</span></p>
+          </div>
+
+          <div style="margin-top:12px;">
+            <button type="button" onclick="captureSelection('important')">Important</button>
+            <button type="button" onclick="captureSelection('hypotheses')">To hypotheses</button>
+            <button type="button" onclick="captureSelection('variables')">To variables / mechanisms</button>
+            <button type="button" onclick="captureSelection('check')">To check</button>
+            <button type="button" onclick="captureSelection('contradictions')">Contradiction</button>
+            <button type="button" onclick="captureSelection('questions')">Question</button>
+          </div>
+        </div>
+
+        <div class="grid">
+
+          <div class="card">
+            <h3>Project topic / goal</h3>
+            <p class="small">Название темы и цель могут формироваться Рэем по мере сбора данных. Человек может заполнить вручную.</p>
+            <input id="draftProjectTitle" placeholder="Project topic" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;margin-bottom:8px;">
+            <textarea id="draftProjectGoal" rows="3" placeholder="Project goal" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;"></textarea>
+          </div>
+
+          <div class="card">
+            <h3>Important notes</h3>
+            <div id="importantBox" class="small">Nothing selected yet.</div>
+          </div>
+
+          <div class="card">
+            <h3>Hypotheses</h3>
+            <div id="hypothesesBox" class="small">Nothing selected yet.</div>
+          </div>
+
+          <div class="card">
+            <h3>Variables / mechanisms</h3>
+            <div id="variablesBox" class="small">Nothing selected yet.</div>
+          </div>
+
+          <div class="card">
+            <h3>To check</h3>
+            <div id="checkBox" class="small">Nothing selected yet.</div>
+          </div>
+
+          <div class="card">
+            <h3>Contradictions</h3>
+            <div id="contradictionsBox" class="small">Nothing selected yet.</div>
+          </div>
+
+          <div class="card">
+            <h3>Open questions</h3>
+            <div id="questionsBox" class="small">Nothing selected yet.</div>
+          </div>
+
+          <div class="card">
+            <h3>Tools & resources</h3>
+            <p class="small">
+              Подключение вопросов, банков, статистики, моделей, сенсоров, приборов, игр и Рэя к этому проекту.
+            </p>
+            <button class="primary" onclick="showSection('tools')">Choose tools/resources</button>
+          </div>
+
+        </div>
+
+        <div class="card">
+          <button class="primary" type="button">
+            Save Project
+          </button>
+          <p class="small">
+            После сохранения проект появится во вкладке Projects. Позже его можно будет продолжать редактировать.
+          </p>
+        </div>
+        <div class="dashboard-block">
+          <h2 class="dashboard-block-title">2. Create / connect instruments and data preparation tools</h2>
+          <p class="dashboard-block-subtitle">
+            Создание и подключение вопросов, банков, сенсоров, приборов, игр, VR/AR, стандартных представлений данных и будущих анализаторов.
+          </p>
+
+          <div class="card">
+            <h2>Create New Tools</h2>
+          </div>
+          <div class="grid">
+            <div class="card">
+              <h3>Question constructor</h3>
+              <p class="small">Создание и редактирование вопросов в выбранном языке банка.</p>
+              <button class="primary" type="button" onclick="showSection('questionConstructor')">
+                Open
+              </button>
+            </div>
+
+            <div class="card tool-card">
+              <h3>Standard data preparation</h3>
+              <p class="small">
+                Подготовка стандартных научных представлений данных из Prepared Domain Output:
+                таблицы, матрицы, item responses, scale values, domain values, deltas.
+              </p>
+              <button class="primary" type="button">
+                Open
+              </button>
+            </div>
+            
+            <div class="card">
+              <h3>Sensors / devices</h3>
+              <p class="small">Описание сенсоров, приборов, оборудования.</p>
+              <button class="primary" type="button">Open</button>
+            </div>
+
+            <div class="card">
+              <h3>Games / simulations</h3>
+              <p class="small">Создание игр, симуляций, VR/AR сценариев.</p>
+              <button class="primary" type="button">Open</button>
+            </div>
+
+            <div class="card">
+              <h3>Analysis methods</h3>
+              <p class="small">Добавление статистики и методов проверки гипотез.</p>
+              <button class="primary" type="button">Open</button>
+            </div>
+          </div>
+        </div>
+
+          </div>
+        </details>
+
+      </section>
+
+      <section id="platformMap" class="workspace-section" style="display:none">
+        <div class="page-catalog">
+          <h2>Карта платформы</h2>
+          <p class="small">
+            Служебный список экранов. Основной путь пилота остаётся на Dashboard.
+          </p>
+
+          <div class="page-catalog-grid">
+            <a class="page-link" href="/assessment">
+              <strong>Assessment / Pilot</strong>
+              <span>Участник, согласие, анкета и личный кабинет.</span>
+            </a>
+            <div class="page-link rc-disabled">
+              <strong>Decision Questionnaire</strong>
+              <span>Анкета принятия решений в условиях неопределенности.</span>
+              <span class="rc-status">Not available in Pilot RC</span>
+            </div>
+            <a class="page-link" href="/data-check">
+              <strong>Data Check</strong>
+              <span>Проверка записей, пропусков и готовности dataset.</span>
+            </a>
+            <a class="page-link" href="/data-preparation">
+              <strong>Data Preparation</strong>
+              <span>Prepared outputs, records, tables and validation.</span>
+            </a>
+            <a class="page-link" href="/analysis-builder">
+              <strong>Analysis Builder</strong>
+              <span>Сборка анализа: переменные, группы, метод, запрос.</span>
+            </a>
+            <div class="page-link rc-disabled">
+              <strong>Research Lab</strong>
+              <span>Гипотезы, validation plan and research objects.</span>
+              <span class="rc-status">Not available in Pilot RC</span>
+            </div>
+            <a class="page-link" href="/scientific-results">
+              <strong>Scientific Results</strong>
+              <span>Результаты, статистика, покрытия и JSON.</span>
+            </a>
+            <a class="page-link" href="/analysis-check">
+              <strong>Analysis Check</strong>
+              <span>Проверка совместимости шкал и метода анализа.</span>
+            </a>
+            <div class="page-link rc-disabled">
+              <strong>Health Model Explorer</strong>
+              <span>Параметры модели, механизмы и технический статус.</span>
+              <span class="rc-status">Internal</span>
+            </div>
+            <div class="page-link rc-disabled">
+              <strong>Question Metadata</strong>
+              <span>Банки вопросов, шкалы и metadata.</span>
+              <span class="rc-status">Internal</span>
+            </div>
+            <div class="page-link rc-disabled">
+              <strong>Measurement Setup</strong>
+              <span>Сенсоры, файлы, коннекторы и measurement package.</span>
+              <span class="rc-status">Not available in Pilot RC</span>
+            </div>
+            <div class="page-link rc-disabled">
+              <strong>Research Games</strong>
+              <span>Реестр наших игр, события и подготовленные game signal bundles.</span>
+              <span class="rc-status">Not available in Pilot RC</span>
+            </div>
+            <div class="page-link rc-disabled">
+              <strong>Participant Portal</strong>
+              <span>Отдельный вход участника: доступные активности и подключённые игры.</span>
+              <span class="rc-status">Not available in Pilot RC</span>
+            </div>
+            <div class="page-link rc-disabled">
+              <strong>Offline AI Core</strong>
+              <span>Отдельное локальное ядро независимого ИИ: обучение, память, границы.</span>
+              <span class="rc-status">Internal</span>
+            </div>
+            <div class="page-link rc-disabled">
+              <strong>Pilot Result</strong>
+              <span>Короткий экран результата пилота.</span>
+              <span class="rc-status">Opened only after participant session</span>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <section id="projects" class="workspace-section" style="display:none">
+        <div class="card">
+          <h2>Projects</h2>
+          <p class="small">
+            Здесь находятся уже сохранённые проекты. Нажатие на проект открывает его рабочую страницу.
+          </p>
+        </div>
+
+        <div class="grid">
+          <div class="card">
+            <h3>Health Model Pilot</h3>
+            <p class="small">Рабочий проект. Все разделы можно редактировать.</p>
+            <button class="primary" onclick="openProject('health_model_pilot')">
+              Open project
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="projectPage" class="workspace-section" style="display:none">
+        <div class="card">
+          <button type="button" onclick="showSection('projects')">← Back to Projects</button>
+          <h2 id="projectPageTitle">Project</h2>
+          <p class="small">
+            Рабочая страница проекта. Все разделы исследования редактируемые.
+            Дополнительные разделы можно добавлять в нужное место.
+          </p>
+        </div>
+
+        <div class="card">
+          <h3>Project sections</h3>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button type="button" onclick="openProjectSection('projectOverview')">Overview</button>
+            <button type="button" onclick="openProjectSection('projectReview')">Review</button>
+            <button type="button" onclick="openProjectSection('projectQuestions')">Questions</button>
+            <button type="button" onclick="openProjectSection('projectHypotheses')">Hypotheses</button>
+            <button type="button" onclick="openProjectSection('projectResources')">Resources</button>
+            <button type="button" onclick="openProjectSection('projectData')">Data</button>
+            <button type="button" onclick="openProjectSection('projectAnalysis')">Analysis</button>
+            <button type="button" onclick="openProjectSection('projectResults')">Results</button>
+            <button type="button" onclick="openProjectSection('projectPublications')">Publications</button>
+          </div>
+        </div>
+
+        <div id="projectOverview" class="card project-section">
+          <h3>Overview</h3>
+          <p class="small">Название, цель, состояние проекта, ключевые решения.</p>
+          <textarea rows="5" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;"></textarea>
+        </div>
+
+        <div id="projectReview" class="card project-section" style="display:none">
+          <h3>Review</h3>
+          <p class="small">Обзор, источники, выводы, противоречия, заметки Рэя и исследователя.</p>
+          <textarea rows="6" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;"></textarea>
+        </div>
+
+        <div id="projectQuestions" class="card project-section" style="display:none">
+          <h3>Questions</h3>
+          <p class="small">Вопросы, анкеты, банки вопросов, языковые версии RU / EN / ES.</p>
+          <button class="primary" type="button" onclick="showSection('questionConstructor')">
+            Open question constructor
+          </button>
+        </div>
+
+        <div id="projectHypotheses" class="card project-section" style="display:none">
+          <h3>Hypotheses</h3>
+          <p class="small">Гипотезы проекта и планы проверки.</p>
+          <button class="primary" type="button" onclick="showSection('hypotheses')">Open workspace hypotheses</button>
+        </div>
+
+        <div id="projectResources" class="card project-section" style="display:none">
+          <h3>Resources</h3>
+          <p class="small">Подключённые инструменты, ресурсы, сенсоры, игры, модели, статистика.</p>
+          <button class="primary" onclick="showSection('tools')">Attach resources/tools</button>
+        </div>
+
+        <div id="projectData" class="card project-section" style="display:none">
+          <h3>Data</h3>
+          <p class="small">Участники, ответы, результаты анкет, сенсорные данные, качество данных.</p>
+          <button class="primary" onclick="showSection('pilot')">Open pilot data</button>
+        </div>
+
+        <div id="projectAnalysis" class="card project-section" style="display:none">
+          <h3>Analysis</h3>
+          <p class="small">Статистические проверки, модели, расчёты, неопределённость.</p>
+          <button class="primary" type="button">Open analysis</button>
+        </div>
+
+        <div id="projectResults" class="card project-section" style="display:none">
+          <h3>Results</h3>
+          <p class="small">Результаты проверки гипотез, выводы, ограничения.</p>
+          <button class="primary" type="button">Open results</button>
+        </div>
+
+        <div id="projectPublications" class="card project-section" style="display:none">
+          <h3>Publications</h3>
+          <p class="small">Статьи, отчёты, гранты, материалы публикаций.</p>
+          <button class="primary" type="button">Open publication workspace</button>
+        </div>
+
+        <div class="card">
+          <button type="button">+ Add section</button>
+          <button type="button">Remove section</button>
+        </div>
+      </section>
+    <section id="hypotheses" class="workspace-section" style="display:none">
+      <div class="card">
+        <h2>Отдельные исследования</h2>
+        <p class="small">
+          Каждое исследование имеет свой study_id, свои гипотезы, данные,
+          план анализа и переходы в результаты. Анкеты и модель могут
+          подключаться к исследованию, но не подменяют его.
+        </p>
+      </div>
+
+      <div class="study-layout">
+        <div class="card">
+          <h3>Исследования</h3>
+          <div id="studiesList" class="study-list">Loading...</div>
+        </div>
+
+        <div>
+          <div class="card">
+            <h3 id="activeStudyTitle">Выберите исследование</h3>
+            <p id="activeStudyDescription" class="small">
+              Активное исследование определяет, какие объекты, данные и
+              анализы показываются во вкладке.
+            </p>
+            <div id="activeStudyMeta" class="small"></div>
+            <div class="study-toolbar">
+              <button type="button" onclick="loadStudies()">Обновить</button>
+              <button type="button" onclick="openStudyData()">Данные исследования</button>
+              <button type="button" onclick="openStudyAnalysis()">Анализ</button>
+              <button type="button" onclick="openStudyResults()">Результаты</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Создать исследование</h3>
+            <div class="study-form-grid">
+              <input id="newStudyTitle" placeholder="Название исследования">
+              <input id="newStudyId" placeholder="study_id, можно оставить пустым">
+              <textarea id="newStudyDescription" rows="3" placeholder="Описание"></textarea>
+              <textarea id="newStudyQuestion" rows="3" placeholder="Главный исследовательский вопрос"></textarea>
+            </div>
+            <div class="study-toolbar">
+              <button class="primary" type="button" onclick="createStudy()">Создать</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Добавить гипотезу / объект в активное исследование</h3>
+            <div class="study-form-grid">
+              <input id="newObjectTitle" placeholder="Название гипотезы или объекта">
+              <select id="newObjectType">
+                <option value="hypothesis">Hypothesis</option>
+                <option value="discovery_candidate">Discovery candidate</option>
+                <option value="mechanism_candidate">Mechanism candidate</option>
+                <option value="derived_parameter">Derived parameter</option>
+              </select>
+              <textarea id="newObjectQuestion" rows="3" placeholder="Исследовательский вопрос"></textarea>
+              <textarea id="newObjectDescription" rows="3" placeholder="Описание / заметки"></textarea>
+            </div>
+            <div class="study-toolbar">
+              <button class="primary" type="button" onclick="createStudyObject()">Добавить в исследование</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Объекты активного исследования</h3>
+            <div id="hypothesesList">Loading...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="questionConstructor" class="workspace-section" style="display:none">
+      <div class="card">
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+            <b>Банк вопросов</b>
+
+            <div id="qcBankButtons" style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button type="button" onclick="selectConstructorBank('intro')">Знакомство</button>
+              <button type="button" onclick="selectConstructorBank('resource')">Истощение ресурсов</button>
+              <button type="button" onclick="selectConstructorBank('decision')">Принятие решений</button>
+              <button type="button" onclick="selectConstructorBank('decision_under_uncertainty')">
+                Принятие решений в условиях неопределенности
+              </button>
+            </div>
+
+            <button class="primary" onclick="loadConstructorQuestions()">Загрузить</button>
+          <button class="primary" onclick="saveConstructorQuestions()">Сохранить</button>
+          <button onclick="validateQuestionnaire()">Проверить</button>
+          <button onclick="createConstructorQuestion()">+ Новый вопрос</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:180px 1fr;gap:18px;">
+        <div class="card">
+          <h3>Вопросы банка</h3>
+          <div id="qcTree" class="small">Банк не загружен.</div>
+        </div>
+
+        <div class="card">
+          <div class="qc-toolbar">
+              <button onclick="createQuestionBank()">+ Новый банк</button>
+            <button onclick="toggleQcPanel('type')">Тип вопроса ▾</button>
+            <button onclick="toggleQcPanel('scale')">Научная шкала ▾</button>
+            <button onclick="toggleQcPanel('answers')">Ответы ▾</button>
+            <button onclick="toggleQcPanel('routing')">Переходы ▾</button>
+            <button onclick="toggleQcPanel('use')">Использование ▾</button>
+          </div>
+
+          <div class="qc-editor-grid">
+            <div id="qcPanel" class="qc-panel"></div>
+
+            <div class="qc-live">
+              <input id="qcCode" class="qc-code" placeholder="DU5" oninput="updateQcText()">
+              <textarea id="qcPrompt" class="qc-question" placeholder="Текст вопроса" oninput="updateQcText()"></textarea>
+              <div id="qcPreview"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+    
+    <section id="questionnaireConnection" class="workspace-section" style="display:none">
+      <div class="card">
+        <button type="button" onclick="showSection('pilot')">← Back to Pilot</button>
+        <h2 id="qcProjectTitle">Health Model Pilot</h2>
+        <p class="small">
+          Manage which question banks are included in this pilot questionnaire.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Question banks</h3>
+        <div id="connectedQuestionnairesList" class="small"></div>
+      </div>
+    </section>
+    
+    <section id="tools" class="workspace-section" style="display:none">
+      <div class="card">
+        <h3>Tools & Resources</h3>
+        <p class="small">
+          Здесь выбираются и подключаются ресурсы и инструменты к конкретному
+          проекту или исследованию. Настройки можно менять в любой момент.
+        </p>
+
+        <label class="small">Attach to project / investigation:</label>
+        <select style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;margin:8px 0 16px;">
+          <option>Health Model Pilot</option>
+          <option>Independent Study</option>
+        </select>
+
+        <div class="grid">
+          <div class="card">
+            <h3>Questions</h3>
+            <p class="small">Question banks and questionnaires.</p>
+            <button class="primary" onclick="loadEntities()">Open resources</button>
+          </div>
+
+          <div class="card">
+            <h3>Model parameters</h3>
+            <p class="small">Calculated parameters, mechanisms and model outputs.</p>
+            <button class="primary" onclick="loadEntities()">Open resources</button>
+          </div>
+
+          <div class="card">
+            <h3>Statistics</h3>
+            <p class="small">Correlation, regression, group comparison and future methods.</p>
+            <button class="primary" onclick="loadEntities()">Open resources</button>
+          </div>
+
+          <div class="card">
+            <h3>Sensors & Devices</h3>
+            <p class="small">Sensors, instruments, laboratory equipment and calibration assets.</p>
+            <button class="primary" onclick="loadEntities()">Open resources</button>
+          </div>
+
+          <div class="card">
+            <h3>Games / Simulations / VR</h3>
+            <p class="small">Registered research games, event collection and prepared signal bundles.</p>
+            <p class="rc-status">Not available in Pilot RC</p>
+          </div>
+
+          <div class="card">
+            <h3>Ray</h3>
+            <p class="small">Ray participation mode, rules, hypotheses and collaboration settings.</p>
+            <button class="primary" type="button">Configure Ray</button>
+          </div>
+        </div>
+
+        <pre id="assetsOutput"></pre>
+      </div>
+    </section>
+    
+    <section id="pilot" class="workspace-section" style="display:none">
+      <div class="card">
+          <h3 id="pilotProjectTitle" data-project-id="health_model_pilot">
+            Health Model Pilot
+          </h3>
+        <p class="small">
+          Управление проектом пилота: участники, вопросы, данные, гипотезы,
+          инструменты проверки и результаты.
+        </p>
+        <button class="primary" onclick="location.href='/assessment'">
+          Open participant page
+        </button>
+      </div>
+
+      <div class="grid">
+
+        <div class="card">
+          <h3>Question Constructor</h3>
+          <p class="small">
+            Создание и редактирование вопросов для банка на трёх языках:
+            RU / EN / ES.
+          </p>
+          <button class="primary" type="button" onclick="showSection('questionConstructor')">
+            Open constructor
+          </button>
+        </div>
+
+        <div class="card">
+          <h3>Connecting the questionnaire</h3>
+          <p class="small">
+          Enable and disable question banks that are visible to the participant in the pilot.
+          </p>
+          <button class="primary" type="button" onclick="showSection('questionnaireConnection')">
+              Open
+          </button>
+        </div>
+
+        <div class="card">
+          <h3>Games</h3>
+          <p class="small">
+            Игровые модули подготовлены как отдельный слой, но не входят в Pilot RC.
+          </p>
+          <p class="rc-status">Not available in Pilot RC</p>
+        </div>
+
+        <div class="card">
+          <h3>Hypotheses</h3>
+          <p class="small">
+            Формирование гипотез на основе вопросов, параметров модели,
+            наблюдений и данных. В RC используется только закрытый workspace.
+          </p>
+          <button class="primary" type="button" onclick="showSection('hypotheses')">
+            Open workspace hypotheses
+          </button>
+        </div>
+
+        <div class="card">
+          <h3>Hypothesis Testing Tools</h3>
+          <p class="small">
+            Выбор статистики, параметров модели, переменных, методов проверки
+            и дополнительных инструментов.
+          </p>
+          <button class="primary" onclick="showSection('tools')">
+            Choose tools
+          </button>
+        </div>
+        <div class="card">
+          <h3>Data Preparation Constructor</h3>
+          <p class="small">
+            Подготовка данных перед анализом: стандартные представления, таблицы,
+            матрицы, item responses, scale/domain values, deltas и preview результата.
+          </p>
+          <button class="primary" type="button" onclick="location.href='/data-preparation'">
+            Open constructor
+          </button>
+        </div>
+        <div class="card">
+          <h3>Hypothesis Testing Results</h3>
+          <p class="small">
+            Просмотр результатов проверки гипотез: что проверяли, каким методом,
+            на каких данных, какой результат получен и достаточно ли данных для вывода.
+          </p>
+
+          <p><b>Current status:</b> No completed tests yet.</p>
+          <p class="small">
+            После запуска статистики здесь будут отображаться N, method, predictor,
+            outcome, p-value, effect size, confidence interval and interpretation.
+          </p>
+
+          <button class="primary" type="button" onclick="location.href='/scientific-results'">
+            Open scientific results
+          </button>
+        </div>
+
+      </div>
+      <div class="card" id="pilotConsistencySection">
+        <h3>Consistency & Clarifications</h3>
+        <p class="small">
+          Bounded review of answer differences. This section does not diagnose,
+          penalize, or update the Health Model automatically.
+        </p>
+        <div class="consistency-toolbar">
+          <label>
+            <span class="small">Session ID</span>
+            <input id="consistencySessionId" placeholder="Paste session_id or load latest">
+          </label>
+          <button type="button" onclick="loadLatestConsistencySession()">Load latest</button>
+          <button class="primary" type="button" onclick="loadConsistencyClarifications()">Open session</button>
+        </div>
+        <div id="consistencyClarificationsList" class="consistency-list">
+          <p class="small">Select a Pilot session to see clarification status.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <aside class="ray" id="rayPartnerPanel">
+    <div class="ray-header">
+      <div>
+        <h2 id="rayPartnerTitle">Research Partner</h2>
+        <p class="small" id="rayPartnerSubtitle">
+          Ray — коллега рядом, не отдельный чат.
+        </p>
+      </div>
+      <span class="ray-status" id="rayPartnerStatus">loading</span>
+    </div>
+
+    <div class="ray-card">
+      <h3 id="rayNowTitle">Working now</h3>
+      <ul id="rayNowList">
+        <li>Loading workspace state...</li>
+      </ul>
+    </div>
+
+    <div class="ray-card">
+      <h3 id="rayRiskTitle">Risks I see</h3>
+      <ul id="rayRiskList">
+        <li>Loading risks...</li>
+      </ul>
+    </div>
+
+    <div class="ray-card">
+      <h3 id="rayHypTitle">Candidate hypotheses</h3>
+      <div id="rayHypothesesList" class="ray-muted">
+        Loading candidates...
+      </div>
+    </div>
+
+    <div class="ray-card">
+      <h3 id="rayHumanTitle">Ray to human</h3>
+      <div id="rayHumanList" class="ray-actions"></div>
+    </div>
+
+    <div class="ray-card">
+      <h3 id="rayRulesTitle">Working agreements</h3>
+      <div class="ray-note" id="rayRulesText">
+        No data means no invented conclusions. Hypothesis is not fact.
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<script>
+    const initialLang = window.PlatformLanguage?.get() || "ru";
+
+    const I18N = {
+      ru: {
+        workspaceTitle: "Исследовательская платформа",
+        workspaceSubtitle: "Рабочее пространство исследователя и Рэя.",
+        dashboard: "Dashboard",
+        projects: "Проекты",
+        independentStudies: "Отдельные исследования",
+        assets: "Ресурсы",
+        tools: "Инструменты",
+        pilot: "Пилот",
+        workGroup: "Работа",
+        researchGroup: "Исследование",
+        systemGroup: "Система",
+        platformMap: "Карта платформы",
+        newInvestigation: "+ Новое исследование"
+      },
+      en: {
+        workspaceTitle: "Plataforma de investigación",
+        workspaceSubtitle: "Researcher and Ray workspace.",
+        dashboard: "Dashboard",
+        projects: "Projects",
+        independentStudies: "Independent studies",
+        assets: "Assets",
+        tools: "Tools",
+        pilot: "Pilot",
+        workGroup: "Work",
+        researchGroup: "Research",
+        systemGroup: "System",
+        platformMap: "Platform map",
+        newInvestigation: "+ New Investigation"
+      },
+      es: {
+        workspaceTitle: "Research Workspace",
+        workspaceSubtitle: "Espacio de trabajo del investigador y Ray.",
+        dashboard: "Dashboard",
+        projects: "Proyectos",
+        independentStudies: "Estudios independientes",
+        assets: "Recursos",
+        tools: "Herramientas",
+        pilot: "Piloto",
+        workGroup: "Trabajo",
+        researchGroup: "Investigación",
+        systemGroup: "Sistema",
+        platformMap: "Mapa de la plataforma",
+        newInvestigation: "+ Nueva investigación"
+      }
+    };
+
+    const RAY_TEXT = {
+      ru: {
+        title: "Research Partner",
+        subtitle: "Ray — коллега рядом, не отдельный чат.",
+        ready: "рядом",
+        loading: "загрузка",
+        now: "Что держу в фокусе",
+        risks: "Риски, которые вижу",
+        hypotheses: "Кандидаты гипотез",
+        human: "Ray для человека",
+        rules: "Рабочие соглашения",
+        ruleText: "Нет данных — не выдумывать. Гипотеза не факт. Если появляется каша, раскладываем по уровням: пилот, данные, анализ, исследование.",
+        noObjects: "Исследовательских объектов пока нет: сначала лучше создать 1-2 проверяемые гипотезы, а не раздувать платформу.",
+        objectsReady: count => `В Research Lab сохранено объектов: ${count}. Можно выбирать, какие из них доводить до проверки.`,
+        noRecords: "Записей участников пока не видно. Для пилота главный следующий шаг — пройти сессию или загрузить данные.",
+        recordsReady: count => `Есть записи участников: ${count}. Можно проверять покрытие и качество данных.`,
+        pilotFocus: "Приоритет остаётся запуск пилота; исследовательская платформа работает как опора, а не отдельный продукт.",
+        dataRisk: "Без записей участников анализ будет выглядеть готовым, но выводов делать нельзя.",
+        hypothesisRisk: "Без явной гипотезы статистика превращается в перебор методов.",
+        languageRisk: "Если включён не RU, стоит проверить согласие, анкету и результаты в этом языке.",
+        methodHypothesis: "Workspace должен вести от данных к проверяемой гипотезе, а не сразу к результату.",
+        pilotHypothesis: "Пилот лучше держать отдельным рабочим потоком до первого стабильного запуска.",
+        createHypothesis: "Создать гипотезу",
+        checkData: "Проверить данные",
+        openPilot: "Открыть пилот",
+        openAnalysis: "Собрать анализ",
+        refresh: "Обновить взгляд Рэя",
+        markReviewed: "Отметить как просмотренное",
+        reviewed: "Отмечено как просмотренное",
+        enoughStructure: "В Workspace уже достаточно структуры для следующей ручной проверки.",
+      },
+      en: {
+        title: "Research Partner",
+        subtitle: "Ray is nearby as a colleague, not a separate chat.",
+        ready: "nearby",
+        loading: "loading",
+        now: "What I am watching",
+        risks: "Risks I see",
+        hypotheses: "Candidate hypotheses",
+        human: "Ray to human",
+        rules: "Working agreements",
+        ruleText: "No data means no invented conclusions. Hypothesis is not fact. If things get messy, split the work into pilot, data, analysis, and research.",
+        noObjects: "No research objects yet: create 1-2 testable hypotheses before expanding the platform.",
+        objectsReady: count => `${count} research objects are saved. Choose which ones are ready for testing.`,
+        noRecords: "No participant records are visible yet. The pilot needs a completed session or uploaded data next.",
+        recordsReady: count => `${count} participant records are available. Data coverage and quality can be checked.`,
+        pilotFocus: "Pilot launch remains the priority; the research platform supports it, not replaces it.",
+        dataRisk: "Without participant records, analysis may look ready but cannot support conclusions.",
+        hypothesisRisk: "Without an explicit hypothesis, statistics becomes method browsing.",
+        languageRisk: "When not using RU, check consent, questionnaire, and result text in the selected language.",
+        methodHypothesis: "Workspace should lead from data to a testable hypothesis, not straight to results.",
+        pilotHypothesis: "Pilot should stay as a separate workflow until the first stable launch.",
+        createHypothesis: "Create hypothesis",
+        checkData: "Check data",
+        openPilot: "Open pilot",
+        openAnalysis: "Build analysis",
+        refresh: "Refresh Ray view",
+        markReviewed: "Mark reviewed",
+        reviewed: "Marked as reviewed",
+        enoughStructure: "Current workspace has enough structure for the next manual review.",
+      },
+      es: {
+        title: "Research Partner",
+        subtitle: "Ray está cerca como colega, no como chat separado.",
+        ready: "cerca",
+        loading: "cargando",
+        now: "Qué estoy observando",
+        risks: "Riesgos que veo",
+        hypotheses: "Hipótesis candidatas",
+        human: "Ray para la persona",
+        rules: "Acuerdos de trabajo",
+        ruleText: "Sin datos no se inventan conclusiones. Una hipótesis no es un hecho. Si aparece confusión, separamos: piloto, datos, análisis e investigación.",
+        noObjects: "Aún no hay objetos de investigación: conviene crear 1-2 hipótesis verificables antes de ampliar la plataforma.",
+        objectsReady: count => `Hay ${count} objetos de investigación guardados. Se puede elegir cuáles probar.`,
+        noRecords: "Aún no se ven registros de participantes. El siguiente paso del piloto es completar una sesión o cargar datos.",
+        recordsReady: count => `Hay ${count} registros de participantes. Ya se puede revisar cobertura y calidad.`,
+        pilotFocus: "El lanzamiento del piloto sigue siendo la prioridad; la plataforma de investigación lo sostiene, no lo reemplaza.",
+        dataRisk: "Sin registros de participantes, el análisis puede parecer listo pero no permite conclusiones.",
+        hypothesisRisk: "Sin hipótesis explícita, la estadística se vuelve una lista de métodos.",
+        languageRisk: "Si no se usa RU, conviene revisar consentimiento, cuestionario y resultados en el idioma elegido.",
+        methodHypothesis: "Workspace debe guiar de datos a hipótesis verificable, no directamente a resultados.",
+        pilotHypothesis: "El piloto debe quedarse como flujo separado hasta el primer lanzamiento estable.",
+        createHypothesis: "Crear hipótesis",
+        checkData: "Revisar datos",
+        openPilot: "Abrir piloto",
+        openAnalysis: "Construir análisis",
+        refresh: "Actualizar mirada de Ray",
+        markReviewed: "Marcar como revisado",
+        reviewed: "Marcado como revisado",
+        enoughStructure: "Workspace ya tiene estructura suficiente para la próxima revisión manual.",
+      }
+    };
+    let rayPartnerState = {
+      objects: [],
+      records: [],
+      lastUpdatedAt: null,
+      acknowledged: localStorage.getItem("ray_partner_ack") === "1"
+    };
+    let researchStudies = [];
+    let activeStudyId = localStorage.getItem("research_workspace_active_study") || "health_model";
+
+    function rayLang() {
+      return window.PlatformLanguage?.get() || initialLang || "ru";
+    }
+
+    function rayT(key) {
+      return RAY_TEXT[rayLang()]?.[key] || RAY_TEXT.ru[key] || key;
+    }
+
+    function rayEscape(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function setRayList(id, items) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = items.map(item => `<li>${rayEscape(item)}</li>`).join("");
+    }
+
+    function renderRayPartner() {
+      const objects = rayPartnerState.objects || [];
+      const records = rayPartnerState.records || [];
+      const current = RAY_TEXT[rayLang()] || RAY_TEXT.ru;
+      const isNonRu = rayLang() !== "ru";
+
+      const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = value;
+      };
+
+      setText("rayPartnerTitle", current.title);
+      setText("rayPartnerSubtitle", current.subtitle);
+      setText("rayPartnerStatus", rayPartnerState.lastUpdatedAt ? current.ready : current.loading);
+      setText("rayNowTitle", current.now);
+      setText("rayRiskTitle", current.risks);
+      setText("rayHypTitle", current.hypotheses);
+      setText("rayHumanTitle", current.human);
+      setText("rayRulesTitle", current.rules);
+      setText("rayRulesText", current.ruleText);
+
+      setRayList("rayNowList", [
+        current.pilotFocus,
+        objects.length ? current.objectsReady(objects.length) : current.noObjects,
+        records.length ? current.recordsReady(records.length) : current.noRecords,
+      ]);
+
+      const risks = [];
+      if (!records.length) risks.push(current.dataRisk);
+      if (!objects.length) risks.push(current.hypothesisRisk);
+      if (isNonRu) risks.push(current.languageRisk);
+      if (!risks.length) risks.push(current.enoughStructure);
+      setRayList("rayRiskList", risks);
+
+      const hypotheses = [
+        current.methodHypothesis,
+        current.pilotHypothesis,
+      ];
+
+      if (objects.length) {
+        hypotheses.unshift(
+          ...objects.slice(0, 2).map(object =>
+            `${object.title || "Research object"}: ${object.research_question || object.status || "candidate for review"}`
+          )
+        );
+      }
+
+      document.getElementById("rayHypothesesList").innerHTML =
+        hypotheses.map(item => `<div class="ray-note" style="margin-bottom:8px;">${rayEscape(item)}</div>`).join("");
+
+      document.getElementById("rayHumanList").innerHTML = `
+        <button class="primary" type="button" onclick="showSection('pilot')">${rayEscape(current.openPilot)}</button>
+        <button type="button" onclick="showSection('hypotheses')">${rayEscape(current.createHypothesis)}</button>
+        <button type="button" onclick="location.href='/data-check'">${rayEscape(current.checkData)}</button>
+        <button type="button" onclick="location.href='/analysis-builder'">${rayEscape(current.openAnalysis)}</button>
+        <button type="button" onclick="refreshRayPartner()">${rayEscape(current.refresh)}</button>
+        <button type="button" onclick="acknowledgeRayPartner()">${rayEscape(rayPartnerState.acknowledged ? current.reviewed : current.markReviewed)}</button>
+      `;
+    }
+
+    async function refreshRayPartner() {
+      renderRayPartner();
+
+      const [objectsResult, recordsResult] = await Promise.allSettled([
+        fetch("/research/objects").then(response => response.json()),
+        fetch("/research/participant-data/records").then(response => response.json()),
+      ]);
+
+      if (objectsResult.status === "fulfilled") {
+        rayPartnerState.objects = objectsResult.value.objects || [];
+      }
+
+      if (recordsResult.status === "fulfilled") {
+        rayPartnerState.records = recordsResult.value.records || [];
+      }
+
+      rayPartnerState.lastUpdatedAt = new Date().toISOString();
+      renderRayPartner();
+    }
+
+    function acknowledgeRayPartner() {
+      rayPartnerState.acknowledged = true;
+      localStorage.setItem("ray_partner_ack", "1");
+      renderRayPartner();
+    }
+
+    window.addEventListener("platform-language-change", renderRayPartner);
+function showSection(id) {
+  document.querySelectorAll(".workspace-section").forEach(el => {
+    el.style.display = "none";
+  });
+
+  const section = document.getElementById(id);
+
+  if (!section) {
+    alert("Section not found: " + id);
+    const dashboard = document.getElementById("dashboard");
+    if (dashboard) dashboard.style.display = "block";
+    return;
+  }
+
+  section.style.display = "block";
+
+  const title = document.getElementById("sectionTitle");
+  if (title) {
+    const sectionTitles = {
+      dashboard: "Research Workspace",
+      platformMap: "Карта платформы",
+      projects: "Projects",
+      hypotheses: "Independent Studies",
+      assets: "Resources",
+      tools: "Tools",
+      pilot: "Pilot",
+      questionConstructor: "Question Constructor",
+      questionnaireConnection: "Questionnaire Connection",
+    };
+
+    title.innerText =
+      sectionTitles[id] ||
+      id.charAt(0).toUpperCase() + id.slice(1);
+  }
+
+  if (id === "questionConstructor") {
+    loadQuestionnaireComponents().then(() => {
+      loadQuestionBanks().then(() => {
+        loadConstructorQuestions();
+      });
+    });
+  }
+  
+  if (id === "questionnaireConnection") {
+    renderQuestionnaireConnection();
+  }
+
+  if (id === "hypotheses") {
+    loadStudies();
+  }
+}
+
+    function applyTranslations() {
+      const t = I18N[window.PlatformLanguage?.get() || initialLang] || I18N.ru;
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (t[key]) {
+          el.innerText = t[key];
+        }
+      });
+    }
+
+    applyTranslations();
+    window.addEventListener("platform-language-change", applyTranslations);
+ 
+ function openWorkflowStep(step) {
+   alert(
+     "Workflow step: " + step +
+     "\n\nFor pilot MVP this will open a dedicated workspace later."
+   );
+ }
+ 
+ function captureSelection(target) {
+   const selectedText = window.getSelection().toString().trim();
+
+   if (!selectedText) {
+     alert("Select text first.");
+     return;
+   }
+
+   const targetMap = {
+     important: "importantBox",
+     hypotheses: "hypothesesBox",
+     variables: "variablesBox",
+     check: "checkBox",
+     contradictions: "contradictionsBox",
+     questions: "questionsBox"
+   };
+
+   const boxId = targetMap[target];
+   const box = document.getElementById(boxId);
+
+   if (!box) return;
+
+   if (box.innerText === "Nothing selected yet.") {
+     box.innerHTML = "";
+   }
+
+   const item = document.createElement("div");
+   item.style.marginBottom = "8px";
+   item.innerHTML = `
+     <div>${selectedText}</div>
+     <div class="small">Source: demo source</div>
+   `;
+
+   box.appendChild(item);
+ }
+ 
+ function openProject(projectId) {
+   showSection("projectPage");
+
+   if (projectId === "health_model_pilot") {
+     document.getElementById("projectPageTitle").innerText = "Health Model Pilot";
+   }
+ }
+
+ function openProjectSection(sectionId) {
+   document.querySelectorAll(".project-section").forEach(el => {
+     el.style.display = "none";
+   });
+
+   document.getElementById(sectionId).style.display = "block";
+ }
+ 
+async function loadStudies() {
+  const response = await fetch("/research/studies");
+  const data = await response.json();
+
+  researchStudies = data.studies || [];
+
+  if (
+    researchStudies.length &&
+    !researchStudies.some(study => study.study_id === activeStudyId)
+  ) {
+    activeStudyId = researchStudies[0].study_id;
+    localStorage.setItem("research_workspace_active_study", activeStudyId);
+  }
+
+  renderStudies();
+  await loadObjects();
+}
+
+function renderStudies() {
+  const list = document.getElementById("studiesList");
+  if (!list) return;
+
+  list.innerHTML = researchStudies.length
+    ? researchStudies.map(study => `
+        <button
+          type="button"
+          class="study-card ${study.study_id === activeStudyId ? "active" : ""}"
+          onclick="selectStudy('${rayEscape(study.study_id)}')"
+        >
+          <strong>${rayEscape(study.title || study.study_id)}</strong>
+          <span class="small">${rayEscape(study.study_id)}</span><br>
+          <span class="small">${rayEscape(study.status || "draft")} · ${study.active === false ? "inactive" : "active"}</span>
+        </button>
+      `).join("")
+    : "<p class='small'>Исследований пока нет.</p>";
+
+  const active = researchStudies.find(study => study.study_id === activeStudyId);
+  const title = document.getElementById("activeStudyTitle");
+  const description = document.getElementById("activeStudyDescription");
+  const meta = document.getElementById("activeStudyMeta");
+
+  if (!active) {
+    if (title) title.innerText = "Выберите исследование";
+    if (description) description.innerText = "Создайте или выберите исследование.";
+    if (meta) meta.innerText = "";
+    return;
+  }
+
+  if (title) title.innerText = active.title || active.study_id;
+  if (description) {
+    description.innerText =
+      active.description ||
+      active.primary_research_question ||
+      "Описание пока не заполнено.";
+  }
+  if (meta) {
+    meta.innerText =
+      "study_id: " + active.study_id +
+      " · version: " + (active.version || "—") +
+      " · author: " + (active.author || "—");
+  }
+}
+
+function selectStudy(studyId) {
+  activeStudyId = studyId;
+  localStorage.setItem("research_workspace_active_study", activeStudyId);
+  renderStudies();
+  loadObjects();
+}
+
+async function createStudy() {
+  const title = document.getElementById("newStudyTitle").value.trim();
+
+  if (!title) {
+    alert("Введите название исследования.");
+    return;
+  }
+
+  const payload = {
+    title,
+    study_id: document.getElementById("newStudyId").value.trim() || null,
+    description: document.getElementById("newStudyDescription").value.trim(),
+    primary_research_question: document.getElementById("newStudyQuestion").value.trim(),
+    author: "researcher"
+  };
+
+  const response = await fetch("/research/studies", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(payload)
+  });
+  const data = await response.json();
+
+  if (!response.ok || !data.ok) {
+    alert("Исследование не создано: " + JSON.stringify(data));
+    return;
+  }
+
+  activeStudyId = data.study.study_id;
+  localStorage.setItem("research_workspace_active_study", activeStudyId);
+
+  ["newStudyTitle", "newStudyId", "newStudyDescription", "newStudyQuestion"]
+    .forEach(id => document.getElementById(id).value = "");
+
+  await loadStudies();
+}
+
+async function createStudyObject() {
+  if (!activeStudyId) {
+    alert("Сначала выберите исследование.");
+    return;
+  }
+
+  const title = document.getElementById("newObjectTitle").value.trim();
+
+  if (!title) {
+    alert("Введите название объекта.");
+    return;
+  }
+
+  const payload = {
+    object_type: document.getElementById("newObjectType").value,
+    owner: "researcher",
+    title,
+    description: document.getElementById("newObjectDescription").value.trim(),
+    status: "draft",
+    study_id: activeStudyId,
+    research_question: document.getElementById("newObjectQuestion").value.trim()
+  };
+
+  const response = await fetch("/research/objects", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(payload)
+  });
+  const data = await response.json();
+
+  if (!response.ok || !data.ok) {
+    alert("Объект не создан: " + JSON.stringify(data));
+    return;
+  }
+
+  ["newObjectTitle", "newObjectQuestion", "newObjectDescription"]
+    .forEach(id => document.getElementById(id).value = "");
+
+  await loadObjects();
+  await refreshRayPartner();
+}
+
+function openStudyData() {
+  const study = activeStudyId || "health_model";
+  location.href = "/data-check?study_id=" + encodeURIComponent(study);
+}
+
+function openStudyAnalysis() {
+  const study = activeStudyId || "health_model";
+  location.href = "/analysis-builder?study_id=" + encodeURIComponent(study);
+}
+
+function openStudyResults() {
+  const study = activeStudyId || "";
+  location.href = "/scientific-results" + (study ? "?study_id=" + encodeURIComponent(study) : "");
+}
+
+const CONSISTENCY_TEXT = {
+  ru: {
+    empty: "Для выбранной сессии нет расхождений, требующих уточнения.",
+    loadFailed: "Не удалось загрузить Consistency & Clarifications.",
+    latestMissing: "Пока нет pilot-сессий.",
+    date: "Дата",
+    session: "Сессия",
+    compared: "Сравнение",
+    question: "Вопрос",
+    type: "Тип",
+    status: "Статус",
+    temporal: "Временной контекст",
+    sources: "Источники",
+    current: "Текущий ответ",
+    previous: "Сравниваемый ответ",
+    clarification: "Уточнение участника",
+    uncertainty: "Неопределённость",
+    readiness: "Влияние на готовность",
+    trajectory: "Кандидат для траектории",
+    boundary: "Без диагноза, штрафа или автоматического обновления модели.",
+    yes: "да",
+    no: "нет",
+  },
+  en: {
+    empty: "No differences requiring clarification are visible for this session.",
+    loadFailed: "Consistency & Clarifications failed to load.",
+    latestMissing: "No pilot sessions yet.",
+    date: "Date",
+    session: "Session",
+    compared: "Compared with",
+    question: "Question",
+    type: "Type",
+    status: "Status",
+    temporal: "Time context",
+    sources: "Sources",
+    current: "Current answer",
+    previous: "Compared answer",
+    clarification: "Participant clarification",
+    uncertainty: "Uncertainty",
+    readiness: "Readiness impact",
+    trajectory: "Trajectory candidate",
+    boundary: "No diagnosis, penalty, or automatic model update.",
+    yes: "yes",
+    no: "no",
+  },
+  es: {
+    empty: "No hay diferencias que requieran aclaración para esta sesión.",
+    loadFailed: "No se pudo cargar Consistency & Clarifications.",
+    latestMissing: "Aún no hay sesiones piloto.",
+    date: "Fecha",
+    session: "Sesión",
+    compared: "Comparada con",
+    question: "Pregunta",
+    type: "Tipo",
+    status: "Estado",
+    temporal: "Contexto temporal",
+    sources: "Fuentes",
+    current: "Respuesta actual",
+    previous: "Respuesta comparada",
+    clarification: "Aclaración del participante",
+    uncertainty: "Incertidumbre",
+    readiness: "Impacto en preparación",
+    trajectory: "Candidato de trayectoria",
+    boundary: "Sin diagnóstico, penalización ni actualización automática del modelo.",
+    yes: "sí",
+    no: "no",
+  },
+};
+
+const CONSISTENCY_STATUS_TEXT = {
+  ru: {
+    detected: "обнаружено",
+    clarification_requested: "запрошено уточнение",
+    clarified: "уточнено",
+    unresolved: "не разрешено",
+    comparison_blocked: "сравнение заблокировано",
+  },
+  en: {
+    detected: "detected",
+    clarification_requested: "clarification requested",
+    clarified: "clarified",
+    unresolved: "unresolved",
+    comparison_blocked: "comparison blocked",
+  },
+  es: {
+    detected: "detectado",
+    clarification_requested: "aclaración solicitada",
+    clarified: "aclarado",
+    unresolved: "sin resolver",
+    comparison_blocked: "comparación bloqueada",
+  },
+};
+
+function consistencyLang() {
+  return window.PlatformLanguage?.get() || "ru";
+}
+
+function consistencyClass(item) {
+  if (item.discrepancy_type === "comparison_blocked") return "blocked";
+  if (item.discrepancy_type === "sensor_self_report_disagreement") return "sensor";
+  if (item.trajectory_candidate) return "cross-session";
+  return "within-session";
+}
+
+function formatAnswerForConsistency(answer) {
+  if (!answer) return "—";
+  return [
+    answer.question_code || "—",
+    answer.answer_value ?? "—",
+    answer.source_type || "—",
+    answer.created_at || "",
+  ].map(rayEscape).join(" · ");
+}
+
+function renderConsistencyClarifications(items) {
+  const lang = consistencyLang();
+  const text = CONSISTENCY_TEXT[lang] || CONSISTENCY_TEXT.ru;
+  const statuses = CONSISTENCY_STATUS_TEXT[lang] || CONSISTENCY_STATUS_TEXT.ru;
+  const list = document.getElementById("consistencyClarificationsList");
+
+  if (!items.length) {
+    list.innerHTML = `<p class="small">${rayEscape(text.empty)}</p>`;
+    return;
+  }
+
+  list.innerHTML = items.map(item => {
+    const clarification = item.participant_clarification;
+    const clarificationText = clarification
+      ? [
+          statuses[clarification.status] || clarification.status,
+          clarification.selected_option,
+          clarification.free_text,
+        ].filter(Boolean).join(" · ")
+      : statuses[item.status] || item.status;
+    return `
+      <div class="consistency-item ${consistencyClass(item)}">
+        <h4>
+          ${rayEscape(item.display_type || item.discrepancy_type)}
+          <span class="consistency-status">${rayEscape(statuses[item.status] || item.status)}</span>
+        </h4>
+        <div class="consistency-kv">
+          <div><b>${rayEscape(text.date)}</b><br>${rayEscape(item.detected_at || "—")}</div>
+          <div><b>${rayEscape(text.session)}</b><br>${rayEscape(item.session_id || "—")}</div>
+          <div><b>${rayEscape(text.compared)}</b><br>${rayEscape(item.compared_session_id || "—")}</div>
+          <div><b>${rayEscape(text.question)}</b><br>${rayEscape(item.question_code || "—")}</div>
+          <div><b>${rayEscape(text.sources)}</b><br>${rayEscape((item.source_types || []).join(", ") || "—")}</div>
+          <div><b>${rayEscape(text.trajectory)}</b><br>${item.trajectory_candidate ? rayEscape(text.yes) : rayEscape(text.no)}</div>
+          <div><b>${rayEscape(text.current)}</b><br>${formatAnswerForConsistency(item.current_answer)}</div>
+          <div><b>${rayEscape(text.previous)}</b><br>${formatAnswerForConsistency(item.compared_answer)}</div>
+          <div><b>${rayEscape(text.temporal)}</b><br>${rayEscape(JSON.stringify(item.temporal_context || {}))}</div>
+          <div><b>${rayEscape(text.clarification)}</b><br>${rayEscape(clarificationText || "—")}</div>
+          <div><b>${rayEscape(text.uncertainty)}</b><br>${rayEscape(item.uncertainty_note || "—")}</div>
+          <div><b>${rayEscape(text.readiness)}</b><br>${rayEscape(item.readiness_impact || "—")}</div>
+        </div>
+        <p class="small">${rayEscape(text.boundary)}</p>
+      </div>
+    `;
+  }).join("");
+}
+
+async function loadLatestConsistencySession() {
+  const lang = consistencyLang();
+  const text = CONSISTENCY_TEXT[lang] || CONSISTENCY_TEXT.ru;
+  const response = await fetch("/research/participant-data/records");
+  const data = await response.json();
+  const latest = (data.records || []).find(record => record.record_source === "pilot_session");
+  if (!latest) {
+    document.getElementById("consistencyClarificationsList").innerHTML =
+      `<p class="small">${rayEscape(text.latestMissing)}</p>`;
+    return;
+  }
+  document.getElementById("consistencySessionId").value = latest.session_id || latest.record_id;
+  await loadConsistencyClarifications();
+}
+
+async function loadConsistencyClarifications() {
+  const lang = consistencyLang();
+  const text = CONSISTENCY_TEXT[lang] || CONSISTENCY_TEXT.ru;
+  const sessionId = document.getElementById("consistencySessionId").value.trim();
+  if (!sessionId) return loadLatestConsistencySession();
+
+  const response = await fetch(
+    "/pilot/sessions/" +
+    encodeURIComponent(sessionId) +
+    "/consistency-clarifications?lang=" +
+    encodeURIComponent(lang)
+  );
+  const data = await response.json();
+
+  if (!response.ok || !data.ok) {
+    document.getElementById("consistencyClarificationsList").innerHTML =
+      `<p class="small">${rayEscape(text.loadFailed)}</p>`;
+    return;
+  }
+
+  renderConsistencyClarifications(data.clarifications || []);
+}
+
+async function loadObjects() {
+  const query = activeStudyId
+    ? "?study_id=" + encodeURIComponent(activeStudyId)
+    : "";
+  const response = await fetch("/research/objects" + query);
+  const data = await response.json();
+
+  const objects = data.objects || [];
+  rayPartnerState.objects = objects;
+  rayPartnerState.lastUpdatedAt = rayPartnerState.lastUpdatedAt || new Date().toISOString();
+  renderRayPartner();
+
+  const objectCountEl = document.getElementById("objectCount");
+  if (objectCountEl) {
+    objectCountEl.innerText = objects.length + " saved objects";
+  }
+
+  document.getElementById("hypothesesList").innerHTML =
+    objects.length === 0
+      ? "<p class='small'>В активном исследовании пока нет объектов.</p>"
+      : objects.map(o => `
+          <div class="card">
+            <b>${o.title}</b>
+            <p class="small">${o.study_id || "legacy"} · ${o.object_type || "object"} · ${o.status || ""}</p>
+            <p>${o.research_question || ""}</p>
+            <p class="small">${o.description || ""}</p>
+          </div>
+        `).join("");
+}
+
+async function loadEntities() {
+  const response = await fetch(
+    "/research/entities?language=" + encodeURIComponent(window.PlatformLanguage?.get() || "ru")
+  );
+  const data = await response.json();
+  document.getElementById("assetsOutput").innerText = JSON.stringify(data, null, 2);
+}
+    let constructorQuestions = [];
+    let constructorCurrentIndex = 0;
+    let selectedConstructorBank = "intro";
+    let constructorSourceFile = null;
+    let constructorVariableName = null;
+    let questionnaireComponents = null;
+
+    async function loadQuestionnaireComponents() {
+      if (questionnaireComponents) return questionnaireComponents;
+
+      const response = await fetch("/questionnaire-components");
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        alert("Компоненты конструктора не загрузились");
+        return null;
+      }
+
+      questionnaireComponents = data.components;
+      return questionnaireComponents;
+    }
+    const SCALE_TEMPLATES = {
+      likert5: {
+        label: "Likert 5-point",
+        type: "single_choice",
+        scale_type: "likert",
+        value_type: "integer",
+        options: [
+          "Strongly disagree",
+          "Disagree",
+          "Neither agree nor disagree",
+          "Agree",
+          "Strongly agree"
+        ]
+      },
+      likert7: {
+        label: "Likert 7-point",
+        type: "single_choice",
+        scale_type: "likert",
+        value_type: "integer",
+        options: [
+          "Strongly disagree",
+          "Disagree",
+          "Somewhat disagree",
+          "Neither agree nor disagree",
+          "Somewhat agree",
+          "Agree",
+          "Strongly agree"
+        ]
+      },
+      nrs10: {
+        label: "Numeric Rating Scale 0–10",
+        type: "single_choice",
+        scale_type: "ordinal",
+        value_type: "integer",
+        options: Array.from({length: 11}, (_, i) => String(i))
+      },
+      vas100: {
+        label: "Visual Analog Scale 0–100",
+        type: "visual_analog_scale",
+        scale_type: "visual_analog",
+        value_type: "float",
+        min: 0,
+        max: 100,
+        step: null,
+        options: []
+      }
+    };
+
+    const RESPONSE_TYPE_ALIASES = {
+      single_select: "single_choice",
+      multi_select: "multiple_choice",
+      scale: "numeric",
+      slider: "numeric",
+      visual_analog_scale: "numeric",
+      number: "numeric",
+      free_text: "text",
+      long_text: "text",
+      file_upload: "file"
+    };
+
+    const QUESTION_TYPE_ALIASES = {
+      single_select: "single_choice",
+      multi_select: "multiple_choice",
+      scale: "slider",
+      number: "numeric",
+      free_text: "text",
+      long_text: "text",
+      file_upload: "file"
+    };
+
+    const DEFAULT_SCALE_BY_RESPONSE_TYPE = {
+      single_choice: "ordinal",
+      multiple_choice: "nominal",
+      numeric: "ratio",
+      text: "text",
+      date: "date",
+      time: "time",
+      duration: "duration",
+      file: "file",
+      ranking: "ordinal"
+    };
+
+    const DEFAULT_PRESENTATION_BY_RESPONSE_TYPE = {
+      single_choice: "radio",
+      multiple_choice: "checkbox",
+      numeric: "number_input",
+      text: "text_input",
+      date: "date_input",
+      time: "time_input",
+      duration: "duration_input",
+      file: "file_input",
+      ranking: "ranking"
+    };
+
+    function normalizeResponseTypeId(value) {
+      if (!value) return null;
+      return RESPONSE_TYPE_ALIASES[value] || value;
+    }
+
+    function normalizeQuestionTypeId(value) {
+      if (!value) return null;
+      return QUESTION_TYPE_ALIASES[value] || value;
+    }
+
+    function getResponseComponent(responseType) {
+      const id = normalizeResponseTypeId(responseType);
+      return (questionnaireComponents?.response_types || [])
+        .find(component => component.id === id) || null;
+    }
+
+    function getQuestionKind(q) {
+      const questionType = normalizeQuestionTypeId(
+        q.question_type || q.type
+      );
+      const responseType = normalizeResponseTypeId(
+        q.response_type || q.type
+      );
+
+      if (questionType === "slider" || questionType === "visual_analog_scale") {
+        return questionType;
+      }
+
+      return responseType || questionType || "single_choice";
+    }
+
+    function ensureCompatibleScale(q) {
+      const responseType = normalizeResponseTypeId(q.response_type || q.type);
+      const responseComponent = getResponseComponent(responseType);
+      const compatibleScales =
+        responseComponent?.compatible_scale_types || [];
+
+      if (
+        q.scale_type &&
+        compatibleScales.length &&
+        !compatibleScales.includes(q.scale_type)
+      ) {
+        q.scale_type = null;
+      }
+
+      if (!q.scale_type) {
+        q.scale_type =
+          DEFAULT_SCALE_BY_RESPONSE_TYPE[responseType] ||
+          compatibleScales[0] ||
+          null;
+      }
+    }
+
+    function syncQuestionComponentShape(q) {
+      const originalType = q.type || q.question_type || q.response_type;
+      const responseType = normalizeResponseTypeId(
+        q.response_type || originalType
+      );
+      const questionType = normalizeQuestionTypeId(
+        q.question_type || originalType
+      );
+
+      q.response_type = responseType || "single_choice";
+      q.question_type =
+        questionType ||
+        (q.response_type === "numeric" ? "numeric" : q.response_type);
+      q.presentation_type =
+        q.presentation_type ||
+        DEFAULT_PRESENTATION_BY_RESPONSE_TYPE[q.response_type] ||
+        null;
+      q.type = q.question_type;
+
+      ensureCompatibleScale(q);
+      applyScaleRules(q);
+    }
+
+    function currentQc() {
+      return constructorQuestions[constructorCurrentIndex] || null;
+    }
+    async function loadQuestionBanks() {
+      const response = await fetch(
+        "/question-banks?lang=" + encodeURIComponent(lang)
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        alert("Список банков не загрузился");
+        return;
+      }
+
+      const box = document.getElementById("qcBankButtons");
+
+      if (!data.banks.length) {
+        box.innerHTML = "Банков нет.";
+        return;
+      }
+
+      if (!selectedConstructorBank) {
+        selectedConstructorBank = data.banks[0].id;
+      }
+
+      const protectedBankIds = new Set([
+        "health_model",
+        "decision_under_uncertainty",
+        "intro",
+        "resource",
+        "decision",
+      ]);
+
+      box.innerHTML = "";
+
+      data.banks.forEach(bank => {
+        const wrapper = document.createElement("div");
+
+        wrapper.style.display = "flex";
+        wrapper.style.gap = "4px";
+        wrapper.style.alignItems = "center";
+
+        const selectButton = document.createElement("button");
+
+        selectButton.type = "button";
+        selectButton.innerText = bank.title || bank.id;
+
+        if (bank.id === selectedConstructorBank) {
+          selectButton.classList.add("primary");
+        }
+
+        selectButton.onclick = function () {
+          selectConstructorBank(bank.id);
+        };
+
+        wrapper.appendChild(selectButton);
+
+        if (!protectedBankIds.has(bank.id)) {
+          const deleteButton = document.createElement("button");
+
+          deleteButton.type = "button";
+          deleteButton.innerText = "🗑";
+          deleteButton.title = "Удалить банк";
+
+          deleteButton.style.border = "1px solid #fecaca";
+          deleteButton.style.background = "#fef2f2";
+          deleteButton.style.color = "#991b1b";
+          deleteButton.style.cursor = "pointer";
+          deleteButton.style.padding = "8px 10px";
+
+          deleteButton.onclick = function () {
+            deleteQuestionBank(bank.id);
+          };
+
+          wrapper.appendChild(deleteButton);
+        }
+
+        box.appendChild(wrapper);
+      });
+    }
+    
+    async function createQuestionBank() {
+      const title = prompt("Название нового банка вопросов");
+      if (!title) return;
+
+      const bankId = title
+        .trim()
+        .toLowerCase()
+        .replaceAll(" ", "_")
+        .replace(/[^a-z0-9_]/g, "");
+
+      const response = await fetch("/question-banks", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          bank_id: bankId,
+          title
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        alert("Банк не создан: " + JSON.stringify(data));
+        return;
+      }
+
+      alert("Банк создан: " + data.bank.id);
+    }
+    async function deleteQuestionBank(bankId) {
+      if (!bankId) {
+        return;
+      }
+
+      const confirmed = confirm(
+        `Удалить банк "${bankId}"?\n\n` +
+        `Будут удалены его файлы RU / EN / ES. ` +
+        `Это действие нельзя отменить.`
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      const response = await fetch(
+        "/question-banks/" + encodeURIComponent(bankId),
+        {
+          method: "DELETE",
+        }
+      );
+
+      let data = null;
+
+      try {
+        data = await response.json();
+      } catch (error) {
+        alert(
+          "Сервер вернул некорректный ответ при удалении банка."
+        );
+        return;
+      }
+
+      if (!response.ok || !data.ok) {
+        const detail = data.detail;
+
+        if (
+          response.status === 409 &&
+          detail?.error === "QUESTION_BANK_IS_CONNECTED"
+        ) {
+          alert(
+            "Банк подключён к пилоту.\n\n" +
+            "Сначала отключите его от пилотного опросника."
+          );
+          return;
+        }
+
+        alert(
+          "Банк не удалён:\n" +
+          JSON.stringify(data, null, 2)
+        );
+        return;
+      }
+
+      if (selectedConstructorBank === bankId) {
+        selectedConstructorBank = "";
+        constructorQuestions = [];
+        constructorCurrentIndex = 0;
+        constructorSourceFile = null;
+        constructorVariableName = null;
+
+        document.getElementById("qcTree").innerHTML =
+          "Банк не выбран.";
+
+        document.getElementById("qcCode").value = "";
+        document.getElementById("qcPrompt").value = "";
+        document.getElementById("qcPreview").innerHTML = "";
+        document.getElementById("qcPanel").innerHTML =
+          "<p class='small'>Выберите другой банк.</p>";
+      }
+
+      await loadQuestionBanks();
+
+      alert(`Банк "${bankId}" удалён.`);
+    }
+    async function loadConstructorQuestions() {
+      const bank = selectedConstructorBank;
+      const tree = document.getElementById("qcTree");
+
+      tree.innerHTML = "Загружаю банк: " + bank + "...";
+
+      if (!bank) {
+        tree.innerHTML = "Банк не выбран.";
+        return;
+      }
+
+      let response;
+      let text;
+
+      try {
+          response = await fetch(
+            "/question-banks/" + encodeURIComponent(bank) +
+            "?lang=" + encodeURIComponent(lang)
+          );
+
+        text = await response.text();
+      } catch (error) {
+        tree.innerHTML = "Запрос не дошёл до сервера: " + error.message;
+        return;
+      }
+
+      let data;
+
+      try {
+        data = JSON.parse(text);
+      } catch (error) {
+        tree.innerHTML =
+          "Сервер вернул не JSON.<br>Status: " +
+          response.status +
+          "<pre>" + escapeHtml(text.slice(0, 1000)) + "</pre>";
+        return;
+      }
+
+      if (!response.ok || !data.ok) {
+        tree.innerHTML =
+          "Ошибка загрузки банка.<br>Status: " +
+          response.status +
+          "<pre>" + escapeHtml(JSON.stringify(data, null, 2)) + "</pre>";
+        return;
+      }
+      
+      constructorSourceFile = data.source_file;
+      constructorVariableName = data.variable_name;
+      
+      constructorQuestions = data.questions || [];
+      constructorCurrentIndex = 0;
+
+      renderQcTree();
+
+      document.getElementById("qcCode").value = "";
+      document.getElementById("qcPrompt").value = "";
+      document.getElementById("qcPreview").innerHTML = "";
+      document.getElementById("qcPanel").innerHTML =
+        "<p class='small'>Выберите вопрос слева или нажмите “+ Новый вопрос”.</p>";
+    }
+    
+    function selectConstructorBank(bankId) {
+      selectedConstructorBank = bankId;
+      loadQuestionBanks();
+      loadConstructorQuestions();
+    }
+    
+    function renderQcTree() {
+      const box = document.getElementById("qcTree");
+
+      box.innerHTML = constructorQuestions.map((q, i) => `
+        <div
+          style="
+            padding:10px 0;
+            border-bottom:1px solid #eee;
+          "
+        >
+          <div
+            style="
+              display:flex;
+              gap:6px;
+              align-items:center;
+            "
+          >
+            <button
+              type="button"
+              onclick="selectQc(${i})"
+              style="flex:1;text-align:left;"
+            >
+              ${
+                i === constructorCurrentIndex
+                  ? "➜ "
+                  : ""
+              }
+              ${escapeHtml(q.code || "NO_CODE")}
+            </button>
+
+            <button
+              type="button"
+              onclick="deleteConstructorQuestion(${i})"
+              title="Удалить вопрос"
+              style="
+                border:1px solid #fecaca;
+                background:#fef2f2;
+                color:#991b1b;
+                cursor:pointer;
+              "
+            >
+              🗑
+            </button>
+          </div>
+
+          <div style="margin-top:6px;">
+            ${escapeHtml(q.prompt || "(пустой вопрос)")}
+          </div>
+        </div>
+      `).join("") || "Вопросов пока нет.";
+    }
+
+    function selectQc(i) {
+      constructorCurrentIndex = i;
+      fillQc();
+    }
+    
+    function normalizeQuestionForConstructor(q) {
+      if (!q.type && !q.question_type && !q.response_type) {
+        q.type = "single_choice";
+      }
+      if (!q.score_direction) q.score_direction = "not_scored";
+
+      if (!Array.isArray(q.options)) {
+        q.options = [];
+      }
+
+      q.options = q.options.map((opt, index) => ({
+        value: opt.value ?? index,
+        text: typeof opt.text === "string" ? opt.text : "",
+        next_code: opt.next_code || ""
+      }));
+
+      if (
+        (normalizeResponseTypeId(q.response_type || q.type) === "single_choice" ||
+         normalizeResponseTypeId(q.response_type || q.type) === "multiple_choice" ||
+         normalizeResponseTypeId(q.response_type || q.type) === "ranking") &&
+        q.options.length === 0
+      ) {
+        q.options = [
+          { value: 0, text: "", next_code: "" },
+          { value: 1, text: "", next_code: "" }
+        ];
+      }
+      if (!("scale_type" in q)) q.scale_type = null;
+      if (!("value_type" in q)) q.value_type = null;
+      if (!Array.isArray(q.allowed_values)) {
+        q.allowed_values = (q.options || []).map(opt => opt.value);
+      }
+
+      syncQuestionComponentShape(q);
+    }
+    
+    function fillQc() {
+      const q = currentQc();
+      if (!q) return;
+
+      normalizeQuestionForConstructor(q);
+
+      document.getElementById("qcCode").value = q.code || "";
+      document.getElementById("qcPrompt").value = q.prompt || "";
+
+      renderQcPreview();
+      renderQcTree();
+      renderTypeSpecificEditor();
+    }
+
+    function updateQcText() {
+      const q = currentQc();
+      if (!q) return;
+      q.code = document.getElementById("qcCode").value.trim();
+      q.prompt = document.getElementById("qcPrompt").value.trim();
+      renderQcPreview();
+      renderQcTree();
+    }
+
+    function toggleQcPanel(name) {
+      const panel = document.getElementById("qcPanel");
+      panel.style.display = "block";
+
+      if (name === "type") renderTypePanel();
+      if (name === "scale") renderScalePanel();
+      if (name === "answers") renderAnswersPanel();
+      if (name === "routing") renderRoutingPanel();
+      if (name === "use") renderUsePanel();
+    }
+
+    async function renderTypePanel() {
+      const response = await fetch("/questionnaire-components");
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        alert("Question types failed to load");
+        return;
+      }
+
+      const types =
+        data.components.response_types ||
+        data.components.question_types ||
+        [];
+      
+      document.getElementById("qcPanel").innerHTML = `
+        <h3>Question type</h3>
+
+        <div class="qc-panel-grid">
+          ${types.map(type => `
+            <button
+              class="qc-choice"
+              onclick="setQcType('${type.id}')"
+            >
+              ${escapeHtml(type.title)}
+            </button>
+          `).join("")}
+        </div>
+      `;
+    }
+    
+    function getOptionValues(q) {
+      return (q.options || []).map(opt => opt.value);
+    }
+
+    function inferEnumeratedValueType(q) {
+      const values = getOptionValues(q);
+
+      if (values.length === 0) return "integer";
+
+      const allNumbers = values.every(v => typeof v === "number");
+      const allIntegers = values.every(v => Number.isInteger(v));
+
+      if (allIntegers) return "integer";
+      if (allNumbers) return "float";
+
+      return "string";
+    }
+
+    function applyScaleRules(q) {
+      if (!q) return;
+
+      const scale = q.scale_type;
+
+      if (scale === "binary") {
+        q.value_type = "integer";
+        q.value_constraint_type = "enumerated";
+        q.allowed_values = [0, 1];
+        q.allowed_range = null;
+        return;
+      }
+
+      if (scale === "nominal") {
+        q.value_type = inferEnumeratedValueType(q);
+        q.value_constraint_type = "enumerated";
+        q.allowed_values = getOptionValues(q);
+        q.allowed_range = null;
+        return;
+      }
+
+      if (scale === "ordinal") {
+        q.value_type = "integer";
+        q.value_constraint_type = "enumerated";
+        q.allowed_values = getOptionValues(q);
+        q.allowed_range = null;
+        return;
+      }
+
+      if (scale === "likert") {
+        q.value_type = "integer";
+        q.value_constraint_type = "enumerated";
+        q.allowed_values = getOptionValues(q);
+        q.allowed_range = null;
+        return;
+      }
+
+      if (scale === "interval") {
+        q.value_type = "float";
+        q.value_constraint_type = "range";
+        q.allowed_values = [];
+        q.allowed_range = q.allowed_range || {
+          min: q.min ?? null,
+          max: q.max ?? null,
+          step: q.step ?? 1
+        };
+        return;
+      }
+
+      if (scale === "ratio") {
+        q.value_type = "float";
+        q.value_constraint_type = "range";
+        q.allowed_values = [];
+        q.allowed_range = q.allowed_range || {
+          min: q.min ?? 0,
+          max: q.max ?? null,
+          step: q.step ?? 1
+        };
+        return;
+      }
+
+      if (scale === "continuous") {
+        q.value_type = "float";
+        q.value_constraint_type = "range";
+        q.allowed_values = [];
+        q.allowed_range = q.allowed_range || {
+          min: q.min ?? null,
+          max: q.max ?? null,
+          step: q.step ?? null
+        };
+        return;
+      }
+
+      if (scale === "visual_analog") {
+        q.value_type = "float";
+        q.value_constraint_type = "range";
+        q.allowed_values = [];
+        q.allowed_range = q.allowed_range || {
+          min: q.min ?? 0,
+          max: q.max ?? 100,
+          step: q.step ?? null
+        };
+        return;
+      }
+
+      if (scale === "duration") {
+        q.value_type = "float";
+        q.value_constraint_type = "range";
+        q.allowed_values = [];
+        q.allowed_range = q.allowed_range || {
+          min: q.min ?? 0,
+          max: q.max ?? null,
+          step: q.step ?? 1
+        };
+        return;
+      }
+
+      if (scale === "text" || scale === "date" || scale === "time" || scale === "file") {
+        q.value_type = "string";
+        q.value_constraint_type = null;
+        q.allowed_values = [];
+        q.allowed_range = null;
+        return;
+      }
+
+      q.value_type = null;
+      q.value_constraint_type = null;
+    }
+
+    async function renderScalePanel() {
+      const q = currentQc();
+      if (!q) return;
+
+      await loadQuestionnaireComponents();
+
+      ensureCompatibleScale(q);
+      applyScaleRules(q);
+
+      const responseComponent = getResponseComponent(q.response_type || q.type);
+      const compatibleScaleIds =
+        responseComponent?.compatible_scale_types || [];
+      const scaleTypes = (questionnaireComponents?.scale_types || [])
+        .filter(scale => (
+          compatibleScaleIds.length === 0 ||
+          compatibleScaleIds.includes(scale.id)
+        ));
+
+      document.getElementById("qcPanel").innerHTML = `
+        <h3 style="margin:0 0 12px;">Scientific Scale</h3>
+
+        <label class="small">Scale type</label>
+        <select class="qc-input" style="width:100%;margin:4px 0 12px;"
+          onchange="setQcScaleType(this.value)">
+          <option value="">Не выбрано</option>
+          ${scaleTypes.map(scale => `
+            <option value="${escapeHtml(scale.id)}" ${q.scale_type === scale.id ? "selected" : ""}>
+              ${escapeHtml(scale.title || scale.id)}
+            </option>
+          `).join("")}
+        </select>
+
+        ${q.scale_type ? `
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+            <div>
+              <label class="small">Value type</label>
+              <div class="qc-input" style="background:#f7f7fb;margin-top:4px;">
+                ${escapeHtml(q.value_type || "—")}
+              </div>
+            </div>
+
+            <div>
+              <label class="small">Constraint</label>
+              <div class="qc-input" style="background:#f7f7fb;margin-top:4px;">
+                ${escapeHtml(q.value_constraint_type || "—")}
+              </div>
+            </div>
+          </div>
+
+          ${renderValueConstraintEditor(q)}
+        ` : `
+          <p class="small">Сначала выбери тип шкалы. Остальные поля система назначит сама.</p>
+        `}
+
+        <p class="small" style="margin:10px 0 8px;">
+          Несовместимые сочетания здесь не выбираются вручную.
+        </p>
+
+        <details>
+          <summary><b>Templates</b></summary>
+          <div class="qc-panel-grid" style="margin-top:10px;">
+            ${Object.keys(SCALE_TEMPLATES).map(key => `
+              <button class="qc-choice" onclick="applyScaleTemplate('${key}')">
+                ${SCALE_TEMPLATES[key].label}
+              </button>
+            `).join("")}
+          </div>
+        </details>
+      `;
+    }
+
+    function renderValueConstraintEditor(q) {
+      if (q.value_constraint_type === "range") {
+        const range = q.allowed_range || {};
+
+        return `
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+            <div>
+              <label class="small">Min</label>
+              <input class="qc-input" type="number" value="${range.min ?? ""}"
+                style="width:100%;margin-top:4px;padding:8px;"
+                oninput="setQcAllowedRangeField('min', this.value)">
+            </div>
+
+            <div>
+              <label class="small">Max</label>
+              <input class="qc-input" type="number" value="${range.max ?? ""}"
+                style="width:100%;margin-top:4px;padding:8px;"
+                oninput="setQcAllowedRangeField('max', this.value)">
+            </div>
+
+            <div>
+              <label class="small">Step</label>
+              <input class="qc-input" type="number" value="${range.step ?? ""}"
+                style="width:100%;margin-top:4px;padding:8px;"
+                oninput="setQcAllowedRangeField('step', this.value)">
+            </div>
+          </div>
+        `;
+      }
+
+      if (q.value_constraint_type === "enumerated") {
+        return `
+          <label class="small">Allowed values</label>
+          <div class="qc-input" style="background:#f7f7fb;margin-top:4px;">
+            ${escapeHtml((q.allowed_values || []).join(", "))}
+          </div>
+        `;
+      }
+
+      return "";
+    }
+
+    function setQcScaleType(value) {
+      const q = currentQc();
+      if (!q) return;
+
+      q.scale_type = value || null;
+
+      if (q.scale_type === "visual_analog") {
+        q.question_type = "visual_analog_scale";
+        q.response_type = "numeric";
+        q.presentation_type = "visual_analog_line";
+        q.type = "visual_analog_scale";
+      } else if (q.question_type === "visual_analog_scale") {
+        q.question_type = "numeric";
+        q.response_type = "numeric";
+        q.presentation_type = "number_input";
+        q.type = "numeric";
+      }
+
+      applyScaleRules(q);
+
+      renderScalePanel();
+      renderQcPreview();
+    }
+
+    function setQcAllowedRangeField(field, value) {
+      const q = currentQc();
+      if (!q) return;
+
+      q.allowed_range = q.allowed_range || {
+        min: null,
+        max: null,
+        step: 1
+      };
+
+      q.allowed_range[field] = value === "" ? null : Number(value);
+
+      q.min = q.allowed_range.min;
+      q.max = q.allowed_range.max;
+      q.step = q.allowed_range.step;
+
+      renderQcPreview();
+    }
+
+    function setQcValueType(value) {
+      return;
+    }
+
+    function setQcValueConstraintType(value) {
+      return;
+    }
+
+    function setQcAllowedValues(value) {
+      return;
+    }
+    
+    function applyQuestionComponentMapping(q, legacyType) {
+      const map = {
+        single_select: {
+          question_type: "single_choice",
+          response_type: "single_choice",
+          presentation_type: "radio"
+        },
+        multi_select: {
+          question_type: "multiple_choice",
+          response_type: "multiple_choice",
+          presentation_type: "checkbox"
+        },
+        scale: {
+          question_type: "slider",
+          response_type: "numeric",
+          presentation_type: "slider"
+        },
+        number: {
+          question_type: "numeric",
+          response_type: "numeric",
+          presentation_type: "number_input"
+        },
+        text: {
+          question_type: "text",
+          response_type: "text",
+          presentation_type: "text_input"
+        },
+        long_text: {
+          question_type: "text",
+          response_type: "text",
+          presentation_type: "text_input"
+        },
+        date: {
+          question_type: "date",
+          response_type: "date",
+          presentation_type: "date_input"
+        },
+        time: {
+          question_type: "time",
+          response_type: "time",
+          presentation_type: "time_input"
+        },
+        file: {
+          question_type: "file",
+          response_type: "file",
+          presentation_type: "file_input"
+        }
+      };
+
+      const mapped = map[legacyType];
+
+      if (!mapped) return;
+
+      q.question_type = mapped.question_type;
+      q.response_type = mapped.response_type;
+      q.presentation_type = mapped.presentation_type;
+    }
+    
+    function setQcType(type) {
+      const q = currentQc();
+      if (!q) {
+        alert("Сначала выберите или создайте вопрос");
+        return;
+      }
+
+      q.response_type = normalizeResponseTypeId(type);
+      q.question_type = normalizeQuestionTypeId(type);
+      q.type = q.question_type;
+      q.presentation_type =
+        DEFAULT_PRESENTATION_BY_RESPONSE_TYPE[q.response_type] ||
+        q.presentation_type ||
+        null;
+      q.scale_template = "";
+      q.scale_type = null;
+      q.allowed_range = null;
+      q.allowed_values = [];
+
+      const optionTypes = [
+        "single_choice",
+        "multiple_choice",
+        "ranking"
+      ];
+
+      if (optionTypes.includes(q.response_type)) {
+        if (!Array.isArray(q.options) || q.options.length === 0) {
+          q.options = [
+            { value: 0, text: "", next_code: "" },
+            { value: 1, text: "", next_code: "" }
+          ];
+        }
+      } else {
+        q.options = [];
+      }
+
+      syncQuestionComponentShape(q);
+      renderQcPreview();
+      renderQcTree();
+      renderTypeSpecificEditor();
+    }
+    
+    function renderTypeSpecificEditor() {
+        const q = currentQc();
+        if (!q) return;
+
+        const kind = getQuestionKind(q);
+
+        switch (kind) {
+
+            case "single_choice":
+            case "multiple_choice":
+                renderAnswersPanel();
+                break;
+                
+            case "numeric":
+                    renderNumericEditor();
+                    break;
+
+            case "slider":
+            case "visual_analog_scale":
+                renderSliderEditor();
+                break;
+
+            case "text":
+                renderTextEditor();
+                break;
+
+            case "date":
+                renderDateEditor();
+                break;
+
+            case "time":
+                renderTimeEditor();
+                break;
+
+            case "duration":
+                renderDurationEditor();
+                break;
+
+            case "ranking":
+                renderRankingEditor();
+                break;
+
+            default:
+                document.getElementById("qcPanel").innerHTML =
+                    "<p class='small'>Editor is not implemented for this question type yet.</p>";
+        }
+    }
+    
+    function renderEditorForQuestionType() {
+      const q = currentQc();
+      if (!q) return;
+
+      if (q.type === "single_choice" || q.type === "single_select") {
+        renderAnswersPanel();
+        return;
+      }
+
+      if (q.type === "multiple_choice" || q.type === "multi_select") {
+        renderAnswersPanel();
+        return;
+      }
+
+      if (q.type === "numeric" || q.type === "number") {
+        renderNumericEditor();
+        return;
+      }
+
+      document.getElementById("qcPanel").innerHTML =
+        "<p class='small'>Editor for this question type is not connected yet.</p>";
+    }
+    
+    function renderNumericEditor() {
+      const q = currentQc();
+      if (!q) return;
+
+      const panel = document.getElementById("qcPanel");
+
+      panel.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <h3>Numeric input</h3>
+          <button type="button" onclick="closeQcPanel()">Close</button>
+        </div>
+
+        <label class="small">Minimum</label>
+        <input class="qc-input" type="number" value="${q.min ?? ""}"
+          style="width:50px;margin:6px 0 10px;"
+          oninput="currentQc().min = this.value === '' ? null : Number(this.value); renderQcPreview();">
+
+        <label class="small">Maximum</label>
+        <input class="qc-input" type="number" value="${q.max ?? ""}"
+          style="width:50px;margin:6px 0 10px;"
+          oninput="currentQc().max = this.value === '' ? null : Number(this.value); renderQcPreview();">
+
+        <label class="small">Step</label>
+        <input class="qc-input" type="number" value="${q.step ?? ""}"
+          style="width:80px;margin:6px 0 10px;"
+          oninput="currentQc().step = this.value === '' ? null : Number(this.value); renderQcPreview();">
+
+        <label class="small">Unit</label>
+        <input class="qc-input" value="${escapeHtml(q.unit || "")}"
+          style="width:80px;margin:6px 0 10px;"
+          oninput="currentQc().unit = this.value; renderQcPreview();">
+
+        <label class="small">Next question</label>
+        <div style="margin-top:20px;">
+          ${nextSelect(q.default_next || "", "setDefaultNext(this.value)")}
+        </div>
+      `;
+    }
+    
+    function renderSliderEditor() {
+      const q = currentQc();
+      if (!q) return;
+
+      const panel = document.getElementById("qcPanel");
+
+      panel.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <h3>Slider</h3>
+          <button type="button" onclick="closeQcPanel()">Close</button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:110px 110px;gap:14px;margin-bottom:10px;">
+          <div>
+            <label class="small">Minimum</label>
+            <input class="qc-input" type="number" value="${q.min ?? 0}"
+              style="width:70px;margin-top:6px;"
+              oninput="currentQc().min = Number(this.value); renderQcPreview();">
+          </div>
+
+          <div>
+            <label class="small">Maximum</label>
+            <input class="qc-input" type="number" value="${q.max ?? 10}"
+              style="width:70px;margin-top:6px;"
+              oninput="currentQc().max = Number(this.value); renderQcPreview();">
+          </div>
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <label class="small">Step</label><br>
+          <input class="qc-input" type="number" value="${q.step ?? 1}"
+            style="width:70px;margin-top:6px;"
+            oninput="currentQc().step = Number(this.value); renderQcPreview();">
+        </div>
+
+        <label class="small">Left label</label><br>
+        <input class="qc-input" value="${escapeHtml(q.left_label || "")}"
+          style="width:270px;margin:6px 0 10px;"
+          oninput="currentQc().left_label = this.value; renderQcPreview();">
+
+        <label class="small">Right label</label><br>
+        <input class="qc-input" value="${escapeHtml(q.right_label || "")}"
+          style="width:270px;margin:6px 0 10px;"
+          oninput="currentQc().right_label = this.value; renderQcPreview();">
+
+        <label class="small">Next question</label>
+        <div style="margin-top:6px;">
+          ${nextSelect(q.default_next || "", "setDefaultNext(this.value)")}
+        </div>
+      `;
+    }
+    
+    function renderTextEditor() {
+      const q = currentQc();
+      if (!q) return;
+
+      const panel = document.getElementById("qcPanel");
+
+      panel.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <h3>Text</h3>
+          <button type="button" onclick="closeQcPanel()">Close</button>
+        </div>
+
+        <label class="small">Placeholder</label><br>
+        <input class="qc-input" value="${escapeHtml(q.placeholder || "")}"
+          style="width:220px;margin:6px 0 10px;"
+          oninput="currentQc().placeholder = this.value; renderQcPreview();">
+
+        <label class="small">Maximum length</label><br>
+        <input class="qc-input" type="number" value="${q.max_length ?? ""}"
+          style="width:90px;margin:6px 0 10px;"
+          oninput="currentQc().max_length = this.value === '' ? null : Number(this.value); renderQcPreview();">
+
+        <label class="small">Multiline</label>
+        <input type="checkbox"
+          ${q.multiline ? "checked" : ""}
+          onchange="currentQc().multiline = this.checked; renderQcPreview();">
+
+        <br><br>
+
+        <label class="small">Next question</label>
+        <div style="margin-top:6px;">
+          ${nextSelect(q.default_next || "", "setDefaultNext(this.value)")}
+        </div>
+      `;
+    }
+    
+    function renderDateEditor() {
+      const q = currentQc();
+      if (!q) return;
+
+      const panel = document.getElementById("qcPanel");
+
+      panel.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <h3>Date</h3>
+          <button type="button" onclick="closeQcPanel()">Close</button>
+        </div>
+
+        <label class="small">Minimum date</label><br>
+        <input class="qc-input" type="date" value="${q.min_date || ""}"
+          style="width:250px;margin:6px 0 10px;"
+          oninput="currentQc().min_date = this.value; renderQcPreview();">
+
+        <label class="small">Maximum date</label><br>
+        <input class="qc-input" type="date" value="${q.max_date || ""}"
+          style="width:250px;margin:6px 0 10px;"
+          oninput="currentQc().max_date = this.value; renderQcPreview();">
+
+        <label class="small">Next question</label>
+        <div style="margin-top:10px;">
+          ${nextSelect(q.default_next || "", "setDefaultNext(this.value)")}
+        </div>
+      `;
+    }
+    function renderTimeEditor() {
+      const q = currentQc();
+      if (!q) return;
+
+      const panel = document.getElementById("qcPanel");
+
+      panel.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <h3>Time</h3>
+          <button type="button" onclick="closeQcPanel()">Close</button>
+        </div>
+
+        <label class="small">Minimum time</label><br>
+        <input class="qc-input" type="time" value="${q.min_time || ""}"
+          style="width:250px;margin:6px 0 10px;"
+          oninput="currentQc().min_time = this.value; renderQcPreview();">
+
+        <label class="small">Maximum time</label><br>
+        <input class="qc-input" type="time" value="${q.max_time || ""}"
+          style="width:250px;margin:6px 0 10px;"
+          oninput="currentQc().max_time = this.value; renderQcPreview();">
+
+        <label class="small">Next question</label>
+        <div style="margin-top:6px;">
+          ${nextSelect(q.default_next || "", "setDefaultNext(this.value)")}
+        </div>
+      `;
+    }
+    
+    function renderDurationEditor() {
+      const q = currentQc();
+      if (!q) return;
+
+      const panel = document.getElementById("qcPanel");
+
+      panel.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <h3>Duration</h3>
+          <button type="button" onclick="closeQcPanel()">Close</button>
+        </div>
+
+        <label class="small">Minimum duration</label><br>
+        <input class="qc-input" type="number" value="${q.min_duration ?? ""}"
+          style="width:250px;margin:6px 0 10px;"
+          oninput="currentQc().min_duration = this.value === '' ? null : Number(this.value); renderQcPreview();">
+
+        <label class="small">Maximum duration</label><br>
+        <input class="qc-input" type="number" value="${q.max_duration ?? ""}"
+          style="width:250px;margin:6px 0 10px;"
+          oninput="currentQc().max_duration = this.value === '' ? null : Number(this.value); renderQcPreview();">
+
+        <label class="small">Unit</label><br>
+        <select class="qc-input"
+          style="width:250px;margin:6px 0 10px;"
+          onchange="currentQc().duration_unit = this.value; renderQcPreview();">
+          <option value="seconds" ${q.duration_unit === "seconds" ? "selected" : ""}>Seconds</option>
+          <option value="minutes" ${q.duration_unit === "minutes" || !q.duration_unit ? "selected" : ""}>Minutes</option>
+          <option value="hours" ${q.duration_unit === "hours" ? "selected" : ""}>Hours</option>
+          <option value="days" ${q.duration_unit === "days" ? "selected" : ""}>Days</option>
+        </select>
+
+        <label class="small">Next question</label>
+        <div style="margin-top:6px;">
+          ${nextSelect(q.default_next || "", "setDefaultNext(this.value)")}
+        </div>
+      `;
+    }
+    function renderRankingEditor() {
+      const q = currentQc();
+      if (!q) return;
+
+      const panel = document.getElementById("qcPanel");
+      q.options = q.options || [];
+
+      panel.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <h3>Ranking</h3>
+          <button type="button" onclick="closeQcPanel()">Close</button>
+        </div>
+
+        <p class="small">Items to rank</p>
+
+        ${q.options.map((opt, index) => `
+          <div style="display:flex;gap:8px;align-items:center;margin:8px 0;">
+            <span class="small">↕</span>
+            <input
+              class="qc-input"
+              style="width:220px;height:30px;"
+              value="${escapeHtml(opt.text || "")}"
+              oninput="setAnswerText(${index}, this.value)"
+            >
+            <button
+              type="button"
+              onclick="deleteAnswer(${index})"
+              title="Delete item"
+              style="border:none;background:none;cursor:pointer;font-size:18px;padding:2px;"
+            >🗑</button>
+          </div>
+        `).join("")}
+
+        <button type="button" onclick="addAnswer()">+ Add item</button>
+
+        <div style="margin-top:16px;">
+          <label class="small">Next question</label>
+          <div style="margin-top:6px;">
+            ${nextSelect(q.default_next || "", "setDefaultNext(this.value)")}
+          </div>
+        </div>
+      `;
+    }
+    function applyScaleTemplate(key) {
+      const q = currentQc();
+      const template = SCALE_TEMPLATES[key];
+
+      if (!q) {
+        alert("Сначала выберите или создайте вопрос");
+        return;
+      }
+
+      if (!template) return;
+
+      q.type = template.type;
+      q.scale_template = template.label;
+      q.question_type = normalizeQuestionTypeId(template.type);
+      q.response_type = normalizeResponseTypeId(template.type);
+      q.presentation_type =
+        template.scale_type === "visual_analog"
+          ? "visual_analog_line"
+          : DEFAULT_PRESENTATION_BY_RESPONSE_TYPE[q.response_type];
+      q.scale_type = template.scale_type || q.scale_type;
+      q.value_type = template.value_type || q.value_type;
+      
+      q.min = template.min;
+      q.max = template.max;
+      q.step = template.step ?? q.step ?? null;
+
+      q.options = (template.options || []).map((text, index) => ({
+        value: index,
+        text,
+        next_code: ""
+      }));
+      
+      q.allowed_range = q.scale_type === "visual_analog"
+        ? { min: q.min ?? 0, max: q.max ?? 100, step: q.step ?? null }
+        : null;
+      q.allowed_values = (q.options || []).map(opt => opt.value);
+      syncQuestionComponentShape(q);
+      
+      renderQcPreview();
+      renderTypeSpecificEditor();
+      renderQcTree();
+    }
+
+    function renderAnswersPanel() {
+      const q = currentQc();
+      if (!q) return;
+
+      const panel = document.getElementById("qcPanel");
+      q.options = q.options || [];
+
+      panel.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <h3>Answers</h3>
+          <button type="button" onclick="closeQcPanel()">Close</button>
+        </div>
+
+        ${q.options.map((opt, index) => `
+        <div style="max-width:200px;border:1px solid #ddd;border-radius:14px;padding:10px;margin:10px 0;background:#f9fafb;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <b>Answer ${index + 1}</b>
+              <button
+                  type="button"
+                  onclick="deleteAnswer(${index})"
+                  title="Delete answer"
+                  style="
+                      border:none;
+                      background:none;
+                      cursor:pointer;
+                      font-size:18px;
+                      padding:2px;
+                  ">
+                  🗑
+              </button>
+            </div>
+          
+            <label class="small">Answer text</label>
+            <input
+              class="qc-input"
+              style="width:180px;height:30px;"
+              value="${escapeHtml(opt.text || "")}"
+              oninput="setAnswerText(${index}, this.value)"
+            >
+
+            <div style="display:grid;grid-template-columns:60px 60px;gap:25px;margin-bottom:10px;">
+              <div>
+                <label class="small">Value</label>
+                <input
+                  class="qc-input"
+                  type="number"
+                  style="width:100%;margin-top:6px;"
+                  value="${opt.value}"
+                  oninput="setAnswerValue(${index}, this.value)"
+                >
+              </div>
+
+              <div>
+                <label class="small">Score</label>
+                <input
+                  class="qc-input"
+                  type="number"
+                  style="width:100%;margin-top:6px;"
+                  value="${opt.score ?? opt.value ?? ""}"
+                  oninput="setAnswerScore(${index}, this.value)"
+                >
+              </div>
+            </div>
+
+            <label class="small">Next question</label>
+            <div style="margin-top:6px;">
+              ${nextSelect(opt.next_code || "", "setAnswerNext(" + index + ", this.value)")}
+            </div>
+          </div>
+        `).join("")}
+
+        <button type="button" onclick="addAnswer()">+ Add answer</button>
+      `;
+    }
+
+    function renderRoutingPanel() {
+      const q = currentQc();
+      if (!q) {
+        alert("Сначала выберите или создайте вопрос");
+        return;
+      }
+
+      const panel = document.getElementById("qcPanel");
+
+      if (!Array.isArray(q.options)) {
+        q.options = [];
+      }
+
+      panel.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+          <h3>Переходы</h3>
+          <button type="button" onclick="closeQcPanel()">Закрыть</button>
+        </div>
+
+        ${(q.options || []).map((opt, index) => `
+          <div class="qc-answer-row">
+            <div>${opt.value}</div>
+            <div>${opt.text || "(пустой ответ)"}</div>
+            ${nextSelect(opt.next_code || "", "setAnswerNext(" + index + ", this.value)")}
+          </div>
+        `).join("") || `
+          <p class="small">Для этого типа вопроса задаётся общий переход после ответа.</p>
+          <label>После ответа перейти к</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            ${nextSelect(q.default_next || "", "setDefaultNext(this.value)")}
+            ${
+              q.default_next && q.default_next !== "END_RESERVED"
+                ? `<button type="button" onclick="openQuestionByCode('${q.default_next}')">Открыть</button>`
+                : ""
+            }
+          </div>
+        `}
+      `;
+    }
+
+    function renderUsePanel() {
+      document.getElementById("qcPanel").innerHTML = `
+        <h3>Как использовать ответ</h3>
+        <div class="qc-panel-grid">
+          <button class="qc-choice" onclick="setScoreDirection('higher_is_more_risk')">Чем выше ответ, тем выше риск</button>
+          <button class="qc-choice" onclick="setScoreDirection('higher_is_more_resource')">Чем выше ответ, тем больше ресурс</button>
+          <button class="qc-choice" onclick="setScoreDirection('routing_only')">Только для переходов</button>
+          <button class="qc-choice" onclick="setScoreDirection('not_scored')">Не участвует в расчётах</button>
+        </div>
+      `;
+    }
+
+    function renderQcPreview() {
+      const q = currentQc();
+      const box = document.getElementById("qcPreview");
+      if (!q || !box) return;
+
+      syncQuestionComponentShape(q);
+
+      const kind = getQuestionKind(q);
+
+      if (kind === "numeric") {
+        const range = q.allowed_range || {};
+        box.innerHTML = `
+          <input
+            type="number"
+            disabled
+            placeholder="Number"
+            min="${range.min ?? q.min ?? ""}"
+            max="${range.max ?? q.max ?? ""}"
+            step="${range.step ?? q.step ?? ""}"
+            style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;"
+          >
+          ${q.unit ? `<div class="small">Unit: ${escapeHtml(q.unit)}</div>` : ""}
+          <div class="small">
+            Range:
+            ${range.min ?? q.min ?? "—"} to ${range.max ?? q.max ?? "—"}
+            ${range.step ?? q.step ? ` · step ${range.step ?? q.step}` : ""}
+          </div>
+        `;
+        return;
+      }
+
+      if (kind === "text") {
+        if (q.multiline) {
+          box.innerHTML = `
+            <textarea
+              disabled
+              placeholder="${escapeHtml(q.placeholder || "Text answer")}"
+              maxlength="${q.max_length ?? ""}"
+              style="width:100%;min-height:90px;"
+            ></textarea>
+          `;
+        } else {
+          box.innerHTML = `
+            <input
+              disabled
+              placeholder="${escapeHtml(q.placeholder || "Text answer")}"
+              maxlength="${q.max_length ?? ""}"
+              style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;"
+            >
+          `;
+        }
+        return;
+      }
+      if (kind === "date") {
+        box.innerHTML = `
+          <input
+            type="date"
+            disabled
+            min="${q.min_date || ""}"
+            max="${q.max_date || ""}"
+            style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;"
+          >
+        `;
+        return;
+      }
+      
+      if (kind === "time") {
+        box.innerHTML = `
+          <input
+            type="time"
+            disabled
+            min="${q.min_time || ""}"
+            max="${q.max_time || ""}"
+            style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;"
+          >
+        `;
+        return;
+      }
+      
+      if (kind === "duration") {
+        const range = q.allowed_range || {};
+        box.innerHTML = `
+          <input
+            type="number"
+            disabled
+            min="${range.min ?? q.min_duration ?? ""}"
+            max="${range.max ?? q.max_duration ?? ""}"
+            placeholder="Duration"
+            style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;"
+          >
+          <div class="small">Unit: ${escapeHtml(q.duration_unit || "minutes")}</div>
+        `;
+        return;
+      }
+      if (kind === "ranking") {
+        box.innerHTML = `
+          <ol style="padding-left:22px;">
+            ${(q.options || []).map(opt => `
+              <li style="margin:8px 0;">
+                ${escapeHtml(opt.text || "(empty item)")}
+              </li>
+            `).join("")}
+          </ol>
+        `;
+        return;
+      }
+      if (kind === "slider" || kind === "visual_analog_scale") {
+        const range = q.allowed_range || {};
+        box.innerHTML = `
+          <div style="display:flex;justify-content:space-between;" class="small">
+            <span>${escapeHtml(q.left_label || "")}</span>
+            <span>${escapeHtml(q.right_label || "")}</span>
+          </div>
+          <input
+            type="range"
+            disabled
+            min="${range.min ?? q.min ?? 0}"
+            max="${range.max ?? q.max ?? 10}"
+            step="${range.step ?? q.step ?? 1}"
+            style="width:100%;"
+          >
+          <div class="small">
+            Range: ${range.min ?? q.min ?? 0} to ${range.max ?? q.max ?? 10} · step ${range.step ?? q.step ?? 1}
+          </div>
+        `;
+        return;
+      }
+      const inputType = (
+        kind === "multiple_choice"
+      ) ? "checkbox" : "radio";
+      box.innerHTML = (q.options || []).map(opt => `
+        <label class="answer-card disabled">
+          <input type="${inputType}" disabled>
+          <span>${escapeHtml(opt.text || "(пустой ответ)")}</span>
+        </label>
+      `).join("");
+    }
+
+    function nextSelect(selected, onchange) {
+      const codes = constructorQuestions.map(q => q.code).filter(Boolean);
+
+      return `
+        <select onchange="${onchange}">
+          <option value="" ${selected === "" ? "selected" : ""}>Следующий вопрос</option>
+          <option value="END_RESERVED" ${selected === "END_RESERVED" ? "selected" : ""}>Завершить</option>
+          ${codes.map(code => `<option value="${code}" ${selected === code ? "selected" : ""}>${code}</option>`).join("")}
+        </select>
+      `;
+    }
+
+    function setAnswerText(index, value) {
+      currentQc().options[index].text = value;
+      renderQcPreview();
+    }
+
+    function setAnswerValue(index, value) {
+          const q = currentQc();
+          if (!q) return;
+
+          q.options[index].value =
+            q.value_type === "string" ? value : Number(value);
+          applyScaleRules(q);
+          renderQcPreview();
+        }
+    
+    function setAnswerScore(index, value) {
+      currentQc().options[index].score =
+        value === "" ? null : Number(value);
+    }
+    
+    function setAnswerNext(index, value) {
+      currentQc().options[index].next_code = value;
+      renderRoutingPanel();
+    }
+
+    function setDefaultNext(value) {
+      currentQc().default_next = value;
+      renderRoutingPanel();
+    }
+
+    function setScoreDirection(value) {
+      currentQc().score_direction = value;
+    }
+
+    function addAnswer() {
+      const q = currentQc();
+      q.options.push({value: q.options.length, text: "", next_code: ""});
+      applyScaleRules(q);
+      renderAnswersPanel();
+      renderQcPreview();
+    }
+    
+    function deleteAnswer(index) {
+      const q = currentQc();
+      if (!q) return;
+
+      q.options.splice(index, 1);
+      applyScaleRules(q);
+
+      renderAnswersPanel();
+      renderQcPreview();
+    }
+    
+    function createConstructorQuestion() {
+      constructorQuestions.push({
+        scale_type: null,
+        value_type: null,
+        allowed_values: [0],
+        value_constraint_type: null,
+        allowed_range: null,
+        question_id: crypto.randomUUID ? crypto.randomUUID() : "draft-" + Date.now(),
+        code: "DU" + (constructorQuestions.length + 1),
+        version: 1,
+        block: "DU",
+        family: "decision_under_uncertainty",
+        domain: "context",
+        type: "single_choice",
+        question_type: "single_choice",
+        response_type: "single_choice",
+        presentation_type: "radio",
+        scale_type: "ordinal",
+        prompt: "",
+        options: [{value: 0, text: "", next_code: ""}],
+        score_direction: "not_scored",
+        status: "draft"
+      });
+
+      constructorCurrentIndex = constructorQuestions.length - 1;
+      fillQc();
+    }
+    
+    function deleteConstructorQuestion(index) {
+      const question = constructorQuestions[index];
+
+      if (!question) {
+        return;
+      }
+
+      const questionCode =
+        question.code || "без кода";
+
+      const references = [];
+
+      constructorQuestions.forEach(otherQuestion => {
+        if (otherQuestion === question) {
+          return;
+        }
+
+        if (
+          otherQuestion.default_next ===
+          question.code
+        ) {
+          references.push(
+            `${otherQuestion.code || "NO_CODE"}: общий переход`
+          );
+        }
+
+        (otherQuestion.options || []).forEach(option => {
+          if (
+            option.next_code ===
+            question.code
+          ) {
+            references.push(
+              `${otherQuestion.code || "NO_CODE"}: вариант ответа ` +
+              `"${option.text || option.value}"`
+            );
+          }
+        });
+      });
+
+      let message =
+        `Удалить вопрос ${questionCode}?\n\n` +
+        `Из файла банка он будет удалён только после нажатия «Сохранить».`;
+
+      if (references.length) {
+        message +=
+          `\n\nНа этот вопрос ведут переходы:\n` +
+          references.join("\n") +
+          `\n\nПосле удаления необходимо исправить эти переходы.`;
+      }
+
+      if (!confirm(message)) {
+        return;
+      }
+
+      constructorQuestions.splice(index, 1);
+
+      if (!constructorQuestions.length) {
+        constructorCurrentIndex = 0;
+
+        document.getElementById("qcCode").value = "";
+        document.getElementById("qcPrompt").value = "";
+        document.getElementById("qcPreview").innerHTML = "";
+        document.getElementById("qcPanel").innerHTML =
+          "<p class='small'>В банке пока нет вопросов.</p>";
+
+        renderQcTree();
+        return;
+      }
+
+      if (
+        constructorCurrentIndex >=
+        constructorQuestions.length
+      ) {
+        constructorCurrentIndex =
+          constructorQuestions.length - 1;
+      } else if (
+        index < constructorCurrentIndex
+      ) {
+        constructorCurrentIndex -= 1;
+      }
+
+      fillQc();
+    }
+    
+    function buildQuestionDefinitionForSave(q, index) {
+      syncQuestionComponentShape(q);
+
+      return {
+        ...q,
+
+        question_block: q.block || q.domain || "questionnaire",
+        question_number_in_block: q.question_number_in_block || index + 1,
+        question_id: q.question_id || q.code,
+        question_version: q.version || 1,
+
+        question_type: normalizeQuestionTypeId(q.question_type || q.type),
+        response_type: normalizeResponseTypeId(
+          q.response_type || q.question_type || q.type
+        ),
+        presentation_type: q.presentation_type || null,
+        scale_type: q.scale_type || null,
+        value_type: q.value_type || null,
+        allowed_values: q.allowed_values || [],
+        value_constraint_type: q.value_constraint_type || null,
+        allowed_range: q.allowed_range || null,
+        
+        scale: {
+          scale_type: q.scale_type || null,
+          min: q.min ?? q.min_duration ?? null,
+          max: q.max ?? q.max_duration ?? null,
+          step: q.step ?? null,
+          labels: {
+            left: q.left_label || null,
+            right: q.right_label || null,
+          },
+          direction: q.score_direction || null,
+          unit: q.unit || q.duration_unit || null,
+        },
+
+        answer_options: q.options || [],
+
+        routing: {
+          default_next: q.default_next || null,
+          option_next_codes: (q.options || []).map(opt => ({
+            value: opt.value,
+            next_code: opt.next_code || null,
+          })),
+        },
+      };
+    }
+    
+    async function saveConstructorQuestions() {
+      const bank = selectedConstructorBank;
+
+      if (!bank) {
+        alert("Банк не выбран");
+        return;
+      }
+
+      const response = await fetch(
+        "/question-banks/" + encodeURIComponent(bank) + "/questions",
+        {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            language: lang,
+            source_file: constructorSourceFile,
+            variable_name: constructorVariableName,
+            questions: constructorQuestions.map(buildQuestionDefinitionForSave)
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        alert("Сохранение не удалось: " + JSON.stringify(data));
+        return;
+      }
+
+      alert("Сохранено вопросов: " + data.saved_questions);
+    }
+    
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function closeQcPanel() {
+      document.getElementById("qcPanel").innerHTML =
+        "<p class='small'>Выберите вопрос слева или нажмите “+ Новый вопрос”.</p>";
+    }
+    function validateQuestionnaire() {
+      const errors = [];
+      const warnings = [];
+      const codes = new Set();
+
+      constructorQuestions.forEach((q, index) => {
+        if (!q.code || !q.code.trim()) {
+          errors.push(`Вопрос ${index + 1}: отсутствует код.`);
+          return;
+        }
+
+        if (codes.has(q.code)) {
+          errors.push(`Повторяется код ${q.code}.`);
+        }
+
+        codes.add(q.code);
+      });
+
+      constructorQuestions.forEach(q => {
+        if (
+          q.default_next &&
+          q.default_next !== "END_RESERVED" &&
+          !codes.has(q.default_next)
+        ) {
+          errors.push(`${q.code}: переход на отсутствующий вопрос ${q.default_next}.`);
+        }
+
+        (q.options || []).forEach(opt => {
+          if (
+            opt.next_code &&
+            opt.next_code !== "END_RESERVED" &&
+            !codes.has(opt.next_code)
+          ) {
+            errors.push(
+              `${q.code}: ответ "${opt.text || opt.value}" ведёт к отсутствующему вопросу ${opt.next_code}.`
+            );
+          }
+        });
+      });
+
+      constructorQuestions.forEach(q => {
+        if (!q.prompt || !q.prompt.trim()) {
+          warnings.push(`${q.code}: отсутствует текст вопроса.`);
+        }
+
+        (q.options || []).forEach(opt => {
+          if (!opt.text || !opt.text.trim()) {
+            warnings.push(`${q.code}: есть пустой вариант ответа.`);
+          }
+        });
+      });
+
+      let message = "";
+
+      if (errors.length === 0) {
+        message += "✅ Критических ошибок нет.\n\n";
+      } else {
+        message += "❌ Ошибки:\n\n" + errors.join("\n") + "\n\n";
+      }
+
+      if (warnings.length) {
+        message += "⚠ Предупреждения:\n\n" + warnings.join("\n");
+      }
+
+      alert(message);
+    }
+    function openQuestionByCode(code) {
+      if (!code || code === "END_RESERVED") return;
+
+      const index = constructorQuestions.findIndex(q => q.code === code);
+
+      if (index === -1) {
+        alert("Вопрос не найден: " + code);
+        return;
+      }
+
+      constructorCurrentIndex = index;
+      fillQc();
+    }
+    
+    function getCurrentPilotProject() {
+      const el = document.getElementById("pilotProjectTitle");
+
+      return {
+        id: el?.dataset.projectId || "health_model_pilot",
+        title: el?.innerText?.trim() || "Health Model Pilot"
+      };
+    }
+    
+    async function renderQuestionnaireConnection() {
+        const project = getCurrentPilotProject();
+        document.getElementById("qcProjectTitle").innerText = project.title;
+
+        const box = document.getElementById("connectedQuestionnairesList");
+        box.innerHTML = "Loading question banks...";
+
+        const response = await fetch(
+          "/pilot/questionnaire-banks?project_id=" +
+          encodeURIComponent(project.id) +
+          "&lang=" +
+          encodeURIComponent(lang)
+        );
+        const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        box.innerHTML = "Ошибка загрузки: " + JSON.stringify(data);
+        return;
+      }
+
+      box.innerHTML = data.banks.map(bank => `
+        <div style="padding:12px 0;border-bottom:1px solid #eee;">
+          <label>
+            <input
+              type="checkbox"
+              ${bank.enabled ? "checked" : ""}
+              onchange="togglePilotBank('${bank.id}', this.checked)"
+            >
+            <b>${escapeHtml(bank.id)}</b>
+          </label>
+
+          <div class="small">RU: ${escapeHtml(bank.title_by_lang?.ru || "—")}</div>
+          <div class="small">EN: ${escapeHtml(bank.title_by_lang?.en || "—")}</div>
+          <div class="small">ES: ${escapeHtml(bank.title_by_lang?.es || "—")}</div>
+
+          <div class="small">
+            ${bank.enabled ? "Connected" : "Not connected"}
+          </div>
+        </div>
+      `).join("");
+    }
+    
+    async function togglePilotBank(bankId, enabled) {
+      const project = getCurrentPilotProject();
+
+      const response = await fetch(
+        "/pilot/questionnaire-banks?project_id=" +
+        encodeURIComponent(project.id) +
+        "&lang=" +
+        encodeURIComponent(lang)
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        alert("Failed to read question banks");
+        renderQuestionnaireConnection();
+        return;
+      }
+
+      let enabledIds = data.enabled_bank_ids || [];
+
+      if (enabled) {
+        if (!enabledIds.includes(bankId)) {
+          enabledIds.push(bankId);
+        }
+      } else {
+        enabledIds = enabledIds.filter(id => id !== bankId);
+      }
+
+      const saveResponse = await fetch(
+        "/pilot/questionnaire-banks?project_id=" +
+        encodeURIComponent(project.id),
+        {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            enabled_bank_ids: enabledIds
+          })
+        }
+      );
+
+      const saveData = await saveResponse.json();
+
+      if (!saveResponse.ok || !saveData.ok) {
+        alert("Failed to save connection: " + JSON.stringify(saveData));
+        renderQuestionnaireConnection();
+        return;
+      }
+
+      renderQuestionnaireConnection();
+    }
+    
+renderRayPartner();
+loadStudies();
+refreshRayPartner();
+</script>
+
+</body>
+</html>

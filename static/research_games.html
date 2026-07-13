@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Connected Games</title>
+  <script src="/static/platform_i18n.js?v=20260712-sync"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
+    }
+    header {
+      padding: 22px 28px;
+      background: #ffffff;
+      border-bottom: 1px solid #d9e0ea;
+    }
+    main {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 22px;
+    }
+    nav, .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    nav { margin-top: 12px; }
+    a, button {
+      border-radius: 6px;
+      border: 1px solid #cfd7e5;
+      background: #ffffff;
+      color: #243047;
+      padding: 9px 12px;
+      text-decoration: none;
+      cursor: pointer;
+      font: inherit;
+    }
+    a.primary, button.primary {
+      background: #244b5a;
+      border-color: #244b5a;
+      color: #ffffff;
+      font-weight: 700;
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid #d9e0ea;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .small {
+      color: #5f6b7c;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .game-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 14px 0;
+      border-top: 1px solid #eef1f5;
+      align-items: center;
+    }
+    .game-row:first-child { border-top: 0; }
+    .pill {
+      display: inline-block;
+      padding: 3px 7px;
+      border-radius: 999px;
+      border: 1px solid #d9e0ea;
+      background: #f7fafc;
+      margin: 3px 4px 3px 0;
+      font-size: 12px;
+    }
+    .contract {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .contract div {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 7px;
+      padding: 9px;
+      font-size: 13px;
+    }
+    @media (max-width: 760px) {
+      main { padding: 14px; }
+      .game-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="title">Connected Games</h1>
+    <p id="subtitle" class="small"></p>
+    <nav>
+      <a href="/research-workspace">Workspace</a>
+      <a href="/participant-portal">Participant Portal</a>
+      <a href="/data-preparation">Data Preparation</a>
+      <a href="/analysis-builder">Analysis Builder</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2 id="connectedTitle"></h2>
+      <p id="connectedText" class="small"></p>
+      <div id="gameList"></div>
+    </section>
+
+    <section class="card">
+      <h2 id="boundaryTitle"></h2>
+      <p id="boundaryText" class="small"></p>
+      <div class="contract" id="boundaryList"></div>
+    </section>
+  </main>
+
+  <script>
+    let lang = normalizeLang(new URLSearchParams(location.search).get("lang") || localStorage.getItem("platform_language") || "ru");
+    let games = [];
+    const enabledState = {};
+    const TEXT = {
+      ru: {
+        title: "Подключённые игры",
+        subtitle: "Research OS хранит только регистрацию, контракт запуска и контракт результата. Игровой UI живёт отдельно.",
+        connectedTitle: "Подключённые игры",
+        connectedText: "Здесь можно включить или выключить зарегистрированную игру для Participant Portal. Это не игровой экран.",
+        boundaryTitle: "Что остаётся в Research OS / Pilot",
+        boundaryText: "Платформа не знает внутренний игровой движок. Она хранит только безопасный контракт подключения.",
+        enabled: "включена",
+        disabled: "выключена",
+        launch: "Проверить запуск",
+        enable: "Включить",
+        disable: "Выключить",
+      },
+      en: {
+        title: "Connected Games",
+        subtitle: "Research OS stores only registration, launch contract and result contract. The game UI lives separately.",
+        connectedTitle: "Connected Games",
+        connectedText: "Enable or disable a registered game for Participant Portal. This is not the game screen.",
+        boundaryTitle: "What stays in Research OS / Pilot",
+        boundaryText: "The platform does not know the internal game engine. It stores only the safe connection contract.",
+        enabled: "enabled",
+        disabled: "disabled",
+        launch: "Check launch",
+        enable: "Enable",
+        disable: "Disable",
+      },
+      es: {
+        title: "Juegos conectados",
+        subtitle: "Research OS guarda solo registro, contrato de inicio y contrato de resultado. La interfaz del juego vive aparte.",
+        connectedTitle: "Juegos conectados",
+        connectedText: "Activa o desactiva un juego registrado para Participant Portal. Esta no es la pantalla del juego.",
+        boundaryTitle: "Que queda en Research OS / Pilot",
+        boundaryText: "La plataforma no conoce el motor interno del juego. Solo guarda el contrato seguro de conexion.",
+        enabled: "activado",
+        disabled: "desactivado",
+        launch: "Probar inicio",
+        enable: "Activar",
+        disable: "Desactivar",
+      },
+    };
+    const CONTRACT_FIELDS = [
+      "game_id",
+      "game_version",
+      "title/description RU/EN/ES",
+      "availability",
+      "enabled/disabled",
+      "compatibility",
+      "participant launch route",
+      "result contract",
+      "question UUID mappings",
+      "consent requirements",
+      "provenance requirements",
+      "sensor capability declarations",
+    ];
+    function normalizeLang(value) {
+      const short = String(value || "").slice(0, 2);
+      return ["ru", "en", "es"].includes(short) ? short : "ru";
+    }
+    function t(key) { return TEXT[lang][key] || TEXT.en[key] || key; }
+    function label(value) { return value?.[lang] || value?.en || value?.ru || ""; }
+    async function load() {
+      const response = await fetch("/participant/games/available");
+      const data = await response.json();
+      games = data.games || [];
+      games.forEach(game => { enabledState[game.game_id] = game.enabled !== false; });
+      render();
+    }
+    function toggle(gameId) {
+      enabledState[gameId] = !enabledState[gameId];
+      render();
+    }
+    function render() {
+      document.documentElement.lang = lang;
+      document.title = t("title");
+      document.getElementById("title").textContent = t("title");
+      document.getElementById("subtitle").textContent = t("subtitle");
+      document.getElementById("connectedTitle").textContent = t("connectedTitle");
+      document.getElementById("connectedText").textContent = t("connectedText");
+      document.getElementById("boundaryTitle").textContent = t("boundaryTitle");
+      document.getElementById("boundaryText").textContent = t("boundaryText");
+      document.getElementById("boundaryList").innerHTML = CONTRACT_FIELDS.map(field => `<div>${escapeHtml(field)}</div>`).join("");
+      document.getElementById("gameList").innerHTML = games.map(game => {
+        const enabled = enabledState[game.game_id];
+        return `<div class="game-row" data-game-id="${escapeHtml(game.game_id)}">
+          <div>
+            <strong>${escapeHtml(label(game.title))}</strong>
+            <p class="small">${escapeHtml(label(game.description))}</p>
+            <span class="pill">game_id: ${escapeHtml(game.game_id)}</span>
+            <span class="pill">version: ${escapeHtml(game.game_version)}</span>
+            <span class="pill">result: ${escapeHtml(game.result_contract)}</span>
+            <span class="pill">${enabled ? t("enabled") : t("disabled")}</span>
+          </div>
+          <div class="toolbar">
+            <button type="button" onclick="toggle('${escapeHtml(game.game_id)}')">${enabled ? t("disable") : t("enable")}</button>
+            <a class="primary" href="${escapeHtml(game.participant_launch_route)}?lang=${escapeHtml(lang)}">${escapeHtml(t("launch"))}</a>
+          </div>
+        </div>`;
+      }).join("");
+    }
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+    window.addEventListener("platform-language-change", () => {
+      lang = normalizeLang(window.PlatformLanguage?.get?.() || lang);
+      render();
+    });
+    load();
+  </script>
+</body>
+</html>

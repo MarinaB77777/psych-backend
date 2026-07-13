@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Research Laboratory</title>
+<script src="/static/platform_i18n.js?v=20260712-sync"></script>
+<style>
+body { font-family: Arial, sans-serif; max-width: 1150px; margin: 40px auto; padding: 20px; }
+.card { border: 1px solid #ddd; border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+.grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.tile { border: 1px solid #ddd; border-radius: 12px; padding: 16px; background: #fafafa; }
+button { padding: 10px 16px; margin: 6px 6px 6px 0; cursor: pointer; }
+input, textarea, select { width: 100%; padding: 10px; margin-top: 6px; box-sizing: border-box; }
+.small { color: #666; font-size: 14px; }
+.badge { display:inline-block; padding:6px 10px; margin:4px; border:1px solid #ccc; border-radius:999px; background:#f7f7f7; }
+pre { background:#f6f6f6; padding:12px; overflow:auto; }
+</style>
+</head>
+<body>
+
+<h1>🧪 Research Laboratory</h1>
+<p id="status" class="small">Loading...</p>
+
+<div class="grid">
+  <div class="tile"><b>Human Research</b><br><button onclick="newHypothesis()">New Hypothesis</button></div>
+  <div class="tile"><b>Ray Discovery</b><br><span class="small">Discovery candidates</span></div>
+  <div class="tile"><b>Validation Lab</b><br><span class="small">Validation queue</span></div>
+  <div class="tile"><b>Knowledge Base</b><br><span class="small">Validated knowledge</span></div>
+</div>
+
+<div id="createForm" class="card">
+  <h2>Research Hypothesis</h2>
+
+  <label>Title
+    <input id="titleInput" placeholder="Example: StressBurden and Decision Quality">
+  </label>
+
+  <label>Research question
+    <textarea id="questionInput" rows="3" placeholder="What relationship between answers, parameters or mechanisms are we testing?"
+        После этого гипотеза будет сохранять не просто “вопросы”, а план проверки зависимости значений: predictor / outcome / methods.></textarea>
+  </label>
+  
+  <label>Hypothesis basis</label>
+
+  <select id="basisInput">
+      <option value="researcher_reasoning">Researcher reasoning</option>
+      <option value="literature_review">Literature review</option>
+      <option value="primary_results">Primary results</option>
+      <option value="clinical_observation">Clinical observation</option>
+      <option value="theoretical_model">Theoretical model</option>
+      <option value="ray_discovery">Ray Discovery</option>
+      <option value="previous_study">Previous study</option>
+      <option value="other">Other</option>
+  </select>
+
+  <label>Basis notes</label>
+
+  <textarea
+      id="basisNotesInput"
+      rows="3"
+      placeholder="Explain what this hypothesis is based on">
+  </textarea>
+  
+  <label>Description
+    <textarea id="descriptionInput" rows="3"></textarea>
+  </label>
+
+  <h3>Validation Plan</h3>
+  <p class="small">
+    Гипотеза проверяет зависимость значений: ответов на вопросы,
+    рассчитанных параметров, механизмов или измерений.
+  </p>
+
+  <label>Predictor / X
+    <select id="predictorSelect"></select>
+  </label>
+  <button onclick="addAnalysisInput('predictor')">+ Add Predictor</button>
+
+  <label>Outcome / Y
+    <select id="outcomeSelect"></select>
+  </label>
+  <button onclick="addAnalysisInput('outcome')">+ Add Outcome</button>
+
+  <div id="selectedVariables"></div>
+
+  <h3>Statistical Methods</h3>
+  <select id="methodSelect"></select>
+  <button onclick="addMethod()">+ Add Method</button>
+  <div id="selectedMethods"></div>
+
+  <br>
+  <button onclick="createHypothesis()">Create Hypothesis</button>
+</div>
+
+<div class="card">
+  <h2>Research Objects</h2>
+  <button onclick="loadObjects()">Refresh</button>
+  <div id="objectsList"></div>
+</div>
+
+<script>
+let allEntities = [];
+let selectedVariables = [];
+let selectedMethods = [];
+
+function setStatus(text) {
+  document.getElementById("status").innerText = text;
+}
+
+function newHypothesis() {
+  document.getElementById("titleInput").value = "";
+  document.getElementById("questionInput").value = "";
+  document.getElementById("descriptionInput").value = "";
+  document.getElementById("basisInput").value = "researcher_reasoning";
+  document.getElementById("basisNotesInput").value = "";
+  selectedVariables = [];
+  selectedMethods = [];
+  renderSelected();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+async function loadEntities() {
+  const response = await fetch(
+    "/research/entities?language=" + encodeURIComponent(window.PlatformLanguage?.get() || "ru")
+  );
+  const data = await response.json();
+
+  if (!response.ok || !data.ok) {
+    alert(JSON.stringify(data));
+    return;
+  }
+
+  allEntities = data.entities || [];
+
+  const variableEntities = allEntities.filter(e => e.type !== "STATISTICAL_METHOD");
+  const methodEntities = allEntities.filter(e => e.type === "STATISTICAL_METHOD");
+
+  const variableOptions = variableEntities.map(e =>
+                                                `<option value="${e.id}">${e.type}: ${e.label}</option>`
+                                              ).join("");
+
+                                              document.getElementById("predictorSelect").innerHTML = variableOptions;
+                                              document.getElementById("outcomeSelect").innerHTML = variableOptions;
+
+  document.getElementById("methodSelect").innerHTML = methodEntities.map(e =>
+    `<option value="${e.id}">${e.label}</option>`
+  ).join("");
+}
+
+function entityById(id) {
+  return allEntities.find(e => e.id === id);
+}
+
+    function addAnalysisInput(role) {
+      const selectId = role === "predictor" ? "predictorSelect" : "outcomeSelect";
+      const id = document.getElementById(selectId).value;
+      const entity = entityById(id);
+      if (!entity) return;
+
+      if (!selectedVariables.some(x =>
+        x.entity_id === entity.id &&
+        x.entity_type === entity.type &&
+        x.role === role
+      )) {
+        selectedVariables.push({
+          role: role,
+          entity_id: entity.id,
+          entity_type: entity.type,
+          label: entity.label,
+          value_source: entity.type === "QUESTION"
+            ? "answers." + entity.id
+            : entity.id,
+          source: entity.source || null,
+          study_id: entity.study_id || null
+        });
+      }
+
+      renderSelected();
+    }
+function addMethod() {
+  const id = document.getElementById("methodSelect").value;
+  const entity = entityById(id);
+  if (!entity) return;
+
+  if (!selectedMethods.some(x => x.method_id === entity.id)) {
+    selectedMethods.push({
+      method_id: entity.id,
+      label: entity.label
+    });
+  }
+
+  renderSelected();
+}
+
+    function removeVariable(id, type, role) {
+      selectedVariables = selectedVariables.filter(x =>
+        !(x.entity_id === id && x.entity_type === type && (x.role || "") === role)
+      );
+      renderSelected();
+    }
+
+function removeMethod(id) {
+  selectedMethods = selectedMethods.filter(x => x.method_id !== id);
+  renderSelected();
+}
+
+function renderSelected() {
+    document.getElementById("selectedVariables").innerHTML =
+      selectedVariables.length === 0
+        ? "<p class='small'>No analysis inputs selected.</p>"
+        : selectedVariables.map(v =>
+            `<span class="badge">
+              ${v.role || "input"}: ${v.entity_type} → ${v.value_source || v.entity_id}
+              <button onclick="removeVariable('${v.entity_id}', '${v.entity_type}', '${v.role || ""}')">x</button>
+            </span>`
+          ).join("");
+
+  document.getElementById("selectedMethods").innerHTML =
+    selectedMethods.length === 0
+      ? "<p class='small'>No methods selected.</p>"
+      : selectedMethods.map(m =>
+          `<span class="badge">${m.label}
+            <button onclick="removeMethod('${m.method_id}')">x</button>
+          </span>`
+        ).join("");
+}
+
+async function loadObjects() {
+  setStatus("Loading research objects...");
+
+  const response = await fetch("/research/objects");
+  const data = await response.json();
+
+  if (!response.ok || !data.ok) {
+    setStatus("Failed to load objects");
+    alert(JSON.stringify(data));
+    return;
+  }
+
+  const list = document.getElementById("objectsList");
+  const objects = data.objects || [];
+
+  if (objects.length === 0) {
+    list.innerHTML = "<p class='small'>No research objects yet.</p>";
+    setStatus("Ready");
+    return;
+  }
+
+  list.innerHTML = objects.map(obj => `
+    <div class="card">
+      <h3>${obj.title}</h3>
+      <p class="small">${obj.object_type} | owner: ${obj.owner} | status: ${obj.status}</p>
+      <p><b>Research question:</b> ${obj.research_question || ""}</p>
+      
+      <p><b>Validation plan:</b></p>
+
+      <p><b>Predictors / X:</b></p>
+      ${(obj.variables || [])
+        .filter(v => v.role === "predictor")
+        .map(v => `<span class="badge">${v.entity_type || ""} → ${v.value_source || v.entity_id || v}</span>`)
+        .join("") || "<p class='small'>No predictors selected.</p>"}
+
+      <p><b>Outcomes / Y:</b></p>
+      ${(obj.variables || [])
+        .filter(v => v.role === "outcome")
+        .map(v => `<span class="badge">${v.entity_type || ""} → ${v.value_source || v.entity_id || v}</span>`)
+        .join("") || "<p class='small'>No outcomes selected.</p>"}
+
+      <p><b>Methods:</b></p>
+      ${(obj.analysis_methods || [])
+        .map(m => `<span class="badge">${m.label || m.method_id || m}</span>`)
+        .join("") || "<p class='small'>No methods selected.</p>"}
+  
+  
+      <details><summary>JSON details</summary><pre>${JSON.stringify(obj, null, 2)}</pre></details>
+    </div>
+  `).join("");
+
+  setStatus("Ready");
+}
+
+async function createHypothesis() {
+  const title = document.getElementById("titleInput").value.trim();
+
+  if (!title) {
+    alert("Title is required");
+    return;
+  }
+  
+  const payload = {
+    object_type: "hypothesis",
+    owner: "researcher",
+    status: "draft",
+    title,
+    research_question: document.getElementById("questionInput").value.trim(),
+    hypothesis_basis: document.getElementById("basisInput").value,
+    basis_notes: document.getElementById("basisNotesInput").value.trim(),
+    description: document.getElementById("descriptionInput").value.trim(),
+    variables: selectedVariables,
+    analysis_methods: selectedMethods
+  };
+  
+  setStatus("Creating hypothesis...");
+
+  const response = await fetch("/research/objects", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || !data.ok) {
+    setStatus("Create failed");
+    alert(JSON.stringify(data));
+    return;
+  }
+
+  newHypothesis();
+  await loadObjects();
+}
+
+async function init() {
+  await loadEntities();
+  renderSelected();
+  await loadObjects();
+}
+
+init();
+
+window.addEventListener("platform-language-change", () => {
+  loadEntities();
+});
+</script>
+
+</body>
+</html>

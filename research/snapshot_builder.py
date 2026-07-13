@@ -16,6 +16,10 @@ from research.snapshot_sanitizer import (
     sanitize_next_questions,
 )
 
+from assessment.prepared_output import (
+    build_prepared_domain_output,
+)
+
 from research.pseudonymization import (
     build_export_scoped_participant_reference,
 )
@@ -57,7 +61,10 @@ def _is_invalidated(session: ParticipantSession) -> bool:
     )
 
 
-def _build_snapshot_policy_status(session: ParticipantSession) -> dict:
+def _build_snapshot_policy_status(
+    session: ParticipantSession,
+    policy_status_override: dict | None = None,
+) -> dict:
     invalidated = _is_invalidated(session)
 
     base = {
@@ -66,6 +73,15 @@ def _build_snapshot_policy_status(session: ParticipantSession) -> dict:
         "consent_status": "not_evaluated",
         "policy_restricted": "not_evaluated",
     }
+
+    if policy_status_override:
+        base = {
+            **base,
+            **policy_status_override,
+            "policy_status_override_applied": True,
+        }
+    else:
+        base["policy_status_override_applied"] = False
 
     if invalidated:
         return {
@@ -226,9 +242,45 @@ def _build_answer_summary(session: ParticipantSession) -> dict:
         "builder_is_not_consent_authority": True,
         "builder_is_not_retention_authority": True,
     }
+def _build_domain_data_identity_summary(session: ParticipantSession) -> dict:
+    identity = session.domain_data_identity or {}
 
+    if not identity:
+        return {
+            "identity_status": "missing",
+            "domain_data_identity": {},
+        }
 
-def build_research_snapshot(session: ParticipantSession) -> dict:
+    return {
+        "identity_status": "present",
+        "domain_data_identity": identity,
+    }
+def _build_health_model_research_model_summary(
+    session: ParticipantSession,
+) -> dict:
+    raw_result = session.raw_engine_result or {}
+
+    return {
+        "status": (
+            "present"
+            if raw_result
+            else "missing"
+        ),
+        "calculator_input": raw_result.get("calculator_input", {}),
+        "coverage": raw_result.get("coverage", {}),
+        "question_parameter_mapping_records": raw_result.get(
+            "question_parameter_mapping_records",
+            [],
+        ),
+        "research_calculated_parameter_records": raw_result.get(
+            "research_calculated_parameter_records",
+            [],
+        ),
+    }
+def build_research_snapshot(
+    session: ParticipantSession,
+    policy_status_override: dict | None = None,
+) -> dict:
     public_output = session.public_output or {}
     invalidated = _is_invalidated(session)
 
@@ -245,7 +297,10 @@ def build_research_snapshot(session: ParticipantSession) -> dict:
         "snapshot_scope": "bounded_research_snapshot",
 
         "snapshot_policy_status": (
-            _build_snapshot_policy_status(session)
+            _build_snapshot_policy_status(
+                session=session,
+                policy_status_override=policy_status_override,
+            )
         ),
 
         "source_session": {
@@ -258,9 +313,13 @@ def build_research_snapshot(session: ParticipantSession) -> dict:
                 if session.closed_at is not None
                 else None
             ),
+            "study_id": session.study_id,
+            "participant_role": session.participant_role,
+            "synchronization_reference": session.synchronization_reference,
+            "subject_link_present": session.subject_link_id is not None,
             "invalidated": invalidated,
             "invalidation_reason": session.invalidation_reason,
-        },
+         },
 
         "versions": {
             "engine_version": session.engine_version,
@@ -302,6 +361,10 @@ def build_research_snapshot(session: ParticipantSession) -> dict:
             _build_answer_summary(session)
         ),
 
+        "domain_data_identity_summary": (
+            _build_domain_data_identity_summary(session)
+        ),
+
         "sensor_summary": {
             "status": "not_implemented",
         },
@@ -309,6 +372,20 @@ def build_research_snapshot(session: ParticipantSession) -> dict:
         "standard_method_summary": {
             "status": "not_implemented",
         },
+
+        "health_model_research_model_summary": (
+           _build_health_model_research_model_summary(session)
+        ),
+
+        "prepared_domain_output": build_prepared_domain_output(
+            domain_data_identity=session.domain_data_identity or {},
+            raw_payload={
+                "payload_type": "questionnaire_answers",
+                "study_id": session.study_id,
+                "answer_count": len(session.answers or {}),
+            },
+            analysis_output={},
+         ),
 
         "decision_pattern_summary": {
             "status": "not_implemented",

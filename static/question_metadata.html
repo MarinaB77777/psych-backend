@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Question Metadata</title>
+<script src="/static/platform_i18n.js?v=20260712-sync"></script>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#eef2f7;color:#111827}
+.topbar{background:#0f172a;color:white;padding:14px 18px;display:flex;gap:12px;align-items:center}
+.topbar h2{margin:0 18px 0 0}
+button{cursor:pointer}
+.navbtn{background:#1e293b;color:white;border:1px solid #475569;border-radius:12px;padding:10px 14px}
+.page{display:grid;grid-template-columns:320px 1fr;gap:18px;padding:18px}
+.card{background:white;border:1px solid #d7dde8;border-radius:18px;padding:18px;margin-bottom:16px}
+.small{color:#64748b;font-size:14px}
+.item{display:block;width:100%;text-align:left;border:1px solid #cbd5e1;border-radius:14px;background:white;padding:14px;margin:10px 0}
+.item:hover,.item.active{background:#e0ecff;border-color:#1d4ed8}
+select{padding:8px;border-radius:10px;border:1px solid #cbd5e1}
+.primary{background:#111827;color:white;border:0;border-radius:12px;padding:11px 15px}
+.badge{display:inline-block;padding:4px 9px;border-radius:999px;background:#dcfce7;color:#166534;font-size:13px}
+.warn{background:#fef3c7;color:#92400e}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:10px;padding:8px 0;border-bottom:1px solid #eef2f7}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h2>Question Metadata</h2>
+  <button class="navbtn" onclick="location.href='/research-workspace'">Workspace</button>
+  <button class="navbtn" onclick="location.href='/analysis-builder?study_id=' + encodeURIComponent(selectedBank || '')">Analysis Builder</button>
+  <span id="statusText" class="small" style="margin-left:auto;color:#cbd5e1;">Ready</span>
+</div>
+
+<div class="page">
+  <aside>
+    <div class="card">
+      <h2>Question bank</h2>
+      <div id="bankList" class="small">Loading...</div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="card">
+      <h1 id="title">Select question bank</h1>
+      <p class="small">
+        Add missing analysis metadata before running standard methods.
+      </p>
+    </div>
+
+    <div id="questionsBox"></div>
+  </main>
+</div>
+
+<script>
+let selectedBank = null;
+let currentBankData = null;
+let questions = [];
+
+document.addEventListener("DOMContentLoaded", loadBanks);
+
+function setStatus(text){
+  document.getElementById("statusText").innerText = text;
+}
+
+async function loadBanks(){
+  setStatus("Loading banks...");
+  const response = await fetch("/question-banks");
+  const data = await response.json();
+
+  if(!response.ok || !data.ok){
+    document.getElementById("bankList").innerText = "Failed to load banks.";
+    setStatus("Error");
+    return;
+  }
+
+  document.getElementById("bankList").innerHTML = (data.banks || []).map(bank => `
+    <button class="item" onclick="loadBank('${escapeHtml(bank.id)}')">
+      <b>${escapeHtml(bank.title || bank.id)}</b><br>
+      <span class="small">${escapeHtml(bank.id)}</span>
+    </button>
+  `).join("");
+
+  setStatus("Ready");
+}
+
+async function loadBank(bankId){
+  selectedBank = bankId;
+  setStatus("Loading " + bankId + "...");
+
+  const response = await fetch(
+    "/question-banks/" +
+      encodeURIComponent(bankId) +
+      "?lang=" +
+      encodeURIComponent(window.PlatformLanguage?.get() || "ru")
+  );
+  const data = await response.json();
+
+  if(!response.ok || !data.ok){
+    document.getElementById("questionsBox").innerText = "Failed to load question bank.";
+    setStatus("Error");
+    return;
+  }
+
+  currentBankData = data;
+  questions = data.questions || [];
+
+  document.getElementById("title").innerText =
+    "Question bank: " + bankId;
+
+  renderQuestions();
+  setStatus("Loaded");
+}
+
+function renderQuestions(){
+  const missing = questions.filter(q => !q.scale_type).length;
+
+  document.getElementById("questionsBox").innerHTML = `
+    <div class="card">
+      <h2>Metadata status</h2>
+      <div class="kv"><b>Questions</b><span>${questions.length}</span></div>
+      <div class="kv"><b>Missing scale</b><span>${missing}</span></div>
+      <button class="primary" onclick="saveQuestions()">Save metadata</button>
+    </div>
+
+    ${questions.map((q, index) => renderQuestionCard(q, index)).join("")}
+  `;
+}
+
+function renderQuestionCard(q, index){
+  const scale = q.scale_type || "";
+
+  return `
+    <div class="card">
+      <h3>${escapeHtml(q.code || "NO_CODE")}</h3>
+      <p>${escapeHtml(q.prompt || q.title || q.text || "")}</p>
+
+      <div class="kv">
+        <b>Question type</b>
+        <span>${escapeHtml(q.question_type || q.type || "not set")}</span>
+      </div>
+
+      <div class="kv">
+        <b>Scale type</b>
+        <span>
+          <select onchange="setScale(${index}, this.value)">
+            <option value="" ${scale==="" ? "selected" : ""}>not set</option>
+            <option value="nominal" ${scale==="nominal" ? "selected" : ""}>nominal</option>
+            <option value="ordinal" ${scale==="ordinal" ? "selected" : ""}>ordinal</option>
+            <option value="interval" ${scale==="interval" ? "selected" : ""}>interval</option>
+            <option value="ratio" ${scale==="ratio" ? "selected" : ""}>ratio</option>
+          </select>
+          ${scale ? "<span class='badge'>set</span>" : "<span class='badge warn'>missing</span>"}
+        </span>
+      </div>
+
+      <div class="kv">
+        <b>Options</b>
+        <span>${renderOptions(q.options || [])}</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderOptions(options){
+  if(!options.length) return "—";
+
+  return options.map(opt =>
+    escapeHtml(String(opt.value)) + " — " + escapeHtml(opt.text || "")
+  ).join("<br>");
+}
+
+function setScale(index, value){
+  questions[index].scale_type = value || null;
+  renderQuestions();
+}
+
+async function saveQuestions(){
+  if(!currentBankData || !selectedBank){
+    alert("No bank selected.");
+    return;
+  }
+
+  setStatus("Saving...");
+
+  const response = await fetch(
+    "/question-banks/" + encodeURIComponent(selectedBank) + "/questions",
+    {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        language: currentBankData.language || "ru",
+        source_file: currentBankData.source_file,
+        variable_name: currentBankData.variable_name,
+        questions: questions
+      })
+    }
+  );
+
+  const data = await response.json();
+
+  if(!response.ok || !data.ok){
+    alert(JSON.stringify(data, null, 2));
+    setStatus("Save failed");
+    return;
+  }
+
+  setStatus("Saved");
+  alert("Saved: " + data.saved_questions + " questions");
+}
+
+function escapeHtml(value){
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;");
+}
+</script>
+</body>
+</html>

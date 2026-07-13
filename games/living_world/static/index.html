@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Living World</title>
+  <style>
+    :root {
+      --sky: #cfeaf4;
+      --field: #9fcf9b;
+      --field-dark: #6fa36d;
+      --ink: #20313a;
+      --muted: #60727c;
+      --panel: rgba(255, 255, 255, 0.92);
+      --line: rgba(42, 70, 80, 0.18);
+      --primary: #265766;
+      --good: #547a4f;
+      --warn: #9a6a2f;
+      --shadow: 0 14px 32px rgba(20, 40, 50, 0.16);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: var(--ink);
+      background: #dfe9e8;
+      overflow-x: hidden;
+    }
+    button, input {
+      font: inherit;
+      border-radius: 7px;
+    }
+    button {
+      border: 1px solid var(--line);
+      background: #ffffff;
+      color: var(--ink);
+      padding: 10px 13px;
+      cursor: pointer;
+    }
+    button.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #ffffff;
+      font-weight: 700;
+    }
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    input {
+      border: 1px solid var(--line);
+      padding: 10px;
+      min-width: 220px;
+    }
+    .topbar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.86);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+    }
+    .topbar h1 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+    .small {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .screen {
+      min-height: 100vh;
+      padding: 88px 16px 18px;
+    }
+    .intro {
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 22% 25%, rgba(255,255,255,0.88), transparent 24%),
+        linear-gradient(to bottom, #cfeaf4 0 55%, #9fcf9b 56% 100%);
+    }
+    .intro-panel {
+      width: min(620px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+    }
+    .intro-panel h1 {
+      font-size: 34px;
+      margin: 0 0 10px;
+      letter-spacing: 0;
+    }
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .world {
+      position: relative;
+      min-height: calc(100vh - 106px);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background:
+        linear-gradient(to bottom, var(--sky) 0 56%, var(--field) 57% 100%);
+      box-shadow: var(--shadow);
+      transition: background 300ms ease;
+    }
+    .world.winter { --sky: #d8edf4; --field: #dce8e4; --field-dark: #aebfba; }
+    .world.spring { --sky: #caedf7; --field: #a7d9a3; --field-dark: #75a871; }
+    .world.summer { --sky: #bee8f6; --field: #93ca82; --field-dark: #5f985b; }
+    .world.autumn { --sky: #dcebf1; --field: #c8b778; --field-dark: #9f813d; }
+    .sun {
+      position: absolute;
+      right: 12%;
+      top: 10%;
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      background: #ffd36d;
+      box-shadow: 0 0 45px rgba(255,211,109,0.65);
+    }
+    .path {
+      position: absolute;
+      left: -5%;
+      right: -5%;
+      bottom: 13%;
+      height: 58px;
+      background: rgba(130,110,82,0.42);
+      transform: rotate(-2deg);
+    }
+    .river {
+      position: absolute;
+      left: -5%;
+      right: -5%;
+      bottom: 0;
+      height: 58px;
+      background: rgba(83,142,166,0.52);
+    }
+    .avatar {
+      position: absolute;
+      left: 8%;
+      bottom: 24%;
+      width: 30px;
+      height: 44px;
+      border-radius: 16px 16px 10px 10px;
+      background: var(--primary);
+      box-shadow: 0 5px 0 rgba(0,0,0,0.08);
+      transition: left 450ms ease, bottom 450ms ease;
+      z-index: 4;
+    }
+    .object {
+      position: absolute;
+      width: 92px;
+      height: 78px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 8px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.88);
+      border: 2px solid rgba(35,86,102,0.18);
+      box-shadow: 0 9px 18px rgba(20,40,50,0.13);
+      transform: translateY(18px) scale(0.86);
+      opacity: 0;
+      animation: appear 420ms ease forwards;
+    }
+    .object.changed {
+      border-color: #b67d31;
+      background: #fff4dc;
+      transform: translateY(-3px);
+    }
+    .object .shape {
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 22px;
+      line-height: 1;
+    }
+    .object .name {
+      font-size: 12px;
+      margin-top: 4px;
+      color: var(--ink);
+    }
+    @keyframes appear {
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .hud {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      z-index: 5;
+    }
+    .hud div {
+      background: rgba(255,255,255,0.88);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px;
+    }
+    .hud strong {
+      display: block;
+      font-size: 18px;
+      margin-top: 3px;
+    }
+    .action-panel {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      width: min(960px, calc(100% - 24px));
+      z-index: 20;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      box-shadow: var(--shadow);
+    }
+    .choices {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .event-log {
+      position: absolute;
+      right: 12px;
+      top: 110px;
+      width: min(320px, calc(100% - 24px));
+      display: grid;
+      gap: 6px;
+      z-index: 5;
+    }
+    .event-log div {
+      background: rgba(255,255,255,0.88);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px;
+      font-size: 13px;
+    }
+    .finish-panel {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(245,248,246,0.78);
+      z-index: 30;
+    }
+    .finish-panel > div {
+      width: min(520px, calc(100% - 24px));
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    .hidden { display: none !important; }
+    @media (max-width: 760px) {
+      .topbar { position: static; display: block; }
+      .screen { padding-top: 12px; }
+      .hud { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .event-log { top: 190px; left: 12px; right: 12px; width: auto; }
+      .object { width: 78px; height: 70px; }
+      .action-panel { position: static; transform: none; width: auto; margin-top: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <section id="intro" class="intro">
+    <div class="intro-panel">
+      <h1 id="introTitle"></h1>
+      <p id="introText"></p>
+      <label class="small" id="participantLabel" for="participantId"></label>
+      <div class="toolbar">
+        <input id="participantId" autocomplete="off" />
+        <button id="startButton" class="primary" type="button"></button>
+      </div>
+      <div class="toolbar" style="margin-top:10px;">
+        <button type="button" data-lang="ru">RU</button>
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="es">ES</button>
+      </div>
+      <p id="sensorNote" class="small"></p>
+    </div>
+  </section>
+
+  <section id="game" class="screen hidden">
+    <div class="topbar">
+      <div>
+        <h1 id="gameTitle"></h1>
+        <div id="phaseText" class="small"></div>
+      </div>
+      <div class="toolbar">
+        <button type="button" data-lang="ru">RU</button>
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="es">ES</button>
+      </div>
+    </div>
+
+    <div id="world" class="world winter">
+      <div class="sun"></div>
+      <div class="path"></div>
+      <div class="river"></div>
+      <div id="avatar" class="avatar"></div>
+      <div class="hud">
+        <div><span id="periodLabel"></span><strong id="periodValue">1</strong></div>
+        <div><span id="seasonLabel"></span><strong id="seasonValue"></strong></div>
+        <div><span id="balanceLabel"></span><strong id="balanceValue">1000</strong></div>
+        <div><span id="incomeLabel"></span><strong id="incomeValue">0</strong></div>
+      </div>
+      <div id="objects"></div>
+      <div id="eventLog" class="event-log"></div>
+      <div id="finishPanel" class="finish-panel hidden">
+        <div>
+          <h2 id="finishTitle"></h2>
+          <p id="finishText"></p>
+          <p id="finishMeta" class="small"></p>
+          <div class="toolbar">
+            <a id="portalLink" href="/participant-portal"><button type="button" id="portalButton"></button></a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="actionPanel" class="action-panel">
+      <strong id="actionTitle"></strong>
+      <div id="actionText" class="small"></div>
+      <div id="choices" class="choices"></div>
+    </div>
+  </section>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    let lang = normalizeLang(params.get("lang") || localStorage.getItem("platform_language") || "ru");
+    let config = null;
+    let gameSession = null;
+    let phase = "intro";
+    let worldItems = [];
+    let eventTrace = [];
+    let economy = { balance: 1000, income: 0, expenses: 0 };
+    let month = 1;
+    let seed = Number(params.get("seed") || 3);
+
+    const POSITIONS = {
+      home_suburb: [12, 52],
+      job_factory: [62, 48],
+      family: [28, 62],
+      project: [45, 35],
+      friends: [72, 65],
+    };
+    const SHAPES = {
+      home: "HOME",
+      work: "WORK",
+      family: "FAM",
+      project: "MAKE",
+      friends: "HI",
+    };
+    const TEXT = {
+      ru: {
+        introTitle: "Живой мир",
+        introText: "Постройте маленький мир и проживите с ним несколько месяцев. Это игра, не анкета.",
+        participantLabel: "ID участника, если есть",
+        start: "Войти в мир",
+        sensorNote: "Сенсоры не используются и не требуются.",
+        gameTitle: "Живой мир",
+        buildPhase: "Пустой мир ждёт первых построек.",
+        livePhase: "Мир живёт: время идёт, работа приносит доход, события меняют сцену.",
+        finishPhase: "Игра завершена спокойно.",
+        period: "Месяц",
+        season: "Сезон",
+        balance: "Счёт",
+        income: "Доход",
+        buildTitle: "Что построить?",
+        buildText: "Выберите минимум три элемента. Каждый появится прямо в мире.",
+        liveTitle: "Прожить месяц",
+        liveText: "Персонаж идёт по миру, работа даёт доход, расходы списываются.",
+        finishTitle: "Завершить slice",
+        finishText: "Результат сохранится как ограниченное игровое наблюдение.",
+        advance: "Прожить месяц",
+        finish: "Завершить",
+        portal: "Вернуться в портал",
+        doneTitle: "Мир сохранён",
+        doneText: "Этот slice завершён. Внутренние исследовательские результаты участнику не показываются.",
+        added: name => `${name} появился в мире.`,
+        monthEvent: (m, balance) => `Месяц ${m}: работа и расходы изменили счёт до ${balance}.`,
+        naturalEvent: "Дом изменился: нужен небольшой ремонт, мир визуально отреагировал.",
+        seasons: ["зима", "весна", "лето", "осень"],
+      },
+      en: {
+        introTitle: "Living World",
+        introText: "Build a small world and live with it for a few months. This is a game, not a questionnaire.",
+        participantLabel: "Participant ID, if available",
+        start: "Enter world",
+        sensorNote: "Sensors are not used or required.",
+        gameTitle: "Living World",
+        buildPhase: "An empty world is waiting for its first places.",
+        livePhase: "The world lives: time moves, work produces income, events change the scene.",
+        finishPhase: "The game has finished safely.",
+        period: "Month",
+        season: "Season",
+        balance: "Balance",
+        income: "Income",
+        buildTitle: "What will you build?",
+        buildText: "Choose at least three elements. Each one appears directly in the world.",
+        liveTitle: "Live one month",
+        liveText: "The character moves through the world, work adds income, expenses are paid.",
+        finishTitle: "Finish slice",
+        finishText: "The result will be saved as a bounded game observation.",
+        advance: "Live one month",
+        finish: "Finish",
+        portal: "Return to portal",
+        doneTitle: "World saved",
+        doneText: "This slice is complete. Internal research results are not shown to the participant.",
+        added: name => `${name} appeared in the world.`,
+        monthEvent: (m, balance) => `Month ${m}: work and expenses changed the balance to ${balance}.`,
+        naturalEvent: "The home changed: a small repair is needed, and the world reacted visually.",
+        seasons: ["winter", "spring", "summer", "autumn"],
+      },
+      es: {
+        introTitle: "Mundo vivo",
+        introText: "Construye un pequeno mundo y vivelo durante unos meses. Es un juego, no un cuestionario.",
+        participantLabel: "ID de participante, si existe",
+        start: "Entrar al mundo",
+        sensorNote: "No se usan sensores y no son necesarios.",
+        gameTitle: "Mundo vivo",
+        buildPhase: "Un mundo vacio espera sus primeros lugares.",
+        livePhase: "El mundo vive: pasa el tiempo, el trabajo da ingresos y los eventos cambian la escena.",
+        finishPhase: "El juego termino con seguridad.",
+        period: "Mes",
+        season: "Estacion",
+        balance: "Cuenta",
+        income: "Ingreso",
+        buildTitle: "Que vas a construir?",
+        buildText: "Elige al menos tres elementos. Cada uno aparece directamente en el mundo.",
+        liveTitle: "Vivir un mes",
+        liveText: "El personaje se mueve por el mundo, el trabajo agrega ingreso y se pagan gastos.",
+        finishTitle: "Terminar slice",
+        finishText: "El resultado se guardara como observacion acotada del juego.",
+        advance: "Vivir un mes",
+        finish: "Terminar",
+        portal: "Volver al portal",
+        doneTitle: "Mundo guardado",
+        doneText: "Este slice esta completo. Los resultados internos de investigacion no se muestran al participante.",
+        added: name => `${name} aparecio en el mundo.`,
+        monthEvent: (m, balance) => `Mes ${m}: trabajo y gastos cambiaron la cuenta a ${balance}.`,
+        naturalEvent: "La casa cambio: necesita una pequena reparacion y el mundo reacciono visualmente.",
+        seasons: ["invierno", "primavera", "verano", "otono"],
+      },
+    };
+
+    function normalizeLang(value) {
+      const short = String(value || "").slice(0, 2);
+      return ["ru", "en", "es"].includes(short) ? short : "ru";
+    }
+    function t(key, ...args) {
+      const value = TEXT[lang][key] || TEXT.ru[key] || key;
+      return typeof value === "function" ? value(...args) : value;
+    }
+    function itemTitle(item) {
+      return item.title[lang] || item.title.ru || item.item_id;
+    }
+    function setLang(next) {
+      lang = normalizeLang(next);
+      localStorage.setItem("platform_language", lang);
+      document.documentElement.lang = lang;
+      render();
+    }
+    async function loadConfig() {
+      const response = await fetch("/games/living-world/config");
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error("config failed");
+      config = data;
+      economy.balance = data.simulation.starting_balance;
+    }
+    async function start() {
+      if (!config) await loadConfig();
+      const response = await fetch("/games/living-world/sessions/start", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          participant_id: document.getElementById("participantId").value.trim() || null,
+          language: lang,
+          study_id: "health_model",
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) return alert(JSON.stringify(data));
+      gameSession = data.session;
+      document.body.dataset.gameSessionId = gameSession.game_session_id;
+      phase = "build";
+      document.getElementById("intro").classList.add("hidden");
+      document.getElementById("game").classList.remove("hidden");
+      eventTrace.push({event_type: "simulation_started", stage_id: "build", value: {started: true}});
+      render();
+    }
+    function build(itemId) {
+      const item = config.build_items.find(entry => entry.item_id === itemId);
+      if (!item || worldItems.some(entry => entry.item_id === itemId)) return;
+      const worldItem = {...item, state: "active", created_at: new Date().toISOString()};
+      worldItems.push(worldItem);
+      eventTrace.push({
+        event_type: "world_item_created",
+        stage_id: "build",
+        item_id: itemId,
+        answer: itemId,
+        value: {item_id: itemId, order: worldItems.length},
+      });
+      pushLog(t("added", itemTitle(item)));
+      if (worldItems.length >= config.minimum_items) {
+        phase = "live";
+      }
+      recomputeEconomy();
+      render();
+    }
+    function recomputeEconomy() {
+      economy.income = worldItems.reduce((sum, item) => sum + Number(item.income || 0), 0);
+      economy.expenses = worldItems.reduce((sum, item) => sum + Number(item.expense || 0), 0);
+    }
+    function advanceMonth() {
+      if (phase !== "live") return;
+      month += 1;
+      const previous = economy.balance;
+      economy.balance += economy.income - economy.expenses;
+      const season = seasonName();
+      eventTrace.push({
+        event_type: "time_advanced",
+        stage_id: "live",
+        simulation_tick: month,
+        simulation_period: String(month),
+        season,
+        value: {month, previous_balance: previous, new_balance: economy.balance},
+      });
+      eventTrace.push({
+        event_type: "economic_transaction",
+        stage_id: "live",
+        simulation_tick: month,
+        simulation_period: String(month),
+        season,
+        value: {
+          income: economy.income,
+          expenses: economy.expenses,
+          previous_balance: previous,
+          new_balance: economy.balance,
+        },
+      });
+      pushLog(t("monthEvent", month, economy.balance));
+      if (month === 3) {
+        const home = worldItems.find(item => item.item_id === "home_suburb");
+        if (home) {
+          home.state = "changed";
+          economy.balance -= 180;
+          eventTrace.push({
+            event_type: "natural_event_triggered",
+            stage_id: "live",
+            registry_event_id: "home_repair",
+            item_id: "home_suburb",
+            simulation_tick: month,
+            simulation_period: String(month),
+            season,
+            value: {changed_item_id: "home_suburb", balance_delta: -180},
+          });
+          pushLog(t("naturalEvent"));
+        }
+      }
+      render();
+    }
+    async function finish() {
+      const response = await fetch("/games/living-world/results", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          game_session_id: gameSession.game_session_id,
+          participant_id: gameSession.participant_id,
+          language: lang,
+          random_seed: seed,
+          world_items: worldItems.map(item => ({
+            item_id: item.item_id,
+            category: item.category,
+            state: item.state,
+            created_at: item.created_at,
+          })),
+          event_trace: eventTrace,
+          economy,
+          completed: true,
+          abandoned: false,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) return alert(JSON.stringify(data));
+      phase = "finish";
+      document.body.dataset.acceptedEventCount = String(data.accepted_event_count);
+      document.getElementById("finishPanel").classList.remove("hidden");
+      render();
+    }
+    function pushLog(text) {
+      const log = document.getElementById("eventLog");
+      const row = document.createElement("div");
+      row.textContent = text;
+      log.prepend(row);
+    }
+    function seasonName() {
+      const names = t("seasons");
+      return names[(month - 1) % names.length];
+    }
+    function render() {
+      document.documentElement.lang = lang;
+      document.title = t("gameTitle");
+      document.body.dataset.phase = phase;
+      document.getElementById("introTitle").textContent = t("introTitle");
+      document.getElementById("introText").textContent = t("introText");
+      document.getElementById("participantLabel").textContent = t("participantLabel");
+      document.getElementById("participantId").placeholder = lang === "ru" ? "например, participant-01" : lang === "es" ? "por ejemplo, participant-01" : "for example, participant-01";
+      document.getElementById("startButton").textContent = t("start");
+      document.getElementById("sensorNote").textContent = t("sensorNote");
+      document.getElementById("gameTitle").textContent = t("gameTitle");
+      document.getElementById("phaseText").textContent = phase === "build" ? t("buildPhase") : phase === "finish" ? t("finishPhase") : t("livePhase");
+      document.getElementById("periodLabel").textContent = t("period");
+      document.getElementById("seasonLabel").textContent = t("season");
+      document.getElementById("balanceLabel").textContent = t("balance");
+      document.getElementById("incomeLabel").textContent = t("income");
+      document.getElementById("periodValue").textContent = String(month);
+      document.getElementById("seasonValue").textContent = seasonName();
+      document.getElementById("balanceValue").textContent = String(economy.balance);
+      document.getElementById("incomeValue").textContent = String(economy.income);
+      document.getElementById("world").className = "world " + ["winter","spring","summer","autumn"][(month - 1) % 4];
+      document.getElementById("avatar").style.left = `${8 + Math.min(month, 5) * 9}%`;
+      renderObjects();
+      renderActions();
+      document.getElementById("finishTitle").textContent = t("doneTitle");
+      document.getElementById("finishText").textContent = t("doneText");
+      document.getElementById("finishMeta").textContent = `${worldItems.length} items, ${eventTrace.length} events`;
+      document.getElementById("portalButton").textContent = t("portal");
+      document.getElementById("portalLink").setAttribute("href", `/participant-portal?lang=${encodeURIComponent(lang)}`);
+    }
+    function renderObjects() {
+      document.getElementById("objects").innerHTML = worldItems.map(item => {
+        const pos = POSITIONS[item.item_id] || [40, 50];
+        return `<div class="object ${item.state}" data-item-id="${escapeHtml(item.item_id)}" style="left:${pos[0]}%;top:${pos[1]}%;">
+          <div>
+            <div class="shape">${escapeHtml(SHAPES[item.kind] || "ITEM")}</div>
+            <div class="name">${escapeHtml(itemTitle(item))}</div>
+          </div>
+        </div>`;
+      }).join("");
+    }
+    function renderActions() {
+      const choices = document.getElementById("choices");
+      if (!config) return;
+      if (phase === "build") {
+        document.getElementById("actionPanel").classList.remove("hidden");
+        document.getElementById("actionTitle").textContent = t("buildTitle");
+        document.getElementById("actionText").textContent = t("buildText");
+        choices.innerHTML = config.build_items.map(item => {
+          const added = worldItems.some(entry => entry.item_id === item.item_id);
+          return `<button type="button" ${added ? "disabled" : ""} data-build-item="${escapeHtml(item.item_id)}" onclick="build('${escapeHtml(item.item_id)}')">${escapeHtml(itemTitle(item))}</button>`;
+        }).join("");
+      } else if (phase === "live") {
+        document.getElementById("actionPanel").classList.remove("hidden");
+        document.getElementById("actionTitle").textContent = month >= 3 ? t("finishTitle") : t("liveTitle");
+        document.getElementById("actionText").textContent = month >= 3 ? t("finishText") : t("liveText");
+        choices.innerHTML = month >= 3
+          ? `<button id="finishButton" class="primary" type="button" onclick="finish()">${escapeHtml(t("finish"))}</button>`
+          : `<button id="advanceButton" class="primary" type="button" onclick="advanceMonth()">${escapeHtml(t("advance"))}</button>`;
+      } else {
+        document.getElementById("actionPanel").classList.add("hidden");
+      }
+    }
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+    document.querySelectorAll("[data-lang]").forEach(button => {
+      button.addEventListener("click", () => setLang(button.dataset.lang));
+    });
+    document.getElementById("startButton").addEventListener("click", start);
+    loadConfig().then(render);
+  </script>
+</body>
+</html>

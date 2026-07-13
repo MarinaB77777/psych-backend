@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Participant Portal</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      color: #21323b;
+      background: linear-gradient(to bottom, #dcecf2, #f5f7f4);
+    }
+    header {
+      padding: 22px;
+      background: rgba(255,255,255,0.9);
+      border-bottom: 1px solid #d7e0e5;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 22px;
+    }
+    h1, h2 { margin: 0 0 8px; letter-spacing: 0; }
+    .small { color: #60727c; font-size: 13px; line-height: 1.45; }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+    button, a.button {
+      border: 1px solid #cdd9df;
+      background: #fff;
+      color: #20313a;
+      padding: 10px 13px;
+      border-radius: 7px;
+      text-decoration: none;
+      font: inherit;
+      cursor: pointer;
+    }
+    a.primary {
+      background: #265766;
+      border-color: #265766;
+      color: white;
+      font-weight: 700;
+    }
+    .section {
+      background: rgba(255,255,255,0.94);
+      border: 1px solid #d7e0e5;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 12px 28px rgba(30,50,60,0.1);
+    }
+    .activity {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 0;
+      border-top: 1px solid #eef2f4;
+    }
+    .activity:first-of-type { border-top: 0; }
+    .status {
+      display: inline-block;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: #e8f1ed;
+      color: #416447;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+    @media (max-width: 680px) {
+      header { display: block; }
+      main { padding: 14px; }
+      .activity { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1 id="title"></h1>
+      <p id="subtitle" class="small"></p>
+    </div>
+    <div class="toolbar">
+      <button type="button" onclick="setLang('ru')">RU</button>
+      <button type="button" onclick="setLang('en')">EN</button>
+      <button type="button" onclick="setLang('es')">ES</button>
+    </div>
+  </header>
+  <main>
+    <section class="section">
+      <h2 id="activitiesTitle"></h2>
+      <p id="activitiesText" class="small"></p>
+      <div id="activityList"></div>
+    </section>
+  </main>
+  <script>
+    let lang = normalizeLang(new URLSearchParams(location.search).get("lang") || localStorage.getItem("platform_language") || "ru");
+    let activities = [];
+    const TEXT = {
+      ru: {
+        title: "Портал участника",
+        subtitle: "Доступные активности без исследовательских настроек и внутренних результатов.",
+        activitiesTitle: "Доступные активности",
+        activitiesText: "Выберите активность, которую вам разрешено пройти.",
+        games: "Игры",
+        open: "Открыть",
+        unavailable: "Пока нет доступных активностей.",
+      },
+      en: {
+        title: "Participant Portal",
+        subtitle: "Available activities without research settings or internal results.",
+        activitiesTitle: "Available Activities",
+        activitiesText: "Choose an activity that is available to you.",
+        games: "Games",
+        open: "Open",
+        unavailable: "No activities are available yet.",
+      },
+      es: {
+        title: "Participant Portal",
+        subtitle: "Actividades disponibles sin ajustes de investigacion ni resultados internos.",
+        activitiesTitle: "Actividades disponibles",
+        activitiesText: "Elige una actividad disponible para ti.",
+        games: "Juegos",
+        open: "Abrir",
+        unavailable: "Aun no hay actividades disponibles.",
+      },
+    };
+    function normalizeLang(value) {
+      const short = String(value || "").slice(0, 2);
+      return ["ru", "en", "es"].includes(short) ? short : "ru";
+    }
+    function t(key) { return TEXT[lang][key] || TEXT.en[key] || key; }
+    function label(value) { return value?.[lang] || value?.en || value?.ru || ""; }
+    function setLang(next) {
+      lang = normalizeLang(next);
+      localStorage.setItem("platform_language", lang);
+      render();
+    }
+    async function load() {
+      const response = await fetch("/participant/games/available");
+      const data = await response.json();
+      activities = data.games || [];
+      render();
+    }
+    function render() {
+      document.documentElement.lang = lang;
+      document.title = t("title");
+      document.getElementById("title").textContent = t("title");
+      document.getElementById("subtitle").textContent = t("subtitle");
+      document.getElementById("activitiesTitle").textContent = t("activitiesTitle");
+      document.getElementById("activitiesText").textContent = t("activitiesText");
+      const list = document.getElementById("activityList");
+      if (!activities.length) {
+        list.innerHTML = `<p class="small">${escapeHtml(t("unavailable"))}</p>`;
+        return;
+      }
+      list.innerHTML = `
+        <h3>${escapeHtml(t("games"))}</h3>
+        ${activities.map(game => `
+          <div class="activity" data-game-id="${escapeHtml(game.game_id)}">
+            <div>
+              <strong>${escapeHtml(label(game.title))}</strong>
+              <p class="small">${escapeHtml(label(game.description))}</p>
+              <span class="status">${escapeHtml(game.availability)}</span>
+            </div>
+            <a class="button primary" href="${escapeHtml(game.participant_launch_route)}?lang=${escapeHtml(lang)}">${escapeHtml(t("open"))}</a>
+          </div>
+        `).join("")}`;
+    }
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+    load();
+  </script>
+</body>
+</html>

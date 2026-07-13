@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Analysis Check</title>
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f6f8;
+  color: #1f2937;
+}
+.shell {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 28px;
+}
+.top {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+.nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+a,
+button {
+  border: 1px solid #d8dde6;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: white;
+  color: #111827;
+  text-decoration: none;
+  cursor: pointer;
+}
+button.primary {
+  background: #111827;
+  color: white;
+  border-color: #111827;
+}
+.card {
+  background: white;
+  border: 1px solid #d8dde6;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+label {
+  display: block;
+  font-size: 13px;
+  color: #5b6472;
+  margin-bottom: 5px;
+}
+input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d8dde6;
+  border-radius: 8px;
+  padding: 10px;
+}
+pre {
+  background: #111827;
+  color: #f9fafb;
+  border-radius: 10px;
+  padding: 14px;
+  overflow: auto;
+  min-height: 160px;
+}
+.small {
+  color: #5b6472;
+  font-size: 14px;
+}
+@media (max-width: 760px) {
+  .top {
+    display: block;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+<script src="/static/platform_i18n.js?v=20260712-sync"></script>
+</head>
+<body>
+<div class="shell">
+  <div class="top">
+    <div>
+      <h1>Analysis Check</h1>
+      <p class="small">
+        Проверка совместимости двух переменных, их шкал и выбранного метода анализа.
+      </p>
+    </div>
+    <div class="nav">
+      <a href="/research-workspace">Workspace</a>
+      <a href="/data-preparation">Data Preparation</a>
+      <a href="/analysis-builder">Analysis Builder</a>
+      <a href="/scientific-results">Scientific Results</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Manual check</h2>
+    <p class="small">
+      Используй это как техническую проверку. Для обычного workflow удобнее идти через Analysis Builder.
+    </p>
+    <div class="grid">
+      <div>
+        <label>Study ID</label>
+        <input id="studyId" value="decision_under_uncertainty">
+      </div>
+      <div>
+        <label>Left question code</label>
+        <input id="leftCode" placeholder="DU1">
+      </div>
+      <div>
+        <label>Right question code</label>
+        <input id="rightCode" placeholder="DU2">
+      </div>
+      <div>
+        <label>Method ID</label>
+        <input id="methodId" value="spearman_correlation">
+      </div>
+    </div>
+    <p>
+      <button class="primary" onclick="runCheck()">Run check</button>
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>Result</h2>
+    <pre id="output">No check has been run yet.</pre>
+  </div>
+</div>
+
+<script>
+async function runCheck() {
+  const output = document.getElementById("output");
+  output.textContent = "Checking...";
+
+  const payload = {
+    study_id: document.getElementById("studyId").value.trim(),
+    left_question_code: document.getElementById("leftCode").value.trim(),
+    right_question_code: document.getElementById("rightCode").value.trim(),
+    method_id: document.getElementById("methodId").value.trim()
+  };
+
+  try {
+    const response = await fetch("/research/analysis/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    output.textContent = JSON.stringify(data, null, 2);
+  } catch (error) {
+    output.textContent = String(error);
+  }
+}
+</script>
+</body>
+</html>

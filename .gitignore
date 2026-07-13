@@ -3,3 +3,13 @@ __pycache__/
 *.pyc
 .env
 data/
+
+# Secrets and cloud service-account credentials.
+*service-account*.json
+*service_account*.json
+*-service-account.json
+*-credentials.json
+*credential*.json
+*credentials*.json
+health-model-*.json
+*.private-key.json

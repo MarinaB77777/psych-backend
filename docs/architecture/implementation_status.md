@@ -208,6 +208,54 @@ Runtime architecture index exists:
 
 ---
 
+## Offline Independent AI Core
+
+Status:
+- executable foundation exists.
+
+Implemented:
+- local-first learning event store;
+- explicit learning event contracts;
+- explainable learning profile builder;
+- bounded suggestion builder;
+- offline core service;
+- standalone UI page;
+- API endpoints for status, events, training, and suggestions.
+
+Implemented files include:
+- independent_ai_core/schemas.py
+- independent_ai_core/store.py
+- independent_ai_core/learning.py
+- independent_ai_core/service.py
+- static/offline_ai_core.html
+
+Implemented routes:
+- /offline-ai-core
+- /offline-ai-core/status
+- /offline-ai-core/events
+- /offline-ai-core/train
+- /offline-ai-core/suggestions
+
+Storage:
+- data/offline_ai_core/learning_events.json
+- data/offline_ai_core/learning_profile.json
+
+Stabilized principles:
+- offline learning ≠ autonomous execution
+- learning profile ≠ identity
+- suggestion ≠ permission
+- local memory ≠ research evidence
+- human review required for actions
+
+Contract:
+- docs/architecture/offline_independent_ai_core_contract.md
+
+Pilot status:
+- separate from Pilot v1 scoring and research evidence;
+- may support workflow memory and correction patterns only.
+
+---
+
 # 2. Partially Implemented Systems
 
 ## Analyzer / Readiness Layer
